@@ -1,0 +1,1163 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src * http: https: ws: wss: data: blob: file:; media-src * http: https: data: blob: file:; worker-src * 'unsafe-inline' blob:; child-src * blob:; img-src * http: https: data: blob: file:; style-src * 'unsafe-inline'; font-src * data: https:; script-src * 'unsafe-inline' 'unsafe-eval'">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nidalplayer — M3U Media Player</title>
+  <style>
+    html, body {
+      background-color: #0b0d11 !important;
+      color: #f0f2f5;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+  </style>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="app-root">
+
+  <!-- Cinematic Boot Splash Screen -->
+  <div id="boot" class="screen boot-screen">
+    <!-- Atmospheric glowing nebula backdrop -->
+    <div class="boot-ambient-glow"></div>
+    <div class="boot-grid-pattern"></div>
+
+    <div class="boot-hero-content">
+      <!-- Glowing 3D Emblem with Shimmer -->
+      <div class="boot-logo-wrapper">
+        <div class="boot-logo-glow"></div>
+        <img src="assets/logo.png" alt="NP" class="boot-logo-img">
+      </div>
+
+      <!-- Typography -->
+      <div class="boot-typography">
+        <div class="boot-kicker">
+          <span class="boot-pulse-dot"></span>
+          <span>SYSTEM INITIALIZATION // CINEMA ENGINE</span>
+        </div>
+        <h1 class="boot-brand-title">NIDAL<span>PLAYER</span></h1>
+        <p class="boot-brand-subtitle">ULTRA HD 4K IPTV & CINEMA ECOSYSTEM</p>
+      </div>
+
+      <!-- Laser Scanner Progress Box -->
+      <div class="boot-loader-box">
+        <div class="boot-laser-track">
+          <div class="boot-laser-bar">
+            <div class="boot-laser-head"></div>
+          </div>
+        </div>
+        <div class="boot-status-row">
+          <span id="bootStatus" class="boot-status-text">INITIALIZING HARDWARE ACCELERATION & CACHE…</span>
+          <span class="boot-version-badge">V4.0 PRO</span>
+        </div>
+      </div>
+
+      <!-- Real-time Telemetry Badges -->
+      <div class="boot-telemetry-row">
+        <div class="boot-pill"><span class="boot-pill-dot green"></span> D3D11 GPU ACCELERATED</div>
+        <div class="boot-pill"><span class="boot-pill-dot orange"></span> FAST CHUNKED CACHE</div>
+        <div class="boot-pill"><span class="boot-pill-dot cyan"></span> 4K HEVC READY</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main App Shell -->
+  <div id="appShell" class="app-shell hidden">
+
+    <!-- Left Navigation Sidebar -->
+    <aside class="app-sidebar" id="appSidebar">
+      <div class="sidebar-brand" style="display:flex; align-items:center; gap:12px; padding:18px 20px; border-bottom:1px solid var(--border-subtle);">
+        <img src="assets/logo.png" alt="NP" style="width:38px; height:38px; border-radius:8px; object-fit:cover; border:1px solid rgba(255,255,255,0.12); flex-shrink:0;">
+        <div style="min-width:0;">
+          <div class="brand-badge" style="letter-spacing:1px; line-height:1.2; font-size:14px;">NIDALPLAYER</div>
+          <div class="brand-meta" style="font-size:10px; color:var(--text-muted); margin-top:2px;">M3U MEDIA PLAYER <span class="version-tag">V4.0</span></div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section-title" data-i18n="navigation">NAVIGATION —</div>
+        <button class="nav-item active" data-dest="home">
+          <span class="nav-num">01/</span>
+          <span class="nav-icon">▤</span>
+          <span class="nav-text" data-i18n="nav_home">HOME</span>
+        </button>
+        <button class="nav-item" data-dest="live">
+          <span class="nav-num">02/</span>
+          <span class="nav-icon">●</span>
+          <span class="nav-text" data-i18n="nav_live">LIVE TV</span>
+          <span class="nav-count" id="sidebarLiveCount">0</span>
+        </button>
+        <button class="nav-item" data-dest="movies">
+          <span class="nav-num">03/</span>
+          <span class="nav-icon">▶</span>
+          <span class="nav-text" data-i18n="nav_movies">MOVIES</span>
+          <span class="nav-count" id="sidebarMoviesCount">0</span>
+        </button>
+        <button class="nav-item" data-dest="series">
+          <span class="nav-num">04/</span>
+          <span class="nav-icon">▣</span>
+          <span class="nav-text" data-i18n="nav_series">SERIES</span>
+          <span class="nav-count" id="sidebarSeriesCount">0</span>
+        </button>
+        <button class="nav-item" data-dest="settings">
+          <span class="nav-num">05/</span>
+          <span class="nav-icon">⚙</span>
+          <span class="nav-text" data-i18n="nav_settings">PLAYLISTS & CONFIG</span>
+        </button>
+      </nav>
+
+      <!-- Sidebar Account & Provider Footer -->
+      <div class="sidebar-footer">
+        <div class="account-card">
+          <div class="account-header">
+            <span class="status-indicator active"></span>
+            <strong id="sidebarActivePlaylist">No Playlist</strong>
+          </div>
+          <div class="account-meta" id="sidebarPlaylistMeta">Add or select a playlist</div>
+          <div class="expiry-badge-row" id="sidebarExpiryRow">
+            <span class="expiry-pill" id="sidebarExpiryPill">EXPIRES: —</span>
+          </div>
+          <button id="sidebarQuickEditBtn" class="btn-sidebar-action" data-i18n="edit_fix">EDIT / FIX CONNECTION</button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Stage -->
+    <div class="app-main">
+
+      <!-- Top Utility Header Bar -->
+      <header class="app-topbar">
+        <div class="topbar-left" style="display:flex; align-items:center; gap:10px;">
+          <img src="assets/logo.png" alt="NP" style="width:22px; height:22px; border-radius:5px; object-fit:cover; border:1px solid rgba(255,69,26,0.35); flex-shrink:0;">
+          <div class="view-indicator" id="viewIndicator">// 01. HOME DASHBOARD</div>
+        </div>
+
+        <div class="topbar-search">
+          <span class="search-reticle">⌕</span>
+          <input type="text" id="globalSearchInput" placeholder="SEARCH CHANNELS, MOVIES, OR SHOWS..." data-i18n-placeholder="search_placeholder" autocomplete="off">
+          <button id="clearSearchBtn" class="btn-clear-search hidden">✕</button>
+        </div>
+
+        <div class="topbar-actions">
+          <!-- Language Selector -->
+          <select id="appLanguageSelect" class="lang-dropdown" title="Language / اللغة / Langue / Idioma / Sprache">
+            <option value="en">🇬🇧 EN</option>
+            <option value="ar">🇸🇦 عربي</option>
+            <option value="fr">🇫🇷 FR</option>
+            <option value="es">🇪🇸 ES</option>
+            <option value="de">🇩🇪 DE</option>
+          </select>
+
+          <button id="topSyncBtn" class="btn-action primary" title="Synchronize & Refresh playlist">
+            <span>↻</span> <span data-i18n="sync_playlist">SYNC PLAYLIST</span>
+          </button>
+          <button id="topUpdateBtn" class="btn-action primary update-available-pulse hidden" title="New update ready to install">
+            <span>⚡</span> <span id="topUpdateBtnText">UPDATE READY</span>
+          </button>
+          <button id="topAddPlaylistBtn" class="btn-action" title="Add a new playlist">
+            <span>+</span> <span data-i18n="add_playlist">ADD PLAYLIST</span>
+          </button>
+          <div id="topRemoteStatusBadge" class="remote-status-badge hidden" title="Smartphone is connected and active">
+            <span class="remote-status-dot"></span>
+            <span data-i18n="phone_connected">PHONE CONNECTED</span>
+          </div>
+          <button id="topRemoteBtn" class="btn-action icon-only" title="Mobile Remote Control QR">
+            <span>📱</span>
+          </button>
+          <button id="btnShortcutsHelp" class="btn-action icon-only" title="Keyboard Shortcuts Cheatsheet (Press ? or F1)">
+            <span>⌨</span>
+          </button>
+          <button id="topWindowFullscreenBtn" class="btn-action icon-only" title="Toggle Window Fullscreen (F11 / Esc)">
+            <span id="topWindowFullscreenIcon">⛶</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Content Workspace Containers -->
+      <main class="content-stage" id="contentStage">
+
+        <!-- 1. HOME DASHBOARD VIEW -->
+        <section id="viewHome" class="view-panel">
+          <div class="editorial-hero">
+            <div class="hero-left">
+              <div class="hero-header-wrap">
+                <div class="hero-kicker" data-i18n="hero_kicker">EDITORIAL MEDIA CENTER — BASED ON HIGH PERFORMANCE</div>
+                <h1 class="hero-title"><span data-i18n="hero_title_1">STREAM</span> <span class="highlight" data-i18n="hero_title_2">WITH INTENT.</span></h1>
+                <p class="hero-manifesto" data-i18n="hero_manifesto">High bitrate IPTV engine with instant channel demuxing, EPG auto-matching & 4K metadata discovery.</p>
+              </div>
+              <div id="heroFavClubContainer" class="hero-fav-club-container">
+                <!-- Dynamically rendered favorite club radar (Prompt to select or Next Fixture & Stats) -->
+              </div>
+            </div>
+
+            <div class="hero-right">
+              <div id="homeMiniPlayerCard" class="home-mini-player-card" title="Double click to go Fullscreen">
+                <div class="home-mini-screen">
+                  <div id="homeMiniPlayerMount" class="home-mini-mount"></div>
+                  <!-- Standby Display when nothing playing -->
+                  <div id="homeMiniStandby" class="home-mini-standby">
+                    <div class="standby-logo-wrap">
+                      <img src="assets/logo.png" alt="NP" class="standby-logo">
+                    </div>
+                    <div class="standby-text-wrap">
+                      <div class="standby-tag" data-i18n="standby_dock">STANDBY DOCK //</div>
+                      <h4 id="homeStandbyTitle" data-i18n="no_active_stream">NO ACTIVE STREAM</h4>
+                      <p id="homeStandbySub" data-i18n="standby_desc">Play any Live Channel, Movie, or Episode to stream here in background.</p>
+                      <div style="margin-top:6px;">
+                        <span class="manifesto-pill" id="homeExpiryPill" data-i18n="ready">READY</span>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- Live Overlay Badge -->
+                  <div id="homeMiniLiveBadge" class="home-mini-live-badge hidden">
+                    <span class="mini-live-dot"></span> <span id="homeMiniLiveText" data-i18n="live_broadcasts">LIVE STREAM</span>
+                  </div>
+                  <!-- Fullscreen hint -->
+                  <div class="home-mini-fullscreen-hint" data-i18n="fullscreen_hint">⛶ DOUBLE CLICK FOR FULLSCREEN</div>
+                </div>
+
+                <!-- Bottom bar of Mini Player -->
+                <div class="home-mini-footer">
+                  <div class="home-mini-meta">
+                    <strong id="homeMiniTitle" data-i18n="select_content_prompt">Select content to start streaming</strong>
+                    <span id="homeMiniCategory" data-i18n="engine_ready">Nidalplayer Engine Ready</span>
+                  </div>
+                  <div class="home-mini-controls">
+                    <button id="homeMiniPlayPauseBtn" class="btn-mini-ctrl" title="Play / Pause">⏯</button>
+                    <button id="homeMiniStopBtn" class="btn-mini-ctrl" title="Stop Stream">⏹</button>
+                    <button id="homeMiniExpandBtn" class="btn-mini-ctrl primary" title="Open Fullscreen (F)">⛶</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- FULL-WIDTH SPORTS MATCH CENTER -->
+          <div id="homeSportsSection" class="dashboard-section home-sports-fullwidth">
+            <div class="section-header sports-section-header">
+              <div class="sports-header-title-wrap">
+                <div class="section-title" data-i18n="sports_match_center">MATCH CENTER — TOP 5 LEAGUES</div>
+                <span class="section-sub" data-i18n="upcoming_and_live">TODAY'S LIVE & UPCOMING FIXTURES</span>
+              </div>
+              <div class="sports-league-chips" id="sportsLeagueChips">
+                <button class="sports-chip-btn active" data-league="all">⚽ <span data-i18n="chip_all">ALL</span></button>
+                <button class="sports-chip-btn" data-league="epl">🏴󠁧󠁢󠁥󠁮󠁧󠁿 PREMIER LEAGUE</button>
+                <button class="sports-chip-btn" data-league="laliga">🇪🇸 LA LIGA</button>
+                <button class="sports-chip-btn" data-league="seriea">🇮🇹 SERIE A</button>
+                <button class="sports-chip-btn" data-league="bundesliga">🇩🇪 BUNDESLIGA</button>
+                <button class="sports-chip-btn" data-league="ligue1">🇫🇷 LIGUE 1</button>
+                <button class="sports-chip-btn" data-league="ucl">🏆 CHAMPIONS LEAGUE</button>
+              </div>
+            </div>
+            <div id="homeSportsMatchRow" class="media-row-scroller sports-match-row">
+              <div class="sports-loading-placeholder">
+                <div class="spinner"></div>
+                <span data-i18n="upcoming_and_live">Loading live match fixtures…</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Continue Watching Section -->
+          <div id="continueWatchingSection" class="dashboard-section hidden">
+            <div class="section-header">
+              <div class="section-title" data-i18n="continue_watching">CONTINUE WATCHING —</div>
+              <span class="section-sub" data-i18n="resume_playback">RESUME RECENT PLAYBACK</span>
+            </div>
+            <div id="continueWatchingRow" class="media-row-scroller"></div>
+          </div>
+
+          <!-- Search results across the complete library while on Home -->
+          <div id="homeSearchSection" class="dashboard-section home-search-section hidden">
+            <div class="section-header">
+              <div class="section-title">SEARCH RESULTS —</div>
+              <span class="section-sub">WHOLE LIBRARY</span>
+            </div>
+            <div class="home-search-empty hidden">No matching channels, movies, or series.</div>
+            <div class="home-search-group">
+              <div class="home-search-group-header"><span>LIVE TV</span><span class="home-search-count"></span></div>
+              <div id="homeSearchLiveRow" class="media-row-scroller home-search-row"></div>
+            </div>
+            <div class="home-search-group">
+              <div class="home-search-group-header"><span>MOVIES</span><span class="home-search-count"></span></div>
+              <div id="homeSearchMoviesRow" class="media-row-scroller home-search-row"></div>
+            </div>
+            <div class="home-search-group">
+              <div class="home-search-group-header"><span>SERIES</span><span class="home-search-count"></span></div>
+              <div id="homeSearchSeriesRow" class="media-row-scroller home-search-row"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 2. LIVE TV VIEW (3-Column Layout with Right Embedded Preview Dock) -->
+        <section id="viewLive" class="view-panel hidden">
+          <div class="three-column-layout">
+            
+            <!-- Column 1: Scrollable Categories -->
+            <aside class="col-categories">
+              <div class="column-header">
+                <span data-i18n="categories">CATEGORIES —</span>
+                <span id="liveCategoryCount">0</span>
+              </div>
+              <div class="category-list" id="liveCategoryList">
+                <button class="cat-pill active" data-category="all">
+                  <span data-i18n="all_channels">All Channels</span>
+                  <b id="liveAllCount">0</b>
+                </button>
+              </div>
+            </aside>
+
+            <!-- Column 2: Channels Virtual List -->
+            <section class="col-content">
+              <div class="grid-toolbar">
+                <div class="results-info">
+                  <span id="liveShowingCount">Showing 0 channels</span>
+                </div>
+                <div class="toolbar-controls">
+                  <button id="liveGridBtn" class="btn-tool active" title="Grid View">▦</button>
+                  <button id="liveListBtn" class="btn-tool" title="List View">▤</button>
+                </div>
+              </div>
+              <div id="liveVirtualContainer" class="virtual-scroll-viewport"></div>
+            </section>
+
+            <!-- Column 3: Embedded Live Preview Player Dock -->
+            <aside class="col-preview" id="livePreviewCol">
+              <div class="column-header">
+                <span data-i18n="live_preview">LIVE PREVIEW —</span>
+                <span id="previewStatusBadge" class="status-pill-small">STANDBY</span>
+              </div>
+              
+              <div class="preview-stage-wrap">
+                <div class="embedded-video-box">
+                  <div id="previewVideoContainer" class="preview-video-container">
+                    <video id="nativeVideo" playsinline></video>
+                    <div id="artplayerMount" class="engine-mount hidden"></div>
+                  </div>
+                  <div id="previewPlaceholder" class="preview-empty-state">
+                    <img src="assets/logo.png" alt="NP" style="width:38px; height:38px; border-radius:8px; margin-bottom:8px; border:1px solid rgba(255,69,26,0.35); box-shadow:0 4px 14px rgba(255,69,26,0.2);">
+                    <strong data-i18n="select_channel_prompt">SELECT A CHANNEL</strong>
+                    <small data-i18n="select_channel_copy">Click any channel from the list to preview live broadcast here.</small>
+                  </div>
+                </div>
+
+                <div class="preview-dock-meta">
+                  <div class="preview-title-row">
+                    <div>
+                      <h3 id="previewTitle" class="preview-stream-title">No Channel Selected</h3>
+                      <span id="previewGroup" class="preview-stream-group">Live Television</span>
+                    </div>
+                  </div>
+
+                  <div class="preview-actions-grid">
+                    <button id="previewExpandBtn" class="btn-action primary" title="Expand Fullscreen (F)">
+                      <span data-i18n="expand_fullscreen">⛶ EXPAND FULLSCREEN</span>
+                    </button>
+                    <div class="preview-subcontrols">
+                      <button id="previewSeekBackBtn" class="btn-tool btn-seek-back" title="Rewind 10s">⏪</button>
+                      <button id="previewPlayBtn" class="btn-tool play-pause-btn" title="Play/Pause">▶</button>
+                      <button id="previewSeekFwdBtn" class="btn-tool btn-seek-fwd" title="Forward 10s">⏩</button>
+                      <button id="previewMuteBtn" class="btn-tool" title="Mute/Unmute">🔊</button>
+                      <input type="range" id="previewVolumeSlider" min="0" max="1" step="0.05" value="1" class="volume-slider" title="Volume">
+                      <button id="liveFavBtn" class="btn-tool fav-btn" title="Toggle Favorite">★</button>
+                    </div>
+                  </div>
+
+                  <div class="preview-specs-box">
+                    <div class="spec-row">
+                      <span>RESOLUTION:</span>
+                      <strong id="previewResolution">—</strong>
+                    </div>
+                    <div class="spec-row">
+                      <span>REFRESH RATE:</span>
+                      <strong id="previewFps">—</strong>
+                    </div>
+                    <div class="spec-row">
+                      <span>BITRATE:</span>
+                      <strong id="previewBitrate">—</strong>
+                    </div>
+                    <div class="spec-row">
+                      <span>ENGINE:</span>
+                      <strong id="previewEngine">HTML5 / HLS</strong>
+                    </div>
+                  </div>
+
+                  <!-- Live Sidebar Match Lineup Dock -->
+                  <div id="liveSidebarLineupDock" class="live-sidebar-lineup-dock hidden">
+                    <div class="sidebar-lineup-header">
+                      <div class="sidebar-lineup-title-wrap">
+                        <span>⚽</span>
+                        <span class="sidebar-lineup-kicker" data-i18n="starting_lineups">STARTING XI & LINEUPS</span>
+                      </div>
+                      <span id="sidebarLineupStatus" class="sidebar-lineup-pill">LIVE MATCH</span>
+                    </div>
+                    <div id="sidebarLineupContent" class="sidebar-lineup-content">
+                      <!-- Dynamically rendered starting XI and formations -->
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </aside>
+
+          </div>
+        </section>
+
+        <!-- 3. MOVIES VIEW (3-Column Layout with Right Embedded Movie Preview Dock) -->
+        <section id="viewMovies" class="view-panel hidden">
+          <div class="three-column-layout">
+            
+            <!-- Column 1: Scrollable Genres -->
+            <aside class="col-categories">
+              <div class="column-header">
+                <span data-i18n="categories">GENRES & GROUPS —</span>
+                <span id="moviesCategoryCount">0</span>
+              </div>
+              <div class="category-list" id="moviesCategoryList">
+                <button class="cat-pill active" data-category="all">
+                  <span data-i18n="all_movies">All Movies</span>
+                  <b id="moviesAllCount">0</b>
+                </button>
+              </div>
+            </aside>
+
+            <!-- Column 2: Movies Virtual Grid -->
+            <main class="col-content">
+              <div class="grid-toolbar">
+                <div class="results-info">
+                  <span id="moviesShowingCount">Showing 0 movies</span>
+                </div>
+              </div>
+              <div id="moviesVirtualContainer" class="virtual-scroll-viewport"></div>
+            </main>
+
+            <!-- Column 3: Embedded Movie Preview Player Dock -->
+            <aside class="col-preview" id="moviesPreviewCol">
+              <div class="column-header">
+                <span>MOVIE PREVIEW —</span>
+                <span id="movieStatusBadge" class="status-pill-small">CINEMA</span>
+              </div>
+
+              <div class="preview-stage-wrap">
+                <div class="embedded-video-box">
+                  <div id="moviesPreviewVideoContainer" class="preview-video-container"></div>
+                  <div id="moviePlaceholder" class="preview-empty-state">
+                    <img src="assets/logo.png" alt="NP" style="width:38px; height:38px; border-radius:8px; margin-bottom:8px; border:1px solid rgba(255,69,26,0.35); box-shadow:0 4px 14px rgba(255,69,26,0.2);">
+                    <strong>SELECT A MOVIE</strong>
+                    <small>Click any movie card to preview and stream directly here.</small>
+                  </div>
+                </div>
+
+                <div class="preview-dock-meta">
+                  <div>
+                    <h3 id="moviePreviewTitle" class="preview-stream-title">No Movie Selected</h3>
+                    <div class="vod-meta-row" style="margin-top: 6px; margin-bottom: 8px;">
+                      <span id="moviePreviewRating" class="meta-badge rating">★ —</span>
+                      <span id="moviePreviewYear" class="meta-badge">—</span>
+                      <span id="moviePreviewGenre" class="meta-badge">—</span>
+                    </div>
+                  </div>
+
+                  <p id="moviePreviewPlot" class="vod-plot" style="max-height: 100px; overflow-y: auto; font-size: 11px; margin-bottom: 0;">Select a movie to read its synopsis.</p>
+
+                  <div id="movieCastRow" class="vod-cast-row hidden" style="display:flex; gap:8px; overflow-x:auto; margin-top:8px; padding-bottom:4px; scrollbar-width:none;"></div>
+
+                  <!-- Movie Scrub Progress Bar -->
+                  <div class="dock-progress-wrap" id="movieProgressWrap" style="margin-top: 8px; margin-bottom: 6px; cursor: pointer;">
+                    <div class="hud-progress-bar" style="height: 6px; background: var(--bg-card);"><div id="movieProgressFill" class="hud-progress-fill" style="width: 0%;"></div></div>
+                    <div class="hud-time-row" style="font-size: 10px; margin-top: 3px; color: var(--text-muted); display: flex; justify-content: space-between;">
+                      <span id="movieCurrentTime">00:00</span>
+                      <span id="movieTotalTime">00:00</span>
+                    </div>
+                  </div>
+
+                  <div class="preview-actions-grid">
+                    <button id="movieExpandBtn" class="btn-action primary" title="Expand Fullscreen (F)">
+                      <span data-i18n="expand_fullscreen">⛶ EXPAND FULLSCREEN</span>
+                    </button>
+                    <div class="preview-subcontrols">
+                      <button id="movieSeekBackBtn" class="btn-tool btn-seek-back" title="Rewind 10s">⏪</button>
+                      <button id="moviePlayBtn" class="btn-tool play-pause-btn" title="Play/Pause (Space)">▶</button>
+                      <button id="movieSeekFwdBtn" class="btn-tool btn-seek-fwd" title="Forward 10s">⏩</button>
+                      <button id="movieMuteBtn" class="btn-tool" title="Mute/Unmute">🔊</button>
+                      <input type="range" id="movieVolumeSlider" min="0" max="1" step="0.05" value="1" class="volume-slider" title="Volume">
+                      <button id="movieFavBtn" class="btn-tool fav-btn" title="Toggle Favorite">★</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </aside>
+
+          </div>
+        </section>
+
+        <!-- 4. SERIES VIEW (3-Column Layout with Right Embedded Series Preview Dock & Episode Selector) -->
+        <section id="viewSeries" class="view-panel hidden">
+          <div class="three-column-layout">
+            
+            <!-- Column 1: Scrollable Series Groups -->
+            <aside class="col-categories">
+              <div class="column-header">
+                <span data-i18n="categories">SERIES GROUPS —</span>
+                <span id="seriesCategoryCount">0</span>
+              </div>
+              <div class="category-list" id="seriesCategoryList">
+                <button class="cat-pill active" data-category="all">
+                  <span data-i18n="all_series">All Series</span>
+                  <b id="seriesAllCount">0</b>
+                </button>
+              </div>
+            </aside>
+
+            <!-- Column 2: Series Catalog Grid -->
+            <main class="col-content">
+              <div class="grid-toolbar">
+                <div class="results-info">
+                  <span id="seriesShowingCount">Showing 0 series</span>
+                </div>
+              </div>
+              <div id="seriesVirtualContainer" class="virtual-scroll-viewport"></div>
+            </main>
+
+            <!-- Column 3: Embedded Series Preview Dock with Season & Episode Picker -->
+            <aside class="col-preview" id="seriesPreviewCol">
+              <div class="column-header">
+                <span>SERIES & EPISODES —</span>
+                <span id="seriesStatusBadge" class="status-pill-small">VOD</span>
+              </div>
+
+              <div class="preview-stage-wrap">
+                <div class="embedded-video-box">
+                  <div id="seriesPreviewVideoContainer" class="preview-video-container"></div>
+                  <div id="seriesPlaceholder" class="preview-empty-state">
+                    <img src="assets/logo.png" alt="NP" style="width:38px; height:38px; border-radius:8px; margin-bottom:8px; border:1px solid rgba(255,69,26,0.35); box-shadow:0 4px 14px rgba(255,69,26,0.2);">
+                    <strong>SELECT A SERIES</strong>
+                    <small>Click any series to load seasons and episodes here.</small>
+                  </div>
+                </div>
+
+                <div class="preview-dock-meta">
+                  <div>
+                    <h3 id="seriesPreviewTitle" class="preview-stream-title">No Series Selected</h3>
+                    <div class="vod-meta-row" style="margin-top: 6px; margin-bottom: 6px;">
+                      <span id="seriesPreviewRating" class="meta-badge rating">★ —</span>
+                      <span id="seriesActiveEpLabel" class="meta-badge" style="color: var(--accent-orange);">Episode 1</span>
+                    </div>
+                  </div>
+
+                  <div id="seriesCastRow" class="vod-cast-row hidden" style="display:flex; gap:8px; overflow-x:auto; margin-top:6px; padding-bottom:4px; scrollbar-width:none;"></div>
+
+                  <!-- Series Scrub Progress Bar -->
+                  <div class="dock-progress-wrap" id="seriesProgressWrap" style="margin-top: 8px; margin-bottom: 6px; cursor: pointer;">
+                    <div class="hud-progress-bar" style="height: 6px; background: var(--bg-card);"><div id="seriesProgressFill" class="hud-progress-fill" style="width: 0%;"></div></div>
+                    <div class="hud-time-row" style="font-size: 10px; margin-top: 3px; color: var(--text-muted); display: flex; justify-content: space-between;">
+                      <span id="seriesCurrentTime">00:00</span>
+                      <span id="seriesTotalTime">00:00</span>
+                    </div>
+                  </div>
+
+                  <div class="preview-actions-grid">
+                    <button id="seriesExpandBtn" class="btn-action primary" title="Expand Fullscreen (F)">
+                      <span data-i18n="expand_fullscreen">⛶ EXPAND FULLSCREEN</span>
+                    </button>
+                    <div class="preview-subcontrols">
+                      <button id="seriesPrevEpBtn" class="btn-tool btn-ep-nav" title="Previous Episode">⏮</button>
+                      <button id="seriesSeekBackBtn" class="btn-tool btn-seek-back" title="Rewind 10s">⏪</button>
+                      <button id="seriesPlayBtn" class="btn-tool play-pause-btn" title="Play/Pause (Space)">▶</button>
+                      <button id="seriesSeekFwdBtn" class="btn-tool btn-seek-fwd" title="Forward 10s">⏩</button>
+                      <button id="seriesNextEpBtn" class="btn-tool btn-ep-nav" title="Next Episode">⏭</button>
+                      <button id="seriesMuteBtn" class="btn-tool" title="Mute/Unmute">🔊</button>
+                      <input type="range" id="seriesVolumeSlider" min="0" max="1" step="0.05" value="1" class="volume-slider" title="Volume">
+                      <button id="seriesFavBtn" class="btn-tool fav-btn" title="Toggle Favorite">★</button>
+                    </div>
+                  </div>
+
+                  <!-- Season Tabs & Episode List in the Right Dock -->
+                  <div class="dock-episodes-wrap">
+                    <div class="dock-section-title">SEASONS & EPISODES —</div>
+                    <div id="seriesDockSeasonTabs" class="seasons-tabs"></div>
+                    <div id="seriesDockEpisodeList" class="dock-episodes-list">
+                      <p style="padding: 12px; color: var(--text-muted); font-size: 11px;">Select a series to view episodes.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </aside>
+
+          </div>
+        </section>
+
+        <!-- 5. SETTINGS & PLAYLIST MANAGEMENT VIEW -->
+        <section id="viewSettings" class="view-panel hidden">
+          <div class="settings-container">
+            <div class="settings-section" style="background:var(--bg-card); border:1px solid var(--border-subtle); padding:20px; display:flex; align-items:center; gap:18px; margin-bottom:24px; border-radius:var(--radius-md);">
+              <img src="assets/logo.png" alt="NP" style="width:56px; height:56px; border-radius:12px; object-fit:cover; border:1px solid rgba(255,69,26,0.35); box-shadow:0 6px 20px rgba(255,69,26,0.2); flex-shrink:0;">
+              <div>
+                <div style="font-family:var(--font-mono); font-size:16px; font-weight:700; color:var(--text-primary); letter-spacing:0.5px;">NIDALPLAYER MEDIA CENTER</div>
+                <p style="font-size:11px; color:var(--text-muted); margin-top:4px;">Version 4.0.0 • Swiss Industrial Edition • Obsidian & International Signal Orange</p>
+              </div>
+            </div>
+
+            <div class="settings-section">
+              <div class="settings-title" data-i18n="playlist_mgmt">PLAYLIST MANAGEMENT —</div>
+              <p class="settings-desc" data-i18n="playlist_mgmt_desc">Add, edit, rename, and fix connection details for your stream providers.</p>
+              
+              <div class="settings-actions-bar">
+                <button id="settingsAddBtn" class="btn-action primary">+ <span data-i18n="add_playlist">ADD NEW PLAYLIST</span></button>
+                <button id="settingsRefreshAllBtn" class="btn-action">↻ <span data-i18n="sync_playlist">REFRESH ACTIVE PLAYLIST</span></button>
+              </div>
+
+              <div class="playlist-cards-list" id="settingsPlaylistsList"></div>
+            </div>
+
+            <div class="settings-section">
+              <div class="settings-title" data-i18n="playback_config">PLAYBACK & PERFORMANCE CONFIG —</div>
+              <div class="config-grid">
+                <div class="config-card">
+                  <label data-i18n="primary_engine">PRIMARY PLAYBACK ENGINE</label>
+                  <select id="settingEngineSelect" class="config-select">
+                    <option value="html5">Native HTML5 / HLS.js (Low latency, high compatibility)</option>
+                    <option value="artplayer">Artplayer (Rich player controls & aspect customization)</option>
+                  </select>
+                </div>
+                <div class="config-card">
+                  <label data-i18n="app_language">APPLICATION LANGUAGE</label>
+                  <select id="settingLangSelect" class="config-select">
+                    <option value="en">🇬🇧 English (English)</option>
+                    <option value="ar">🇸🇦 العربية (Arabic - RTL)</option>
+                    <option value="fr">🇫🇷 Français (French)</option>
+                    <option value="es">🇪🇸 Español (Spanish)</option>
+                    <option value="de">🇩🇪 Deutsch (German)</option>
+                  </select>
+                </div>
+                <div class="config-card">
+                  <label data-i18n="fav_team_label">⭐ FAVORITE FOOTBALL CLUB</label>
+                  <select id="settingFavTeamSelect" class="config-select">
+                    <option value="">-- No Favorite Team Selected --</option>
+                    <optgroup label="🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League">
+                      <option value="Arsenal">Arsenal</option>
+                      <option value="Aston Villa">Aston Villa</option>
+                      <option value="Chelsea">Chelsea</option>
+                      <option value="Liverpool">Liverpool</option>
+                      <option value="Manchester City">Manchester City</option>
+                      <option value="Manchester United">Manchester United</option>
+                      <option value="Newcastle">Newcastle United</option>
+                      <option value="Tottenham">Tottenham Hotspur</option>
+                    </optgroup>
+                    <optgroup label="🇪🇸 La Liga">
+                      <option value="Real Madrid">Real Madrid</option>
+                      <option value="Barcelona">Barcelona</option>
+                      <option value="Atletico Madrid">Atlético Madrid</option>
+                      <option value="Real Sociedad">Real Sociedad</option>
+                      <option value="Athletic Club">Athletic Bilbao</option>
+                      <option value="Sevilla">Sevilla</option>
+                      <option value="Valencia">Valencia</option>
+                    </optgroup>
+                    <optgroup label="🇮🇹 Serie A">
+                      <option value="Inter">Inter Milan</option>
+                      <option value="Milan">AC Milan</option>
+                      <option value="Juventus">Juventus</option>
+                      <option value="Napoli">Napoli</option>
+                      <option value="Roma">AS Roma</option>
+                      <option value="Lazio">Lazio</option>
+                      <option value="Atalanta">Atalanta</option>
+                    </optgroup>
+                    <optgroup label="🇩🇪 Bundesliga">
+                      <option value="Bayern Munich">Bayern Munich</option>
+                      <option value="Borussia Dortmund">Borussia Dortmund</option>
+                      <option value="Bayer Leverkusen">Bayer Leverkusen</option>
+                      <option value="RB Leipzig">RB Leipzig</option>
+                      <option value="Stuttgart">VfB Stuttgart</option>
+                    </optgroup>
+                    <optgroup label="🇫🇷 Ligue 1">
+                      <option value="Paris Saint-Germain">Paris Saint-Germain</option>
+                      <option value="Marseille">Olympique de Marseille</option>
+                      <option value="Monaco">AS Monaco</option>
+                      <option value="Lyon">Olympique Lyonnais</option>
+                      <option value="Lille">Lille OSC</option>
+                    </optgroup>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="settings-section">
+              <div class="settings-title">APPLICATION UPDATES —</div>
+              <div class="setting-row" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+                <div>
+                  <strong id="settingsUpdateTitle">Version Status: v4.0.0</strong>
+                  <p class="settings-desc" id="settingsUpdateSubtitle" style="margin:0; font-size:11px;">Nidalplayer checks for updates automatically via GitHub Releases.</p>
+                </div>
+                <div style="display:flex; align-items:center; gap:10px;">
+                  <button id="settingsCheckUpdateBtn" class="btn-action">
+                    <span id="settingsCheckUpdateIcon">↻</span> <span id="settingsCheckUpdateText">CHECK FOR UPDATES</span>
+                  </button>
+                  <button id="settingsInstallUpdateBtn" class="btn-action primary hidden">
+                    <span>⚡</span> <span>RESTART & INSTALL UPDATE</span>
+                  </button>
+                </div>
+              </div>
+              <div id="settingsUpdateProgressRow" class="update-progress-row hidden" style="margin-top:14px;">
+                <div class="update-progress-track">
+                  <div id="settingsUpdateProgressBar" class="update-progress-bar" style="width:0%;"></div>
+                </div>
+                <div class="update-progress-meta">
+                  <span id="settingsUpdateProgressText">Downloading update… 0%</span>
+                  <span id="settingsUpdateSpeedText"></span>
+                </div>
+              </div>
+            </div>
+
+            <div class="settings-section danger-zone">
+              <div class="settings-title">DATA MANAGEMENT —</div>
+              <div class="danger-row">
+                <div>
+                  <strong data-i18n="clear_cache">Clear Saved Diagnostics & Playback Cache</strong>
+                  <p>Frees memory and resets recent logs.</p>
+                </div>
+                <button id="clearCacheBtn" class="btn-danger-outline" data-i18n="clear_cache">CLEAR CACHE</button>
+              </div>
+              <div class="danger-row">
+                <div>
+                  <strong data-i18n="reset_all">Reset All Data & Playlists</strong>
+                  <p>Permanently removes saved playlists and secure credentials.</p>
+                </div>
+                <button id="resetAllDataBtn" class="btn-danger" data-i18n="reset_all">RESET ALL DATA</button>
+              </div>
+            </div>
+
+            <div class="settings-section">
+              <div class="settings-title">LEGAL & PRIVACY —</div>
+              <div class="setting-row" style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                  <strong>Client-Side Privacy Policy</strong>
+                  <p class="settings-desc" style="margin:0; font-size:11px;">Nidalplayer does not collect, track, or share personal data. All data is stored locally.</p>
+                </div>
+                <button id="viewPrivacyBtn" class="btn-action" onclick="window.open('privacy.html', '_blank')">VIEW PRIVACY POLICY</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </main>
+
+    </div>
+  </div>
+
+  <!-- FULLSCREEN PLAYER & IN-STREAM HUD -->
+  <div id="fullscreenPlayer" class="fullscreen-player hidden">
+    <div class="fullscreen-viewport" id="fullscreenViewport"></div>
+
+    <div id="playerHud" class="player-hud">
+      <div class="hud-top">
+        <div class="hud-stream-info">
+          <button id="hudBackBtn" class="hud-btn-back">
+            <span>←</span> <span data-i18n="return_to_list">RETURN TO LIST</span>
+          </button>
+          <div>
+            <h2 id="hudStreamTitle">Stream Name</h2>
+            <span id="hudStreamCategory" class="hud-cat-pill">Category</span>
+          </div>
+        </div>
+        <div class="hud-telemetry">
+          <span id="hudResolution" class="hud-badge">AUTO</span>
+          <span id="hudFps" class="hud-badge hidden">-- FPS</span>
+          <span id="hudBitrate" class="hud-badge">HLS</span>
+          <button id="hudFavBtn" class="hud-btn" style="background:var(--bg-obsidian); border:1px solid var(--border-strong); color:#ffb703; font-size:14px; padding:6px 10px;" title="Toggle Favorite">★</button>
+        </div>
+      </div>
+
+      <div class="hud-bottom">
+        <div class="hud-progress-wrap" id="hudProgressContainer">
+          <div class="hud-progress-bar"><div id="hudProgressFill" class="hud-progress-fill"></div></div>
+          <div class="hud-time-row">
+            <span id="hudCurrentTime">00:00</span>
+            <span id="hudTotalTime">LIVE</span>
+          </div>
+        </div>
+
+        <div class="hud-control-row">
+          <div class="hud-left-controls">
+            <button id="hudPrevEpBtn" class="hud-btn-icon hud-ep-nav hidden" title="Previous Episode">⏮</button>
+            <button id="hudSeekBackBtn" class="hud-btn-icon" title="Rewind 10s">⏪</button>
+            <button id="hudPlayBtn" class="hud-btn-icon" title="Play/Pause (Space)">▶</button>
+            <button id="hudSeekFwdBtn" class="hud-btn-icon" title="Forward 10s">⏩</button>
+            <button id="hudNextEpBtn" class="hud-btn-icon hud-ep-nav hidden" title="Next Episode">⏭</button>
+            <button id="hudMuteBtn" class="hud-btn-icon" title="Mute/Unmute">🔊</button>
+            <input type="range" id="hudVolumeSlider" min="0" max="1" step="0.05" value="1" class="volume-slider">
+          </div>
+
+          <div class="hud-right-controls">
+            <select id="hudAudioTrackSelect" class="hud-select hidden" title="Select Audio Track / Language">
+              <option value="0">Default Audio</option>
+            </select>
+            <select id="hudAspectSelect" class="hud-select" title="Aspect Ratio">
+              <option value="contain">Fit to Screen</option>
+              <option value="cover">Fill Screen</option>
+              <option value="fill">Stretch</option>
+            </select>
+            <select id="hudSpeedSelect" class="hud-select" title="Playback Rate">
+              <option value="0.75">0.75×</option>
+              <option value="1" selected>1.0×</option>
+              <option value="1.25">1.25×</option>
+              <option value="1.5">1.5×</option>
+              <option value="2">2.0×</option>
+            </select>
+            <button id="hudPipBtn" class="hud-btn-icon" title="Picture in Picture">▣</button>
+            <button id="hudExitFullBtn" class="hud-btn-icon highlight" title="Exit Fullscreen (Esc)">
+              <span data-i18n="exit_fullscreen">🗗 EXIT FULLSCREEN</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FULLSCREEN PLAYLIST SYNC & PROGRESSION OVERLAY -->
+  <div id="syncOverlay" class="sync-overlay hidden">
+    <div class="sync-modal-box">
+      <div class="sync-kicker">PLAYLIST REFRESH & DATABASE SYNC // PROGRESSION</div>
+      <h1 class="sync-title">SYNCHRONIZING<br><span class="highlight">PLAYLIST DATA.</span></h1>
+      
+      <!-- Progression Steps Indicator -->
+      <div class="sync-steps-list">
+        <div class="sync-step" id="syncStep1">
+          <span class="step-num">01/</span>
+          <span class="step-label">SERVER HANDSHAKE & CREDENTIAL AUTH</span>
+          <span class="step-status">PENDING</span>
+        </div>
+        <div class="sync-step" id="syncStep2">
+          <span class="step-num">02/</span>
+          <span class="step-label">FETCHING LIVE BROADCASTS & CATEGORIES</span>
+          <span class="step-status">PENDING</span>
+        </div>
+        <div class="sync-step" id="syncStep3">
+          <span class="step-num">03/</span>
+          <span class="step-label">CATALOGING VOD MOVIES & STREAM DATA</span>
+          <span class="step-status">PENDING</span>
+        </div>
+        <div class="sync-step" id="syncStep4">
+          <span class="step-num">04/</span>
+          <span class="step-label">INDEXING TV SERIES & EPISODE TREE</span>
+          <span class="step-status">PENDING</span>
+        </div>
+        <div class="sync-step" id="syncStep5">
+          <span class="step-num">05/</span>
+          <span class="step-label">COMPILING FAST SEARCH CACHE & PERSISTENCE</span>
+          <span class="step-status">PENDING</span>
+        </div>
+      </div>
+
+      <!-- Main Progress Bar -->
+      <div class="sync-progress-container">
+        <div class="sync-progress-bar">
+          <div id="syncProgressFill" class="sync-progress-fill" style="width: 0%;"></div>
+        </div>
+        <div class="sync-meta-row">
+          <span id="syncStatusMessage">Initiating provider connection…</span>
+          <span id="syncPercentText">0%</span>
+        </div>
+      </div>
+
+      <!-- Live Stream Counters -->
+      <div class="sync-counters-grid">
+        <div class="counter-card">
+          <strong id="syncLiveCount">0</strong>
+          <span data-i18n="live_broadcasts">LIVE CHANNELS</span>
+        </div>
+        <div class="counter-card">
+          <strong id="syncMoviesCount">0</strong>
+          <span data-i18n="vod_movies">VOD MOVIES</span>
+        </div>
+        <div class="counter-card">
+          <strong id="syncSeriesCount">0</strong>
+          <span data-i18n="tv_series">TV SERIES</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PLAYLIST ENTRY / EDIT / FIX MODAL -->
+  <div id="playlistModal" class="app-modal hidden">
+    <div class="modal-card playlist-modal-card">
+      <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <img src="assets/logo.png" alt="NP" style="width:34px; height:34px; border-radius:7px; object-fit:cover; border:1px solid rgba(255,69,26,0.35); flex-shrink:0;">
+          <div>
+            <div class="modal-kicker" id="playlistModalKicker">PROVIDER SETUP // 01</div>
+            <h2 id="playlistModalTitle" data-i18n="add_playlist">ADD NEW PLAYLIST</h2>
+          </div>
+        </div>
+        <button id="closePlaylistModalBtn" class="btn-modal-close">✕</button>
+      </div>
+
+      <!-- Provider Type Tabs -->
+      <div class="modal-tabs" id="playlistTypeTabs">
+        <button class="tab-btn active" data-type="xtream" data-i18n="tab_xtream">XTREAM CODES API</button>
+        <button class="tab-btn" data-type="url" data-i18n="tab_m3u_url">M3U / M3U8 URL</button>
+        <button class="tab-btn" data-type="m3u" data-i18n="tab_m3u_file">LOCAL M3U FILE</button>
+      </div>
+
+      <form id="playlistForm" class="modal-form">
+        <div class="form-group">
+          <label for="inputPlaylistTitle" data-i18n="playlist_title_label">PLAYLIST TITLE / CUSTOM NAME <span class="req">*</span></label>
+          <input type="text" id="inputPlaylistTitle" placeholder="e.g. My Premium Stream" required autocomplete="off">
+        </div>
+
+        <!-- Xtream Codes Fields -->
+        <div id="xtreamFieldsGroup" class="fields-group">
+          <div class="form-group">
+            <label for="inputServerUrl" data-i18n="server_url_label">SERVER URL / HOST <span class="req">*</span></label>
+            <input type="text" id="inputServerUrl" placeholder="http://example.com:8080" autocomplete="off">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="inputUsername" data-i18n="username_label">USERNAME <span class="req">*</span></label>
+              <input type="text" id="inputUsername" placeholder="Username" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label for="inputPassword" data-i18n="password_label">PASSWORD <span class="req">*</span></label>
+              <input type="password" id="inputPassword" placeholder="Password" autocomplete="off">
+            </div>
+          </div>
+
+          <!-- Connection Test Tool -->
+          <div class="connection-test-box">
+            <button type="button" id="testConnectionBtn" class="btn-test-conn" data-i18n="test_connection">⚡ TEST SERVER CONNECTION</button>
+            <span id="connectionTestStatus" class="test-status-msg"></span>
+          </div>
+        </div>
+
+        <!-- M3U URL Fields -->
+        <div id="urlFieldsGroup" class="fields-group hidden">
+          <div class="form-group">
+            <label for="inputM3uUrl" data-i18n="m3u_url_label">M3U / M3U8 PLAYLIST URL <span class="req">*</span></label>
+            <input type="text" id="inputM3uUrl" placeholder="https://example.com/playlist.m3u8" autocomplete="off" spellcheck="false">
+          </div>
+        </div>
+
+        <!-- Local File Fields -->
+        <div id="fileFieldsGroup" class="fields-group hidden">
+          <div class="form-group">
+            <label data-i18n="m3u_file_label">LOCAL PLAYLIST FILE (.M3U, .M3U8)</label>
+            <div class="file-picker-row">
+              <button type="button" id="browseFileBtn" class="btn-browse-file" data-i18n="browse_file">📁 BROWSE FILE...</button>
+              <span id="selectedFileName" class="selected-file-label" data-i18n="no_file_selected">No file selected</span>
+            </div>
+          </div>
+        </div>
+
+        <input type="hidden" id="editPlaylistId" value="">
+
+        <div class="modal-actions">
+          <button type="button" id="cancelPlaylistBtn" class="btn-action subtle" data-i18n="cancel">CANCEL</button>
+          <button type="submit" id="savePlaylistBtn" class="btn-action primary" data-i18n="save_sync">SAVE & SYNCHRONIZE →</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- REMOTE CONTROL QR MODAL -->
+  <div id="remoteModal" class="app-modal hidden">
+    <div class="modal-card remote-modal-card">
+      <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <img src="assets/logo.png" alt="NP" style="width:34px; height:34px; border-radius:7px; object-fit:cover; border:1px solid rgba(255,69,26,0.35); flex-shrink:0;">
+          <div>
+            <div class="modal-kicker">MOBILE CONNECTIVITY // 02</div>
+            <h2 data-i18n="mobile_remote">SCAN TO CONTROL</h2>
+          </div>
+        </div>
+        <button id="closeRemoteModalBtn" class="btn-modal-close">✕</button>
+      </div>
+      <div class="remote-qr-body">
+        <p data-i18n="remote_desc">Scan this QR code with your phone on the same Wi-Fi to use your smartphone as an interactive remote control.</p>
+        <div id="modalRemoteStatusPill" class="modal-remote-status-pill">
+          <span class="remote-status-dot offline" id="modalRemoteStatusDot"></span>
+          <span id="modalRemoteStatusText">Waiting for phone to scan...</span>
+        </div>
+        <div class="qr-image-wrapper">
+          <img id="remoteQrImage" alt="Remote QR Code">
+        </div>
+        <div class="remote-urls" id="remoteUrlsContainer"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SPORTS MATCH STREAMING CHANNELS & LINEUPS MODAL -->
+  <div id="matchChannelsModal" class="app-modal hidden">
+    <div class="modal-card match-channels-modal-card">
+      <div class="modal-header">
+        <div class="match-modal-title-group">
+          <div class="modal-kicker" id="matchModalLeagueKicker">⚽ TOP 5 LEAGUES // BROADCASTERS</div>
+          <h2 id="matchModalTitle">MATCH CHANNELS</h2>
+          <div class="match-modal-meta-row">
+            <span class="match-modal-badge" id="matchModalStatusBadge">🔴 LIVE NOW</span>
+            <span class="match-modal-time" id="matchModalTimeText">Today • 19:30</span>
+          </div>
+        </div>
+        <button id="closeMatchModalBtn" class="btn-modal-close">✕</button>
+      </div>
+
+      <!-- Match Modal Tabs: Broadcasters vs Tactical Lineups -->
+      <div class="match-modal-tabs">
+        <button id="matchTabBroadcastersBtn" class="match-tab-btn active">
+          <span>📺</span> <span data-i18n="match_broadcasters">BROADCASTERS & CHANNELS</span>
+        </button>
+        <button id="matchTabLineupsBtn" class="match-tab-btn">
+          <span>👥</span> <span data-i18n="starting_lineups">STARTING XI & LINEUPS</span>
+        </button>
+      </div>
+
+      <div class="match-channels-body">
+        <!-- Panel 1: Broadcasters -->
+        <div id="matchBroadcastersPanel" class="match-modal-panel">
+          <div class="match-channels-prompt">
+            <span data-i18n="channels_streaming">CHANNELS IN YOUR PLAYLIST STREAMING THIS MATCH</span>:
+          </div>
+          <div id="matchChannelsGrid" class="match-channels-grid">
+            <!-- Dynamically filled with matching channel cards -->
+          </div>
+        </div>
+
+        <!-- Panel 2: Tactical Lineups -->
+        <div id="matchLineupsPanel" class="match-modal-panel hidden">
+          <div id="matchLineupsContainer" class="match-lineups-container">
+            <!-- Dynamically filled with team rosters & formations -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+  <!-- KEYBOARD SHORTCUTS CHEATSHEET MODAL -->
+  <div id="modalShortcuts" class="app-modal hidden">
+    <div class="modal-card shortcuts-modal-card">
+      <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div class="shortcuts-icon-badge">⌨</div>
+          <div>
+            <div class="modal-kicker">DESKTOP QUICK GUIDE // 01</div>
+            <h2 style="font-size:18px; color:var(--text-pure); margin:0;">KEYBOARD SHORTCUTS</h2>
+          </div>
+        </div>
+        <button id="closeShortcutsModalBtn" class="btn-modal-close">✕</button>
+      </div>
+
+      <div class="shortcuts-content">
+        <div class="shortcuts-section">
+          <div class="shortcuts-section-title">PLAYBACK & STREAMING</div>
+          <div class="shortcuts-grid">
+            <div class="shortcut-row">
+              <span class="shortcut-desc">Play / Pause stream</span>
+              <div class="shortcut-keys"><kbd>Space</kbd> <span class="shortcut-or">or</span> <kbd>K</kbd></div>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-desc">Toggle Player Fullscreen</span>
+              <div class="shortcut-keys"><kbd>F</kbd></div>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-desc">Toggle Window Fullscreen</span>
+              <div class="shortcut-keys"><kbd>F11</kbd></div>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-desc">Seek Backward / Forward 10s</span>
+              <div class="shortcut-keys"><kbd>←</kbd> <kbd>→</kbd> <span class="shortcut-or">or</span> <kbd>J</kbd> <kbd>L</kbd></div>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-desc">Volume Up / Down (5%)</span>
+              <div class="shortcut-keys"><kbd>↑</kbd> <kbd>↓</kbd></div>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-desc">Mute / Unmute Audio</span>
+              <div class="shortcut-keys"><kbd>M</kbd></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="shortcuts-section">
+          <div class="shortcuts-section-title">NAVIGATION & APPLICATION</div>
+          <div class="shortcuts-grid">
+            <div class="shortcut-row">
+              <span class="shortcut-desc">Focus Global Search</span>
+              <div class="shortcut-keys"><kbd>S</kbd> <span class="shortcut-or">or</span> <kbd>/</kbd></div>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-desc">Switch Views (Home, Live, VOD, Series, Config)</span>
+              <div class="shortcut-keys"><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> <kbd>4</kbd> <kbd>5</kbd></div>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-desc">Close Modal / Exit Fullscreen</span>
+              <div class="shortcut-keys"><kbd>Esc</kbd></div>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-desc">Toggle Shortcuts Cheatsheet</span>
+              <div class="shortcut-keys"><kbd>?</kbd> <span class="shortcut-or">or</span> <kbd>F1</kbd></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="display:flex; justify-content:flex-end; margin-top:20px; padding-top:16px; border-top:1px solid var(--border-subtle);">
+        <button id="btnCloseShortcutsFooter" class="btn-action primary" style="padding:8px 24px;">GOT IT</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONFIRMATION MODAL -->
+  <div id="confirmModal" class="app-modal hidden">
+    <div class="modal-card" style="width:480px; text-align:center;">
+      <div style="font-size:36px; margin-bottom:12px;" id="confirmModalIcon">⚠️</div>
+      <div class="modal-kicker" id="confirmModalKicker">CONFIRM ACTION // 01</div>
+      <h2 id="confirmModalTitle" style="font-size:20px; margin-bottom:10px; color:var(--text-pure);">CONFIRM ACTION</h2>
+      <p id="confirmModalMessage" style="font-size:13px; color:var(--text-secondary); line-height:1.5; margin-bottom:24px;">Are you sure you want to proceed?</p>
+      <div class="modal-actions" style="justify-content:center; gap:16px;">
+        <button id="confirmCancelBtn" class="btn-action subtle">CANCEL</button>
+        <button id="confirmProceedBtn" class="btn-danger">CONFIRM & PROCEED</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESTART NOTICE MODAL -->
+  <div id="restartNoticeModal" class="app-modal hidden">
+    <div class="modal-card" style="width:500px; text-align:center; padding:36px;">
+      <div style="font-size:42px; margin-bottom:14px;">🔄</div>
+      <div class="modal-kicker">SYSTEM RESET COMPLETED // 01</div>
+      <h2 style="font-size:22px; margin-bottom:12px; color:var(--text-pure);">APPLICATION RESET SUCCESSFUL</h2>
+      <p style="font-size:13px; color:var(--text-secondary); line-height:1.6; margin-bottom:24px;">All playlists, credentials, and diagnostics cache have been completely wiped.<br><br><strong style="color:var(--accent-orange);">Please restart Nidalplayer</strong> to initialize a clean session.</p>
+      <div class="modal-actions" style="justify-content:center; gap:12px;">
+        <button id="restartRelaunchBtn" class="btn-action primary" style="padding:10px 24px;">↻ RESTART APPLICATION NOW</button>
+        <button id="restartCloseAppBtn" class="btn-action subtle" style="padding:10px 20px;">✕ CLOSE APP</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AUTO-UPDATE NOTIFICATION MODAL -->
+  <div id="updateNoticeModal" class="app-modal hidden">
+    <div class="modal-card" style="width:520px; text-align:center; padding:32px;">
+      <div style="font-size:42px; margin-bottom:12px;">🚀</div>
+      <div class="modal-kicker">APPLICATION UPDATE // AVAILABLE</div>
+      <h2 id="updateModalTitle" style="font-size:22px; margin-bottom:10px; color:var(--text-pure);">NEW UPDATE AVAILABLE</h2>
+      <p id="updateModalDesc" style="font-size:13px; color:var(--text-secondary); line-height:1.6; margin-bottom:20px;">
+        A new version of Nidalplayer has been downloaded and is ready to install.
+      </p>
+      <div id="updateModalNotes" style="text-align:left; background:var(--bg-card); border:1px solid var(--border-subtle); padding:14px; border-radius:var(--radius-md); font-size:12px; max-height:160px; overflow-y:auto; margin-bottom:24px; color:var(--text-primary); font-family:var(--font-mono); white-space:pre-wrap;"></div>
+      <div class="modal-actions" style="justify-content:center; gap:12px;">
+        <button id="updateModalRestartBtn" class="btn-action primary" style="padding:10px 24px;">⚡ RESTART & INSTALL NOW</button>
+        <button id="updateModalDismissBtn" class="btn-action subtle" style="padding:10px 20px;">LATER (ON EXIT)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Global Toast Notification -->
+  <div id="toastNotification" class="toast-notification hidden"></div>
+
+  <!-- Core Scripts -->
+  <script src="node_modules/hls.js/dist/hls.min.js"></script>
+  <script src="node_modules/artplayer/dist/artplayer.js"></script>
+  <script type="module" src="src/app.js"></script>
+</body>
+</html>

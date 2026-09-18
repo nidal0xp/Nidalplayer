@@ -1,0 +1,49 @@
+name: Build & Publish Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Release Tag (e.g. v4.0.1)'
+        required: false
+        default: ''
+
+jobs:
+  build-and-release:
+    name: Build Windows App & Publish to GitHub Releases
+    runs-on: windows-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Run Quality & Integration Test Suite
+        run: node tests/test_all.mjs
+
+      - name: Verify JavaScript Syntaxes
+        run: |
+          node --check main.js
+          node --check preload.js
+          node --check src/app.js
+
+      - name: Build & Publish Windows Installer to GitHub Releases
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          npm run release

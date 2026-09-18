@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Nidalplayer TV Edition</title>
+  <link rel="stylesheet" href="css/tv.css">
+  <script src="js/hls.min.js"></script>
+  <script src="js/qrcode.min.js"></script>
+</head>
+<body class="tizen-body">
+
+  <!-- TOP HEADER (Visible on Sub-screens) -->
+  <header id="tvTopBar" class="tv-top-bar hidden">
+    <div class="tv-top-left">
+      <button id="topBackBtn" class="tv-btn-back focusable" tabindex="0" title="Back">
+        <svg viewBox="0 0 24 24" class="svg-icon"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" fill="currentColor"/></svg>
+        <span id="topBackLabel" data-i18n="nav_back">Back</span>
+      </button>
+      <div class="tv-page-title" id="topPageTitle">Live TV</div>
+      <div class="tv-page-subtitle" id="topPageSubtitle">All Channels</div>
+    </div>
+    <div class="tv-top-right">
+      <button id="topSyncBtn" class="tv-btn-sync-top focusable" tabindex="0" title="Sync Playlist">
+        <svg viewBox="0 0 24 24" class="svg-icon"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z" fill="currentColor"/></svg>
+        <span data-i18n="sync">SYNC</span>
+      </button>
+      <div class="tv-status-badge" id="topPlaylistBadge">My Stream</div>
+      <div class="tv-clock-widget">
+        <span class="tv-clock-time" id="topClockTime">12:00 PM</span>
+        <span class="tv-clock-date" id="topClockDate">Aug 29, 2026</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- =========================================================================
+       VIEW 1: HOME DASHBOARD (Matching Reference Image 1)
+       ========================================================================= -->
+  <section id="viewHome" class="tv-view tv-view-home">
+    <div class="tv-home-hero">
+      <div class="tv-home-brand">
+        <img src="icon.png" alt="NidalPlayer" class="tv-home-logo-img">
+        <div class="tv-home-brand-text">
+          <h1>NIDAL<span>PLAYER</span></h1>
+          <p class="tv-home-tagline" data-i18n="hero_kicker">ULTRA LIGHTWEIGHT SMART TV EDITION</p>
+        </div>
+      </div>
+
+      <div class="tv-home-status-bar">
+        <div class="tv-status-pill" id="homePlStatusPill">
+          <span class="pill-dot" id="homeStatusDot"></span>
+          <span class="pill-label" data-i18n="status_label">STATUS:</span>
+          <span class="pill-val" id="homePlStatusText">Ready to watch</span>
+        </div>
+        <div class="tv-status-pill focusable" id="homeSyncBtn" tabindex="-1">
+          <span class="pill-dot" style="background:var(--accent-blue);"></span>
+          <span class="pill-val" style="color:var(--accent-blue);" data-i18n="sync_playlist">↻ SYNC PLAYLIST</span>
+        </div>
+        <div class="tv-status-pill" id="homeExpPill" style="display:none;">
+          <span class="pill-dot" style="background:#10b981;"></span>
+          <span class="pill-label" data-i18n="expiration_label">EXPIRATION:</span>
+          <span class="pill-val" id="homeExpText">--</span>
+        </div>
+        <div class="tv-home-clock">
+          <span id="homeClockTime">12:00 PM</span>
+          <span class="tv-home-date" id="homeClockDate">Aug 29, 2026</span>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- 5 PRIMARY HORIZONTAL CARDS (Inspired by Reference Image 1) -->
+    <div class="tv-home-dock" id="homeDock">
+      <!-- 1. Live TV Card -->
+      <div class="tv-dock-card focusable active" data-view="live" tabindex="0" id="cardLive">
+        <div class="card-glow"></div>
+        <div class="card-icon-wrap icon-live">
+          <svg viewBox="0 0 24 24" class="card-svg"><path d="M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 1.99-.9 1.99-2L23 5c0-1.1-.9-2-2-2zm0 14H3V5h18v12zm-11-2l6-4.5-6-4.5v9z" fill="currentColor"/></svg>
+        </div>
+        <div class="card-title" data-i18n="nav_live">Live TV</div>
+        <div class="card-badge" id="badgeLiveCount">0 CHANNELS</div>
+      </div>
+
+      <!-- 2. Series Card -->
+      <div class="tv-dock-card focusable" data-view="series" tabindex="0" id="cardSeries">
+        <div class="card-glow"></div>
+        <div class="card-icon-wrap icon-series">
+          <svg viewBox="0 0 24 24" class="card-svg"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12zm-8-2l6-4.5-6-4.5v9z" fill="currentColor"/></svg>
+        </div>
+        <div class="card-title" data-i18n="nav_series">Series</div>
+        <div class="card-badge" id="badgeSeriesCount">0 SHOWS</div>
+      </div>
+
+      <!-- 3. Movies Card -->
+      <div class="tv-dock-card focusable" data-view="movies" tabindex="0" id="cardMovies">
+        <div class="card-glow"></div>
+        <div class="card-icon-wrap icon-movies">
+          <svg viewBox="0 0 24 24" class="card-svg"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z" fill="currentColor"/></svg>
+        </div>
+        <div class="card-title" data-i18n="nav_movies">Movies</div>
+        <div class="card-badge" id="badgeMoviesCount">0 MOVIES</div>
+      </div>
+
+
+      <!-- 5. Settings Card -->
+      <div class="tv-dock-card focusable" data-view="settings" tabindex="0" id="cardSettings">
+        <div class="card-glow"></div>
+        <div class="card-icon-wrap icon-settings">
+          <svg viewBox="0 0 24 24" class="card-svg"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z" fill="currentColor"/></svg>
+        </div>
+        <div class="card-title" data-i18n="nav_settings">Settings</div>
+        <div class="card-badge" data-i18n="badge_preferences">PREFERENCES</div>
+      </div>
+    </div>
+
+    <!-- HOME BOTTOM SHORTCUTS -->
+    <div class="tv-home-footer">
+      <div class="tv-hint-item"><span class="key-pill">OK</span> <span data-i18n="hint_enter">Enter Section</span></div>
+      <div class="tv-hint-item"><span class="key-pill">&#9668; &#9658;</span> <span data-i18n="hint_navigate">Navigate Cards</span></div>
+      <div class="tv-hint-item"><span class="key-pill">BACK</span> <span data-i18n="hint_exit">Exit</span></div>
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       VIEW 2: LIVE TV BROWSER (Matching Reference Image 2)
+       ========================================================================= -->
+  <section id="viewLive" class="tv-view-split hidden">
+    <!-- COL 1: CATEGORIES LIST -->
+    <div class="tv-pane-cats" id="liveCatsPane">
+      <div class="pane-header-title" data-i18n="categories">CATEGORIES</div>
+      <div class="tv-cats-scroll" id="liveCatsList">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+
+    <!-- COL 2: CHANNELS LIST -->
+    <div class="tv-pane-items" id="liveChannelsPane">
+      <div class="pane-header-title" id="liveCategoryTitle">ALL CHANNELS</div>
+      <div class="tv-items-scroll" id="liveChannelsList">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+
+    <!-- COL 3: HARDWARE AVPLAY / HTML5 PREVIEW & CHANNEL INFO -->
+    <div class="tv-pane-preview" id="livePreviewPane">
+      <div class="tv-preview-container">
+        <!-- LIVE PREVIEW BOX -->
+        <div id="tvLivePreviewBox" class="tv-preview-box">
+          <div class="tv-preview-badge" data-i18n="live_preview">LIVE PREVIEW</div>
+          <div class="tv-preview-overlay-btn focusable" id="previewOverlayBtn" tabindex="0">
+            <svg viewBox="0 0 24 24" class="svg-btn"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>
+            <span data-i18n="expand_fullscreen">PRESS OK FOR FULLSCREEN</span>
+          </div>
+        </div>
+
+        <div class="tv-preview-info-card" id="livePreviewInfo">
+          <div class="tv-preview-channel-header">
+            <div class="tv-prev-logo-wrap" id="livePrevLogoWrap">
+              <img id="livePreviewLogo" class="tv-prev-logo" src="icon.png" alt="Logo">
+            </div>
+            <div class="tv-prev-names">
+              <div class="tv-prev-title" id="livePreviewTitle">Select a channel</div>
+              <div class="tv-prev-group" id="livePreviewGroup">Live TV</div>
+            </div>
+          </div>
+          <div class="tv-preview-epg-box">
+            <div class="tv-epg-now-label" data-i18n="now_playing">NOW PLAYING</div>
+            <div class="tv-epg-now-title" id="livePreviewEpg">Live Broadcast Stream</div>
+            <div class="tv-epg-bar"><div class="tv-epg-fill" id="livePreviewEpgFill" style="width: 45%;"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LIVE TV BOTTOM REMOTE LEGEND -->
+    <footer class="tv-view-footer">
+      <div class="tv-footer-hints">
+        <div class="tv-hint-item"><span class="key-pill">OK</span> <span data-i18n="fullscreen">Fullscreen</span></div>
+        <div class="tv-hint-item"><span class="key-pill">&#9650; &#9660;</span> <span data-i18n="hint_channels">Channels</span></div>
+        <div class="tv-hint-item"><span class="key-pill">&#9668; &#9658;</span> <span data-i18n="hint_cats_prev">Categories & Preview</span></div>
+        <div class="tv-hint-item"><span class="key-pill">BACK</span> <span data-i18n="home">Home</span></div>
+      </div>
+    </footer>
+  </section>
+
+  <!-- =========================================================================
+       VIEW 3: MOVIES (VOD) BROWSER
+       ========================================================================= -->
+  <section id="viewMovies" class="tv-view tv-view-grid hidden">
+    <!-- COL 1: MOVIE CATEGORIES -->
+    <div class="tv-pane-cats" id="moviesCatsPane">
+      <div class="pane-header-title" data-i18n="movie_genres">MOVIE GENRES</div>
+      <div class="tv-cats-scroll" id="moviesCatsList">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+
+    <!-- COL 2: MOVIES POSTER GRID -->
+    <div class="tv-pane-grid" id="moviesGridPane">
+      <div class="pane-header-title" id="moviesCategoryTitle">ALL MOVIES</div>
+      <div class="tv-grid-scroll" id="moviesGridList">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+
+    <!-- MOVIES BOTTOM REMOTE LEGEND -->
+    <footer class="tv-view-footer">
+      <div class="tv-footer-hints">
+        <div class="tv-hint-item"><span class="key-pill">OK</span> <span data-i18n="play_now">Play Movie</span></div>
+        <div class="tv-hint-item"><span class="key-pill">&#9668; &#9658; &#9650; &#9660;</span> <span data-i18n="hint_navigate">Navigate</span></div>
+        <div class="tv-hint-item"><span class="key-pill">BACK</span> <span data-i18n="home">Home</span></div>
+      </div>
+    </footer>
+  </section>
+
+  <!-- =========================================================================
+       VIEW 4: SERIES BROWSER
+       ========================================================================= -->
+  <section id="viewSeries" class="tv-view tv-view-grid hidden">
+    <!-- COL 1: SERIES CATEGORIES -->
+    <div class="tv-pane-cats" id="seriesCatsPane">
+      <div class="pane-header-title" data-i18n="series_genres">SERIES GENRES</div>
+      <div class="tv-cats-scroll" id="seriesCatsList">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+
+    <!-- COL 2: SERIES POSTER GRID -->
+    <div class="tv-pane-grid" id="seriesGridPane">
+      <div class="pane-header-title" id="seriesCategoryTitle">ALL TV SHOWS</div>
+      <div class="tv-grid-scroll" id="seriesGridList">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+
+    <!-- SERIES BOTTOM REMOTE LEGEND -->
+    <footer class="tv-view-footer">
+      <div class="tv-footer-hints">
+        <div class="tv-hint-item"><span class="key-pill">OK</span> <span data-i18n="seasons_episodes">Browse Episodes</span></div>
+        <div class="tv-hint-item"><span class="key-pill">&#9668; &#9658; &#9650; &#9660;</span> <span data-i18n="hint_navigate">Navigate</span></div>
+        <div class="tv-hint-item"><span class="key-pill">BACK</span> <span data-i18n="home">Home</span></div>
+      </div>
+    </footer>
+  </section>
+
+  <!-- =========================================================================
+       VIEW: FAVORITES HUB (Rebuilt with Watch Progress & Next Episodes)
+       ========================================================================= -->
+  <section id="viewFavorites" class="tv-view tv-view-grid hidden">
+    <!-- COL 1: FAVORITE CATEGORIES / TABS -->
+    <div class="tv-pane-cats" id="favsTabsPane">
+      <div class="pane-header-title" data-i18n="favorites">FAVORITES</div>
+      <div class="tv-cats-scroll" id="favsTabsList">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+
+    <!-- COL 2: FAVORITES GRID -->
+    <div class="tv-pane-grid" id="favsGridPane">
+      <div class="pane-header-title" id="favsCategoryTitle">ALL FAVORITES</div>
+      <div class="tv-grid-scroll" id="favsGridList">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+
+    <!-- FAVORITES BOTTOM REMOTE LEGEND -->
+    <footer class="tv-view-footer">
+      <div class="tv-footer-hints">
+        <div class="tv-hint-item"><span class="key-pill">OK</span> <span data-i18n="play_or_view">Play / Details</span></div>
+        <div class="tv-hint-item"><span class="key-pill">&#9668; &#9658; &#9650; &#9660;</span> <span data-i18n="hint_navigate">Navigate</span></div>
+        <div class="tv-hint-item"><span class="key-pill">BACK</span> <span data-i18n="home">Home</span></div>
+      </div>
+    </footer>
+  </section>
+
+  <!-- =========================================================================
+       VIEW 5: PLAYLISTS & SETTINGS HUB
+       ========================================================================= -->
+  <section id="viewSettings" class="tv-view tv-view-settings hidden">
+    <div class="tv-settings-grid">
+      <!-- LEFT: PLAYLIST MANAGEMENT -->
+      <div class="tv-settings-col">
+        <div class="settings-card">
+          <div class="settings-card-title">
+            <svg viewBox="0 0 24 24" class="svg-title"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 9h-4v4h-2v-4H8V9h4V5h2v4h4v2z" fill="currentColor"/></svg>
+            <span data-i18n="playlist_mgmt">PLAYLIST MANAGER</span>
+          </div>
+          <button id="btnOpenAddPlaylist" class="tv-btn tv-btn-primary focusable" style="width:100%; margin-bottom: 20px;" tabindex="0" data-i18n="add_new_playlist">
+            ➕ ADD NEW XTREAM PLAYLIST
+          </button>
+          <div class="tv-saved-playlists-list" id="savedPlaylistsList">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: MOBILE PAIRING & APP PREFERENCES -->
+      <div class="tv-settings-col">
+        <!-- QR CODE MOBILE PAIRING BOX -->
+        <div class="settings-card qr-pairing-card">
+          <div class="settings-card-title">
+            <svg viewBox="0 0 24 24" class="svg-title"><path d="M17 1.01L7 1c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99zM17 19H7V5h10v14z" fill="currentColor"/></svg>
+            <span data-i18n="mobile_remote">PHONE REMOTE &amp; INSTANT SYNC</span>
+          </div>
+          <div class="qr-content-wrapper">
+            <div id="settingsQrCode" class="qr-code-box"></div>
+            <div class="qr-info-text">
+              <p data-i18n="remote_desc">Scan with your mobile camera to control this TV or push playlists directly from your phone!</p>
+              <div class="qr-url-badge" id="qrUrlText">http://192.168.11.126:8765/tv</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- APP PREFERENCES -->
+        <div class="settings-card">
+          <div class="settings-card-title" data-i18n="playback_config">HARDWARE &amp; LANGUAGE SETTINGS</div>
+          
+          <!-- Language Selector -->
+          <div class="form-toggle-row">
+            <div>
+              <div class="toggle-title" data-i18n="app_language">Display Language</div>
+              <div class="toggle-desc" data-i18n="select_language">Select interface language</div>
+            </div>
+            <div class="lang-pills-row" id="langPillsRow">
+              <button class="tv-btn-pill lang-btn focusable" data-lang="en" tabindex="0">🇺🇸 EN</button>
+              <button class="tv-btn-pill lang-btn focusable" data-lang="fr" tabindex="0">🇫🇷 FR</button>
+              <button class="tv-btn-pill lang-btn focusable" data-lang="ar" tabindex="0">🇸🇦 العربية</button>
+              <button class="tv-btn-pill lang-btn focusable" data-lang="es" tabindex="0">🇪🇸 ES</button>
+              <button class="tv-btn-pill lang-btn focusable" data-lang="de" tabindex="0">🇩🇪 DE</button>
+            </div>
+          </div>
+
+          <div class="form-toggle-row">
+            <div>
+              <div class="toggle-title" data-i18n="primary_engine">Hardware ExoPlayer Engine</div>
+              <div class="toggle-desc">Direct Android TV hardware acceleration</div>
+            </div>
+            <button id="btnToggleAvplay" class="tv-btn-pill focusable active" tabindex="0">ENABLED</button>
+          </div>
+          <div class="form-toggle-row">
+            <div>
+              <div class="toggle-title" data-i18n="clear_cache">Clear Storage Cache</div>
+              <div class="toggle-desc">Reset watch history and cache</div>
+            </div>
+            <button id="btnClearCache" class="tv-btn-pill btn-danger focusable" tabindex="0" data-i18n="clear_cache">CLEAR DATA</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       ADD / EDIT PLAYLIST MODAL
+       ========================================================================= -->
+  <div id="modalAddPlaylist" class="tv-modal-overlay tv-modal-top-aligned hidden">
+    <div class="settings-card tv-modal-form-card">
+      <div class="settings-card-title" style="margin-bottom: 16px;">
+        <svg viewBox="0 0 24 24" class="svg-title"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 9h-4v4h-2v-4H8V9h4V5h2v4h4v2z" fill="currentColor"/></svg>
+        <span id="modalAddPlTitle" data-i18n="add_playlist">ADD XTREAM CODES PLAYLIST</span>
+      </div>
+      <div class="form-grid-2col">
+        <div class="form-row" style="margin-bottom: 0;">
+          <label data-i18n="playlist_title_label">PLAYLIST NAME</label>
+          <input type="text" id="cfgPlName" class="tv-input focusable" placeholder="e.g. My Premium IPTV" tabindex="0" enterkeyhint="next" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+        </div>
+        <div class="form-row" style="margin-bottom: 0;">
+          <label data-i18n="username_label">USERNAME *</label>
+          <input type="text" id="cfgUser" class="tv-input focusable" placeholder="Username" tabindex="0" enterkeyhint="next" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+        </div>
+        <div class="form-row" style="margin-bottom: 0;">
+          <label data-i18n="server_url_label">SERVER URL *</label>
+          <input type="text" id="cfgServer" class="tv-input focusable" placeholder="http://example.com:8080" tabindex="0" enterkeyhint="next" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+        </div>
+        <div class="form-row" style="margin-bottom: 0;">
+          <label data-i18n="password_label">PASSWORD *</label>
+          <div style="position: relative; display: flex; align-items: center; width: 100%;">
+            <input type="text" id="cfgPass" class="tv-input focusable" placeholder="Password" tabindex="0" enterkeyhint="done" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" style="width: 100%; padding-right: 80px;">
+            <button type="button" id="btnTogglePass" class="tv-btn-pill" tabindex="-1" style="position: absolute; right: 8px; font-size: 11px; padding: 6px 12px; background: rgba(255,255,255,0.15); cursor: pointer;">HIDE</button>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex; gap: 16px; margin-top: 20px;">
+        <button id="btnSavePlaylist" class="tv-btn tv-btn-primary focusable" style="flex:1;" tabindex="0">
+          <span id="btnSavePlText" data-i18n="save_sync">CONNECT &amp; LOAD &#x25B6;</span>
+        </button>
+        <button id="btnCloseAddPlaylist" class="tv-btn tv-btn-close focusable" tabindex="0" data-i18n="cancel">
+          CANCEL
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       DEDICATED QR REMOTE MODAL (Triggered by GREEN key on Home)
+       ========================================================================= -->
+  <div id="modalQrRemote" class="tv-modal-overlay hidden">
+    <div class="settings-card qr-modal-dialog" style="width: 640px; padding: 36px; text-align: center;">
+      <div class="settings-card-title" style="justify-content: center;">
+        <svg viewBox="0 0 24 24" class="svg-title"><path d="M17 1.01L7 1c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99zM17 19H7V5h10v14z" fill="currentColor"/></svg>
+        <span data-i18n="mobile_remote">MOBILE REMOTE CONTROL</span>
+      </div>
+      <p style="color:var(--text-muted); font-size:16px; margin-bottom: 20px;" data-i18n="remote_desc">
+        Scan this QR code with your phone camera to control your TV or add playlists.
+      </p>
+      <div style="display: flex; justify-content: center; margin-bottom: 20px;">
+        <div id="homeModalQrCode" class="qr-code-box" style="width: 200px; height: 200px;"></div>
+      </div>
+      <div class="qr-url-badge" id="modalQrUrlText" style="margin-bottom: 24px;">http://192.168.11.126:8765/tv</div>
+      <div>
+        <button id="btnCloseQrRemote" class="tv-btn tv-btn-primary focusable" style="padding: 12px 36px;" tabindex="0" data-i18n="cancel">CLOSE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       VIEW 6: FULLSCREEN VIDEO PLAYER OVERLAY (AVPLAY / HTML5)
+       ========================================================================= -->
+  <div id="tvFsPlayer" class="tv-fs-player hidden">
+    <video id="tvFsVideo" class="tv-fs-video" playsinline></video>
+
+    <!-- BUFFERING SPINNER -->
+    <div id="tvBufferingSpinner" class="tv-spinner-overlay hidden">
+      <div class="tv-spinner"></div>
+      <div class="tv-buffering-text">Buffering Stream...</div>
+    </div>
+
+    <!-- FULLSCREEN OSD (Auto-hiding) -->
+    <div id="tvFsOsd" class="tv-fs-osd">
+      <div class="osd-top">
+        <div class="osd-channel-meta">
+          <img id="osdLogo" class="osd-logo" src="icon.png" alt="Logo">
+          <div>
+            <div class="osd-title" id="osdTitle">Channel Title</div>
+            <div class="osd-subtitle" id="osdSubtitle">Live TV &bull; 1080p 60fps</div>
+          </div>
+        </div>
+        <div class="osd-clock" id="osdClock">12:00 PM</div>
+      </div>
+
+      <!-- PROGRESS SCRUBBER (For Movies & Series) -->
+      <div class="osd-progress-wrap" id="osdProgressWrap" style="display:none;">
+        <div class="osd-time" id="osdCurrentTime">00:00</div>
+        <div class="osd-scrubber">
+          <div class="osd-bar-bg"></div>
+          <div class="osd-bar-fill" id="osdProgressFill" style="width: 0%;"></div>
+        </div>
+        <div class="osd-time" id="osdDuration">00:00</div>
+      </div>
+
+      <!-- OSD CONTROLS BAR -->
+      <div class="osd-bottom-controls">
+        <div class="osd-btn-group">
+          <button id="osdBtnPrevEp" class="osd-btn focusable" tabindex="0" style="display:none;">
+            <svg viewBox="0 0 24 24" class="svg-osd"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" fill="currentColor"/></svg>
+            <span>PREV EP</span>
+          </button>
+          <button id="osdBtnPlayPause" class="osd-btn focusable" tabindex="0">
+            <svg viewBox="0 0 24 24" class="svg-osd"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" fill="currentColor"/></svg>
+            <span id="osdPlayPauseLabel">PAUSE</span>
+          </button>
+          <button id="osdBtnNextEp" class="osd-btn focusable" tabindex="0" style="display:none;">
+            <svg viewBox="0 0 24 24" class="svg-osd"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" fill="currentColor"/></svg>
+            <span>NEXT EP</span>
+          </button>
+          <button id="osdBtnFav" class="osd-btn focusable" tabindex="0">
+            <svg viewBox="0 0 24 24" class="svg-osd"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="currentColor"/></svg>
+            <span data-i18n="add_favorites">FAVORITE</span>
+          </button>
+        </div>
+        <div class="osd-hints">
+          <span><kbd>&#9650; &#9660;</kbd> Channel Switch</span>
+          <span><kbd>&#9668; &#9658;</kbd> Seek</span>
+          <span><kbd>BACK</kbd> Exit Fullscreen</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SERIES DETAIL MODAL -->
+  <div id="tvDetailModal" class="tv-modal-overlay hidden">
+    <div class="tv-detail-card">
+      <!-- LEFT SIDEBAR: POSTER & ACTIONS -->
+      <div class="detail-left-sidebar">
+        <div class="poster-frame">
+          <img id="detailPoster" class="detail-poster" src="icon.png" alt="Poster">
+        </div>
+        <div class="detail-sidebar-actions">
+          <button id="btnDetailFav" class="tv-btn tv-btn-fav focusable" tabindex="0">
+            <span id="detailFavIcon">★</span> <span id="detailFavText">ADD TO FAVORITES</span>
+          </button>
+          <button id="btnDetailClose" class="tv-btn tv-btn-close focusable" tabindex="0" data-i18n="cancel">CLOSE</button>
+        </div>
+      </div>
+
+      <!-- RIGHT MAIN CONTENT: TITLE, METAS, SEASONS & FULL EPISODES GRID -->
+      <div class="detail-content">
+        <div class="detail-header-block">
+          <div class="detail-title" id="detailTitle">Series Title</div>
+          <div class="detail-meta">
+            <span class="meta-tag" id="detailGenre">Drama</span>
+            <span class="meta-tag meta-rating" id="detailRating">&#9733; 8.5</span>
+            <span class="meta-tag meta-ep-count" id="detailEpCount">15 Episodes</span>
+          </div>
+          <div class="detail-plot" id="detailPlot">Series description...</div>
+          <div class="movie-actions-row hidden" id="movieActionsRow">
+            <button id="btnMoviePlay" class="tv-btn tv-btn-primary focusable" tabindex="0">
+              <span id="moviePlayText">▶ PLAY MOVIE</span>
+            </button>
+            <button id="btnMovieFav" class="tv-btn tv-btn-fav focusable" tabindex="0">
+              <span id="movieFavIcon">★</span> <span id="movieFavText">ADD TO FAVORITES</span>
+            </button>
+            <button id="btnMovieClose" class="tv-btn tv-btn-close focusable" tabindex="0" data-i18n="cancel">CLOSE</button>
+          </div>
+        </div>
+
+        <!-- SERIES SEASONS TABS & EPISODES -->
+        <div id="detailSeriesContainer" class="detail-series-container">
+          <div class="detail-seasons-row" id="detailSeasonsList"></div>
+          <div class="detail-episodes-list" id="detailEpisodesList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SEARCH MODAL -->
+  <div id="tvSearchModal" class="tv-modal-overlay hidden">
+    <div class="tv-search-dialog" style="width: 800px; background: #0f1420; padding: 30px; border-radius: 20px; border: 2px solid var(--border-subtle);">
+      <div class="search-header" style="display:flex; gap: 16px; margin-bottom: 20px;">
+        <input type="text" id="searchInput" class="tv-input search-input focusable" style="flex:1;" placeholder="Search channels, movies, or series..." tabindex="0">
+        <button id="btnCloseSearch" class="tv-btn tv-btn-close focusable" tabindex="0" data-i18n="cancel">CLOSE</button>
+      </div>
+      <div class="search-results-grid" id="searchResultsGrid" style="max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="tvToast" class="tv-toast hidden">Notification message</div>
+
+  <!-- TV SCRIPTS -->
+  <script src="js/tv-app.js"></script>
+</body>
+</html>
