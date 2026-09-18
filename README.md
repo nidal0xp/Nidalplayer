@@ -1,11 +1,17 @@
-# Nidalplayer — Ultra HD IPTV & Cinema Player (Windows)
+# Nidalplayer — Ultra HD M3U Stream & Cinema Player (Windows)
 
 [![License: CC BY-NC-SA 4.0](https://img.shields.io/badge/License-CC_BY--NC--SA_4.0-orange.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows_x64-blue.svg)](https://github.com/nidal0xp/Nidalplayer/releases)
 [![Version](https://img.shields.io/badge/Version-4.0.0-success.svg)](https://github.com/nidal0xp/Nidalplayer/releases)
 [![Auto-Updates](https://img.shields.io/badge/Updates-Automatic_GitHub_Releases-brightgreen.svg)](https://github.com/nidal0xp/Nidalplayer/releases)
 
-**Nidalplayer** is a high-performance, modernist IPTV & Cinema media center engineered specifically for Windows. Built with an industrial Swiss design aesthetic, it combines lightning-fast stream startup, live sports radar intelligence, 4K metadata discovery, and zero-configuration mobile companion remote control.
+**Nidalplayer** is a high-performance, modernist streaming media center engineered specifically for Windows. Designed with an industrial Swiss aesthetic, it combines lightning-fast stream startup, real-time sports intelligence, 4K metadata discovery, live preview playback, and zero-configuration mobile companion remote control.
+
+---
+
+## 📸 Interface Preview
+
+![Nidalplayer Interface](screenshot.png)
 
 ---
 
@@ -16,22 +22,24 @@
   * High-compatibility synthetic byte-range M3U8 chunking for instant seeking (+10s / -10s) across all movies, episodes, and VOD streams.
   * Multi-track audio and subtitle selection with universal codec support (AAC, MP3, AC3, EAC3).
 
+* **🎬 Integrated Cinema Preview & VOD Grid**:
+  * Side-by-side instant playback preview panel with audio controls, synopsis display, and one-click cinema fullscreen mode.
+  * High-density virtualized grid supporting hundreds of thousands of entries with 60 FPS fluid scrolling.
+  * Real-time search reticle across live feeds, movies, and TV series.
+
 * **⚽ Top 5 Football Leagues Match Center**:
-  * Real-time match fixtures and live scores for Premier League, La Liga, Serie A, Bundesliga, Ligue 1, and UEFA Champions League.
-  * Automated broadcaster channel matching: effortlessly finds which IPTV channels in your playlist are broadcasting the active match.
+  * Real-time match fixtures, live scores, and schedules for Premier League, La Liga, Serie A, Bundesliga, Ligue 1, and UEFA Champions League.
+  * Automated broadcaster channel matching: effortlessly detects which live streams in your playlist are broadcasting the active match.
   * Tactical Starting XI lineups, substitutions, and team formations.
 
-* **🎬 4K TMDB Cinematic Metadata Enrichment**:
-  * Instant title sanitization strips codec and release tags to fetch original 4K backdrops, posters, IMDb ratings, overviews, and cast headshots.
+* **🌟 4K TMDB Metadata Enrichment**:
+  * Instant title sanitization strips codec and release tags to fetch original 4K backdrops, posters, ratings, plot synopses, and cast headshots.
 
 * **📱 Smartphone Companion Remote Control**:
-  * Scan an in-app QR code with any smartphone camera to instantly launch a responsive, touch-optimized web remote control over LAN. No phone app installation required.
+  * Scan an in-app QR code with any smartphone camera to launch a responsive, touch-optimized web remote control over LAN. No phone app installation required.
 
-* **⚡ 200,000+ Channel Virtualized Indexer**:
-  * Smooth 60 FPS scrolling and instant reticle search across massive multi-gigabyte M3U playlists and Xtream Codes servers.
-
-* **🔄 Silent In-App Auto-Updates**:
-  * Built-in background auto-updater automatically detects new versions from GitHub Releases, downloads differential patches in the background, and installs with one click.
+* **🔄 Silent Background Auto-Updates**:
+  * Built-in background auto-updater automatically checks for new releases on GitHub, downloads patches in the background, and prompts with a 1-click restart notification.
 
 ---
 
