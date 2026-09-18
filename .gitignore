@@ -1,0 +1,63 @@
+# Dependencies
+node_modules/
+package-lock.json.bak
+
+# Production & Build outputs
+dist/
+build/*.exe
+build/*.msi
+*.exe
+*.msi
+
+# Platform-specific binaries & SDK toolchains
+build-tools/
+temp_extract/
+tizen/*.wgt
+tizen-app/*.wgt
+*.wgt
+apk/*.apk
+android-tv/bin/
+android-tv/gen/
+android-tv/libs/
+*.apk
+
+# User data, logs, and caches
+*.log
+diagnostics.log
+.cache/
+.temp/
+*.tmp
+*.tmp.*
+
+# OS generated files
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# IDE & Editor configs
+.vscode/
+.idea/
+.claude/
+.gemini/
+*.sublime-project
+*.sublime-workspace
+
+# Environment variables & local secrets
+.env
+.env.local
+.env.*.local
+credentials.json
+remote_token.json
+
+# Keystores & signing certificates
+*.jks
+*.keystore
+*.p12
+*.cer
+*.crt
+*.pem
+
+# Local playlists and user data backups
+*.m3u
+*.m3u8
+library_backup.json

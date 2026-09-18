@@ -33,7 +33,8 @@
   * Tactical Starting XI lineups, substitutions, and team formations.
 
 * **🌟 4K TMDB Metadata Enrichment**:
-  * Instant title sanitization strips codec and release tags to fetch original 4K backdrops, posters, ratings, plot synopses, and cast headshots.
+  * Clean title sanitization strips codec and release tags to fetch original 4K backdrops, posters, ratings, plot synopses, and cast headshots.
+  * **User-Configurable**: Connect your own free [The Movie Database (TMDB)](https://www.themoviedb.org/settings/api) API key directly in **Settings > Playback & Performance Config**.
 
 * **📱 Smartphone Companion Remote Control**:
   * Scan an in-app QR code with any smartphone camera to launch a responsive, touch-optimized web remote control over LAN. No phone app installation required.
@@ -50,6 +51,18 @@
 | **Windows Installer** | [`Nidalplayer-Setup-4.0.0.exe`](https://github.com/nidal0xp/Nidalplayer/releases/download/v4.0.0/Nidalplayer-Setup-4.0.0.exe) | ~84 MB | Standard Windows Setup with desktop & start menu shortcuts |
 | **Portable Edition** | [`Nidalplayer-Portable.exe`](https://github.com/nidal0xp/Nidalplayer/releases/download/v4.0.0/Nidalplayer-Portable.exe) | ~75 MB | Standalone portable executable (no installation required) |
 | **Update Manifest** | [`latest.yml`](https://github.com/nidal0xp/Nidalplayer/releases/download/v4.0.0/latest.yml) | 350 B | Cryptographic SHA-512 update verification manifest |
+
+---
+
+## ⚖️ Legal & Disclaimer
+
+Nidalplayer is strictly a standalone software media player and client aggregator. **It does not host, provide, broadcast, or distribute any media content or playlists.** Users are exclusively responsible for supplying their own legitimate streams. For full details, please review our [DISCLAIMER](DISCLAIMER.md).
+
+---
+
+## 🤝 Contributing
+
+Contributions, bug reports, and enhancements are welcome! Please review [CONTRIBUTING.md](CONTRIBUTING.md) for local development and pull request guidelines.
 
 ---
 
