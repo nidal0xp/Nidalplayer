@@ -9,9 +9,23 @@
 
 ---
 
-## 📸 Interface Preview
+## 📸 Presentation Showcase
 
-![Nidalplayer Interface](screenshot.png)
+![Nidalplayer Presentation](presentation.png)
+
+<p align="center">
+  <em>Windows Desktop Media Center (left) & Smartphone Companion Web Remote (right)</em>
+</p>
+
+---
+
+## 📱 Mobile Companion Web Remote
+
+Scan the in-app QR code with any smartphone on your local Wi-Fi to launch the instant touch remote control — no phone app download required:
+
+<p align="center">
+  <img src="mobile-remote.png" width="340" alt="Nidalplayer Mobile Remote" />
+</p>
 
 ---
 
