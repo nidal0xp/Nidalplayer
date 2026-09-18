@@ -4,10 +4,6 @@ package-lock.json.bak
 
 # Production & Build outputs
 dist/
-build/*.exe
-build/*.msi
-*.exe
-*.msi
 
 # Platform-specific binaries & SDK toolchains
 build-tools/

@@ -2,7 +2,7 @@
 
 [![License: CC BY-NC-SA 4.0](https://img.shields.io/badge/License-CC_BY--NC--SA_4.0-orange.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows_x64-blue.svg)](https://github.com/nidal0xp/Nidalplayer/releases)
-[![Version](https://img.shields.io/badge/Version-4.0.0-success.svg)](https://github.com/nidal0xp/Nidalplayer/releases)
+[![Version](https://img.shields.io/badge/Version-4.1.0-success.svg)](https://github.com/nidal0xp/Nidalplayer/releases)
 [![Auto-Updates](https://img.shields.io/badge/Updates-Automatic_GitHub_Releases-brightgreen.svg)](https://github.com/nidal0xp/Nidalplayer/releases)
 
 **Nidalplayer** is a high-performance, modernist streaming media center engineered specifically for Windows. Designed with an industrial Swiss aesthetic, it combines lightning-fast stream startup, real-time sports intelligence, 4K metadata discovery, live preview playback, and zero-configuration mobile companion remote control.
@@ -48,9 +48,9 @@
 
 | Release Package | File | Size | Description |
 | :--- | :--- | :--- | :--- |
-| **Windows Installer** | [`Nidalplayer-Setup-4.0.0.exe`](https://github.com/nidal0xp/Nidalplayer/releases/download/v4.0.0/Nidalplayer-Setup-4.0.0.exe) | ~84 MB | Standard Windows Setup with desktop & start menu shortcuts |
-| **Portable Edition** | [`Nidalplayer-Portable.exe`](https://github.com/nidal0xp/Nidalplayer/releases/download/v4.0.0/Nidalplayer-Portable.exe) | ~75 MB | Standalone portable executable (no installation required) |
-| **Update Manifest** | [`latest.yml`](https://github.com/nidal0xp/Nidalplayer/releases/download/v4.0.0/latest.yml) | 350 B | Cryptographic SHA-512 update verification manifest |
+| **Windows Installer** | [`Nidalplayer-Setup-4.1.0.exe`](https://github.com/nidal0xp/Nidalplayer/releases/download/v4.1.0/Nidalplayer-Setup-4.1.0.exe) | ~84 MB | Standard Windows Setup with desktop & start menu shortcuts |
+| **Portable Edition** | [`Nidalplayer-Portable.exe`](https://github.com/nidal0xp/Nidalplayer/releases/download/v4.1.0/Nidalplayer-Portable.exe) | ~75 MB | Standalone portable executable (no installation required) |
+| **Update Manifest** | [`latest.yml`](https://github.com/nidal0xp/Nidalplayer/releases/download/v4.1.0/latest.yml) | 350 B | Cryptographic SHA-512 update verification manifest |
 
 ---
 
