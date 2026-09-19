@@ -149,6 +149,32 @@ http://stream.example.com/series/user/pass/789.mp4`;
     console.log('   [Fav Team Info] Club: ' + overview.name + ', Next Match: ' + (overview.nextMatch ? overview.nextMatch.eventName : 'TBD') + ', Form: ' + overview.form.map(f => f.result).join(' '));
   });
 
+  // 8. Auto-Updater: GitHub Release Assets & Binary Downloadability
+  await runAsyncTest('Auto-Updater: GitHub Release Assets & Binary Downloadability', async () => {
+    const apiUrl = 'https://api.github.com/repos/nidal0xp/Nidalplayer/releases/latest';
+    const res = await fetch(apiUrl, { headers: { 'User-Agent': 'Nidalplayer-Update-Verifier' } });
+    assert.strictEqual(res.status, 200, 'GitHub release API must return 200');
+    const releaseData = await res.json();
+    assert.ok(releaseData.tag_name, 'Release must have a tag_name');
+
+    const assetNames = releaseData.assets.map(a => a.name);
+    // Dynamically find the Setup exe for the current release tag (e.g. Nidalplayer-Setup-4.2.0.exe)
+    const tagVersion = releaseData.tag_name.replace(/^v/, '');
+    const setupExeName = `Nidalplayer-Setup-${tagVersion}.exe`;
+    assert.ok(
+      assetNames.includes(setupExeName),
+      `${setupExeName} must be present in release assets (found: ${assetNames.join(', ')})`
+    );
+    assert.ok(assetNames.includes('Nidalplayer-Portable.exe'), 'Nidalplayer-Portable.exe must be present in release assets');
+    assert.ok(assetNames.includes('latest.yml'), 'latest.yml must be present in release assets');
+
+    // Verify the setup binary metadata
+    const setupAsset = releaseData.assets.find(a => a.name === setupExeName);
+    assert.strictEqual(setupAsset.state, 'uploaded', 'Setup asset state must be uploaded');
+    assert.ok(setupAsset.size > 50 * 1024 * 1024, 'Setup asset size must be valid binary (>50MB)');
+    console.log(`   [Updater Info] Tag: ${releaseData.tag_name}, Setup: ${(setupAsset.size / (1024 * 1024)).toFixed(1)} MB, State: ${setupAsset.state}`);
+  });
+
   console.log('===================================================');
   console.log('TEST SUMMARY: ' + passed + ' / ' + total + ' TESTS PASSED (' + Math.round((passed / total) * 100) + '%)');
   console.log('===================================================');

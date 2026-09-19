@@ -1,4 +1,4 @@
-import { state, activatePlaylist, clearActivePlaylistState, addRecent, toggleFavorite, updateWatchProgress } from './state.js';
+﻿import { state, activatePlaylist, clearActivePlaylistState, addRecent, toggleFavorite, updateWatchProgress } from './state.js';
 import { XtreamApi, normalizeServer } from './playlist/xtreamApi.js';
 import { parseM3U } from './playlist/m3uParser.js';
 import { PlayerManager } from './player/playerManager.js';
@@ -4040,118 +4040,264 @@ function setupKeyboardShortcuts() {
 function setupUpdaterUI() {
   if (!bridge?.checkForUpdates) return;
 
-  // Display current app version
+  const githubReleasesUrl = 'https://github.com/nidal0xp/Nidalplayer/releases/latest';
+  let availableUpdateInfo = null;
+  let skippedVersion = localStorage.getItem('nidalplayer-skipped-version') || '';
+
+  // ── Dynamic version injection (fixes hardcoded version issue) ──────────────
   bridge.getAppVersion?.().then(version => {
-    if (version && els.settingsUpdateTitle) {
-      els.settingsUpdateTitle.textContent = `Version Status: v${version}`;
-    }
+    if (!version) return;
+    const major = version.split('.').slice(0, 2).join('.');
+    // Boot screen badge
+    const bootBadge = document.getElementById('bootVersionBadge');
+    if (bootBadge) bootBadge.textContent = `V${major} PRO`;
+    // Sidebar version tag
+    const sidebarTag = document.getElementById('sidebarVersionTag');
+    if (sidebarTag) sidebarTag.textContent = `V${major}`;
+    // Settings header line
+    const settingsLine = document.getElementById('settingsVersionLine');
+    if (settingsLine) settingsLine.textContent = `Version ${version} \u2022 Swiss Industrial Edition \u2022 Obsidian & International Signal Orange`;
+    // Settings update title
+    if (els.settingsUpdateTitle) els.settingsUpdateTitle.textContent = `Version Status: v${version}`;
   });
 
-  // Event: checking
+  // ── Helper: format raw release notes into readable text ───────────────────
+  function formatReleaseNotes(raw, version) {
+    if (!raw || typeof raw !== 'string' || raw.trim().length < 10) {
+      return `\u2713 Bug fixes and stability improvements\n\u2713 Stream engine performance enhancements\n\u2713 GPU memory optimizations\n\nView full changelog: github.com/nidal0xp/Nidalplayer/releases`;
+    }
+    // Strip HTML tags if present
+    const clean = raw.replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').trim();
+    return clean;
+  }
+
+  // ── Helper: show update available state (before download) ─────────────────
+  function showUpdateAvailableUI(info) {
+    availableUpdateInfo = info;
+    const ver = info?.version || '';
+    const notes = formatReleaseNotes(info?.releaseNotes, ver);
+
+    // Settings section
+    if (els.settingsUpdateSubtitle) {
+      els.settingsUpdateSubtitle.textContent = `\u2728 Nidalplayer v${ver} is available — download when ready.`;
+    }
+    document.getElementById('settingsDownloadUpdateBtn')?.classList.remove('hidden');
+    document.getElementById('settingsSkipUpdateBtn')?.classList.remove('hidden');
+    document.getElementById('settingsInstallUpdateBtn')?.classList.add('hidden');
+    if (els.settingsUpdateProgressRow) els.settingsUpdateProgressRow.classList.add('hidden');
+
+    // Update modal
+    if (els.updateModalTitle) els.updateModalTitle.textContent = `UPDATE v${ver} AVAILABLE`;
+    if (els.updateModalNotes) els.updateModalNotes.textContent = notes;
+    if (els.updateModalDesc) els.updateModalDesc.textContent = `Nidalplayer v${ver} is ready to download. Click below to start downloading in the background — you can keep using the app while it downloads.`;
+    document.getElementById('updateModalDownloadBtn')?.classList.remove('hidden');
+    document.getElementById('updateModalRestartBtn')?.classList.add('hidden');
+
+    // Floating banner
+    if (els.floatingUpdateBanner) {
+      els.floatingUpdateBanner.classList.remove('hidden');
+      if (els.floatingUpdateTitle) els.floatingUpdateTitle.textContent = `UPDATE AVAILABLE // v${ver}`;
+      if (els.floatingUpdateDesc) els.floatingUpdateDesc.textContent = `Nidalplayer v${ver} is available. Download it now and restart when ready.`;
+      if (els.floatingUpdateProgressTrack) els.floatingUpdateProgressTrack.classList.add('hidden');
+      document.getElementById('floatingUpdateDownloadBtn')?.classList.remove('hidden');
+      if (els.floatingUpdateInstallBtn) els.floatingUpdateInstallBtn.classList.add('hidden');
+    }
+
+    showToast(`Update v${ver} available — click to download when ready.`);
+  }
+
+  // ── Helper: show downloading state ────────────────────────────────────────
+  function showDownloadingUI(ver) {
+    if (els.settingsUpdateSubtitle) els.settingsUpdateSubtitle.textContent = `Downloading v${ver}…`;
+    document.getElementById('settingsDownloadUpdateBtn')?.classList.add('hidden');
+    document.getElementById('settingsSkipUpdateBtn')?.classList.add('hidden');
+    if (els.settingsUpdateProgressRow) els.settingsUpdateProgressRow.classList.remove('hidden');
+
+    if (els.floatingUpdateBanner) {
+      els.floatingUpdateBanner.classList.remove('hidden');
+      if (els.floatingUpdateTitle) els.floatingUpdateTitle.textContent = `DOWNLOADING // v${ver}`;
+      if (els.floatingUpdateDesc) els.floatingUpdateDesc.textContent = `Downloading Nidalplayer v${ver} in the background…`;
+      if (els.floatingUpdateProgressTrack) els.floatingUpdateProgressTrack.classList.remove('hidden');
+      if (els.floatingUpdateProgressBar) els.floatingUpdateProgressBar.style.width = '0%';
+      document.getElementById('floatingUpdateDownloadBtn')?.classList.add('hidden');
+      if (els.floatingUpdateInstallBtn) els.floatingUpdateInstallBtn.classList.add('hidden');
+    }
+  }
+
+  // ── Helper: show downloaded/ready-to-install state ────────────────────────
+  function showReadyToInstallUI(info) {
+    availableUpdateInfo = info;
+    const ver = info?.version || '';
+    const notes = formatReleaseNotes(info?.releaseNotes, ver);
+
+    // Settings section
+    if (els.settingsUpdateProgressRow) els.settingsUpdateProgressRow.classList.add('hidden');
+    if (els.settingsInstallUpdateBtn) els.settingsInstallUpdateBtn.classList.remove('hidden');
+    document.getElementById('settingsDownloadUpdateBtn')?.classList.add('hidden');
+    document.getElementById('settingsSkipUpdateBtn')?.classList.remove('hidden');
+    if (els.settingsUpdateSubtitle) {
+      els.settingsUpdateSubtitle.textContent = `v${ver} downloaded successfully — restart to apply.`;
+    }
+    if (els.topUpdateBtn) {
+      els.topUpdateBtn.classList.remove('hidden');
+      if (els.topUpdateBtnText) els.topUpdateBtnText.textContent = `UPDATE v${ver} READY`;
+    }
+
+    // Update modal
+    if (els.updateModalTitle) els.updateModalTitle.textContent = `UPDATE v${ver} READY TO INSTALL`;
+    if (els.updateModalNotes) els.updateModalNotes.textContent = notes;
+    if (els.updateModalDesc) els.updateModalDesc.textContent = `Nidalplayer v${ver} has been downloaded. Restart now to apply it, or click LATER to install it next time you close the app.`;
+    document.getElementById('updateModalDownloadBtn')?.classList.add('hidden');
+    document.getElementById('updateModalRestartBtn')?.classList.remove('hidden');
+
+    // Floating banner
+    if (els.floatingUpdateBanner) {
+      els.floatingUpdateBanner.classList.remove('hidden');
+      if (els.floatingUpdateTitle) els.floatingUpdateTitle.textContent = `READY TO INSTALL // v${ver}`;
+      if (els.floatingUpdateDesc) els.floatingUpdateDesc.textContent = `v${ver} downloaded. Restart Nidalplayer to apply the update.`;
+      if (els.floatingUpdateProgressTrack) els.floatingUpdateProgressTrack.classList.add('hidden');
+      document.getElementById('floatingUpdateDownloadBtn')?.classList.add('hidden');
+      if (els.floatingUpdateInstallBtn) {
+        els.floatingUpdateInstallBtn.textContent = '\u26a1 RESTART & INSTALL';
+        els.floatingUpdateInstallBtn.classList.remove('hidden');
+      }
+    }
+
+    // Show modal automatically only once per version
+    if (ver && localStorage.getItem('nidalplayer-notified-install') !== ver) {
+      localStorage.setItem('nidalplayer-notified-install', ver);
+      els.updateNoticeModal?.classList.remove('hidden');
+    }
+    showToast(`Update v${ver} ready — restart to install.`);
+  }
+
+  // ── Helper: trigger install ────────────────────────────────────────────────
+  const triggerInstall = () => {
+    showToast('Restarting Nidalplayer to apply update...');
+    bridge.restartAndInstallUpdate?.();
+  };
+
+  // ── Helper: skip this version ──────────────────────────────────────────────
+  const skipVersion = () => {
+    const ver = availableUpdateInfo?.version || '';
+    if (ver) {
+      skippedVersion = ver;
+      localStorage.setItem('nidalplayer-skipped-version', ver);
+    }
+    els.updateNoticeModal?.classList.add('hidden');
+    els.floatingUpdateBanner?.classList.add('hidden');
+    document.getElementById('settingsDownloadUpdateBtn')?.classList.add('hidden');
+    document.getElementById('settingsSkipUpdateBtn')?.classList.add('hidden');
+    if (els.settingsUpdateSubtitle) {
+      els.settingsUpdateSubtitle.textContent = ver ? `Update v${ver} skipped. Click CHECK FOR UPDATES to re-check.` : 'Update skipped.';
+    }
+    showToast(`Update v${ver || ''} skipped.`);
+  };
+
+  // ── Helper: user-triggered download ───────────────────────────────────────
+  const triggerDownload = async () => {
+    const ver = availableUpdateInfo?.version || '';
+    showDownloadingUI(ver);
+    showToast(`Downloading update v${ver}…`);
+    try {
+      await bridge.triggerUpdateDownload?.();
+    } catch (err) {
+      showToast('Download failed — try again or download from GitHub.');
+      if (els.settingsUpdateSubtitle) {
+        els.settingsUpdateSubtitle.textContent = 'Download failed. Retry or visit GitHub Releases.';
+      }
+      document.getElementById('settingsDownloadUpdateBtn')?.classList.remove('hidden');
+    }
+  };
+
+  // ── Updater Events ────────────────────────────────────────────────────────
   bridge.onUpdaterChecking?.(() => {
-    if (els.settingsCheckUpdateIcon) els.settingsCheckUpdateIcon.textContent = '↻';
+    if (els.settingsCheckUpdateIcon) els.settingsCheckUpdateIcon.textContent = '\u21bb';
     if (els.settingsCheckUpdateText) els.settingsCheckUpdateText.textContent = 'CHECKING...';
     if (els.settingsCheckUpdateBtn) els.settingsCheckUpdateBtn.disabled = true;
   });
 
-  // Event: available
   bridge.onUpdaterAvailable?.(info => {
     if (els.settingsCheckUpdateBtn) els.settingsCheckUpdateBtn.disabled = false;
     if (els.settingsCheckUpdateText) els.settingsCheckUpdateText.textContent = 'CHECK FOR UPDATES';
-    if (els.settingsUpdateSubtitle) {
-      els.settingsUpdateSubtitle.textContent = `Update v${info?.version || ''} found. Downloading in background...`;
+
+    // Respect user's skip choice
+    if (info?.version && info.version === skippedVersion) {
+      console.log(`[Updater UI] Version ${info.version} was skipped by user.`);
+      if (els.settingsUpdateSubtitle) {
+        els.settingsUpdateSubtitle.textContent = `v${info.version} available (skipped). Clear skip in Settings to re-enable.`;
+      }
+      return;
     }
-    if (els.settingsUpdateProgressRow) els.settingsUpdateProgressRow.classList.remove('hidden');
-    
-    // Show Floating In-App Banner
-    if (els.floatingUpdateBanner) {
-      els.floatingUpdateBanner.classList.remove('hidden');
-      if (els.floatingUpdateTitle) els.floatingUpdateTitle.textContent = `UPDATE AVAILABLE // v${info?.version || ''}`;
-      if (els.floatingUpdateDesc) els.floatingUpdateDesc.textContent = `Nidalplayer v${info?.version || ''} is downloading in the background…`;
-      if (els.floatingUpdateProgressTrack) els.floatingUpdateProgressTrack.classList.remove('hidden');
-      if (els.floatingUpdateInstallBtn) els.floatingUpdateInstallBtn.classList.add('hidden');
-    }
-    showToast(`New update v${info?.version || ''} available — downloading...`);
+    showUpdateAvailableUI(info);
   });
 
-  // Event: not available
   bridge.onUpdaterNotAvailable?.(info => {
+    availableUpdateInfo = null;
     if (els.settingsCheckUpdateBtn) els.settingsCheckUpdateBtn.disabled = false;
     if (els.settingsCheckUpdateText) els.settingsCheckUpdateText.textContent = 'CHECK FOR UPDATES';
     if (els.settingsUpdateSubtitle) {
-      els.settingsUpdateSubtitle.textContent = `Nidalplayer is up to date (v${info?.version || '4.1.0'}).`;
+      els.settingsUpdateSubtitle.textContent = `\u2713 Nidalplayer is up to date (v${info?.version || ''}).`;
     }
     if (els.settingsUpdateProgressRow) els.settingsUpdateProgressRow.classList.add('hidden');
-    if (els.floatingUpdateBanner) els.floatingUpdateBanner.classList.add('hidden');
+    els.floatingUpdateBanner?.classList.add('hidden');
     showToast('Nidalplayer is up to date.');
   });
 
-  // Event: download progress
   bridge.onUpdaterProgress?.(progress => {
-    const percent = progress?.percent || 0;
+    const percent = Math.round(progress?.percent || 0);
     if (els.settingsUpdateProgressRow) els.settingsUpdateProgressRow.classList.remove('hidden');
     if (els.settingsUpdateProgressBar) els.settingsUpdateProgressBar.style.width = `${percent}%`;
     if (els.settingsUpdateProgressText) els.settingsUpdateProgressText.textContent = `Downloading update… ${percent}%`;
     if (els.settingsUpdateSpeedText && progress?.bytesPerSecond) {
-      const speedMB = (progress.bytesPerSecond / (1024 * 1024)).toFixed(1);
-      els.settingsUpdateSpeedText.textContent = `${speedMB} MB/s`;
+      els.settingsUpdateSpeedText.textContent = `${(progress.bytesPerSecond / (1024 * 1024)).toFixed(1)} MB/s`;
     }
-
-    // Update Floating Banner Progress
     if (els.floatingUpdateProgressBar) els.floatingUpdateProgressBar.style.width = `${percent}%`;
     if (els.floatingUpdateDesc) {
-      const speed = progress?.bytesPerSecond ? ` (${(progress.bytesPerSecond / (1024 * 1024)).toFixed(1)} MB/s)` : '';
+      const speed = progress?.bytesPerSecond ? ` · ${(progress.bytesPerSecond / (1024 * 1024)).toFixed(1)} MB/s` : '';
       els.floatingUpdateDesc.textContent = `Downloading update… ${percent}%${speed}`;
     }
   });
 
-  // Event: downloaded and ready to install
-  bridge.onUpdaterDownloaded?.(info => {
-    if (els.settingsUpdateProgressRow) els.settingsUpdateProgressRow.classList.add('hidden');
-    if (els.settingsInstallUpdateBtn) els.settingsInstallUpdateBtn.classList.remove('hidden');
-    if (els.topUpdateBtn) {
-      els.topUpdateBtn.classList.remove('hidden');
-      if (els.topUpdateBtnText) els.topUpdateBtnText.textContent = `UPDATE v${info?.version || ''} READY`;
-    }
-    if (els.settingsUpdateSubtitle) {
-      els.settingsUpdateSubtitle.textContent = `Update v${info?.version || ''} downloaded successfully. Restart to apply.`;
-    }
+  bridge.onUpdaterDownloaded?.(info => showReadyToInstallUI(info));
 
-    if (els.updateModalTitle) els.updateModalTitle.textContent = `UPDATE v${info?.version || ''} READY`;
-    if (els.updateModalNotes) {
-      els.updateModalNotes.textContent = info?.releaseNotes || 'Includes performance enhancements, stream engine optimizations, and stability fixes.';
-    }
-
-    // Activate Floating In-App Banner for immediate installation
-    if (els.floatingUpdateBanner) {
-      els.floatingUpdateBanner.classList.remove('hidden');
-      if (els.floatingUpdateTitle) els.floatingUpdateTitle.textContent = `UPDATE READY // v${info?.version || ''}`;
-      if (els.floatingUpdateDesc) els.floatingUpdateDesc.textContent = `Version v${info?.version || ''} has been downloaded and is ready to install.`;
-      if (els.floatingUpdateProgressTrack) els.floatingUpdateProgressTrack.classList.add('hidden');
-      if (els.floatingUpdateInstallBtn) els.floatingUpdateInstallBtn.classList.remove('hidden');
-    }
-
-    els.updateNoticeModal?.classList.remove('hidden');
-    showToast(`Update v${info?.version || ''} downloaded. Restart to apply.`);
-  });
-
-  // Event: non-fatal updater error
   bridge.onUpdaterError?.(err => {
     if (els.settingsCheckUpdateBtn) els.settingsCheckUpdateBtn.disabled = false;
     if (els.settingsCheckUpdateText) els.settingsCheckUpdateText.textContent = 'CHECK FOR UPDATES';
     if (els.settingsUpdateProgressRow) els.settingsUpdateProgressRow.classList.add('hidden');
     const msg = String(err?.message || err || '');
-    console.warn('[Updater UI] Notice:', msg);
+    console.warn('[Updater UI] Error:', msg);
+    const targetVer = availableUpdateInfo?.version ? `v${availableUpdateInfo.version}` : 'latest version';
+
     if (els.settingsUpdateSubtitle) {
       if (msg.includes('404')) {
-        els.settingsUpdateSubtitle.innerHTML = '<span style="color:#ff9f1c;">⚠ GitHub 404: Repository is Private. Auto-updates will activate once the repository is set to Public on GitHub.</span>';
+        els.settingsUpdateSubtitle.innerHTML = `<span style="color:#ff9f1c;">\u26a0 Release binary not yet attached to this GitHub release.</span> <a href="#" id="settingsManualReleaseLink" style="color:var(--accent-cyan); text-decoration:underline; font-weight:600; margin-left:6px; cursor:pointer;">Download ${targetVer} from GitHub manually</a>`;
       } else {
-        els.settingsUpdateSubtitle.textContent = `Update check notice: ${msg.slice(0, 80)}`;
+        els.settingsUpdateSubtitle.innerHTML = `<span>Update error: ${msg.slice(0, 80)}</span> <a href="#" id="settingsManualReleaseLink" style="color:var(--accent-cyan); text-decoration:underline; font-weight:600; margin-left:6px; cursor:pointer;">Open GitHub Releases</a>`;
+      }
+      document.getElementById('settingsManualReleaseLink')?.addEventListener('click', e => {
+        e.preventDefault();
+        bridge.openExternal?.(githubReleasesUrl);
+      });
+    }
+
+    // Reset floating banner to offer manual download
+    if (els.floatingUpdateBanner && !els.floatingUpdateBanner.classList.contains('hidden')) {
+      const fver = availableUpdateInfo?.version;
+      if (els.floatingUpdateTitle) els.floatingUpdateTitle.textContent = fver ? `UPDATE ${fver.toUpperCase()} // ERROR` : 'UPDATE ERROR';
+      if (els.floatingUpdateDesc) els.floatingUpdateDesc.textContent = `Background download failed. Click to download ${targetVer} from GitHub.`;
+      if (els.floatingUpdateProgressTrack) els.floatingUpdateProgressTrack.classList.add('hidden');
+      if (els.floatingUpdateInstallBtn) els.floatingUpdateInstallBtn.classList.add('hidden');
+      const dlBtn = document.getElementById('floatingUpdateDownloadBtn');
+      if (dlBtn) {
+        dlBtn.textContent = '\ud83c\udf10 DOWNLOAD FROM GITHUB';
+        dlBtn.classList.remove('hidden');
+        dlBtn.onclick = () => bridge.openExternal?.(githubReleasesUrl);
       }
     }
   });
 
-  // Manual Check Button
+  // ── Button: Check for Updates ─────────────────────────────────────────────
   els.settingsCheckUpdateBtn?.addEventListener('click', async () => {
     els.settingsCheckUpdateBtn.disabled = true;
     if (els.settingsCheckUpdateText) els.settingsCheckUpdateText.textContent = 'CHECKING...';
@@ -4159,10 +4305,12 @@ function setupUpdaterUI() {
       const res = await bridge.checkForUpdates();
       if (res?.dev) {
         showToast(res.message || 'Auto-updates active in packaged builds.');
-        if (els.settingsUpdateSubtitle) els.settingsUpdateSubtitle.textContent = res.message;
+        if (els.settingsUpdateSubtitle) els.settingsUpdateSubtitle.textContent = res.message || 'Running in dev mode. Updates active in packaged app.';
+      } else if (res?.ok === false) {
+        showToast('Update check failed: ' + (res.error?.slice(0, 60) || 'Unknown error.'));
       }
     } catch {
-      showToast('Could not reach update server.');
+      showToast('Could not reach update server. Check your connection.');
     } finally {
       setTimeout(() => {
         if (els.settingsCheckUpdateBtn) els.settingsCheckUpdateBtn.disabled = false;
@@ -4171,34 +4319,35 @@ function setupUpdaterUI() {
     }
   });
 
-  // Test Notification Simulation Button
-  els.settingsSimulateUpdateBtn?.addEventListener('click', async () => {
-    showToast('Testing update banner & native Windows notification…');
-    await bridge.simulateUpdateNotification?.();
-  });
+  // ── Button: Download Update (Settings) ────────────────────────────────────
+  document.getElementById('settingsDownloadUpdateBtn')?.addEventListener('click', triggerDownload);
 
-  // Install Handlers
-  const triggerInstall = () => {
-    showToast('Restarting Nidalplayer to apply update...');
-    bridge.restartAndInstallUpdate?.();
-  };
+  // ── Button: Skip Version (Settings) ───────────────────────────────────────
+  document.getElementById('settingsSkipUpdateBtn')?.addEventListener('click', skipVersion);
 
+  // ── Button: Install Update (Settings) ─────────────────────────────────────
   els.settingsInstallUpdateBtn?.addEventListener('click', triggerInstall);
-  els.topUpdateBtn?.addEventListener('click', () => {
-    els.updateNoticeModal?.classList.remove('hidden');
-  });
-  els.updateModalRestartBtn?.addEventListener('click', triggerInstall);
-  els.updateModalDismissBtn?.addEventListener('click', () => {
-    els.updateNoticeModal?.classList.add('hidden');
-  });
 
-  // Floating Banner Event Listeners
-  els.floatingUpdateCloseBtn?.addEventListener('click', () => {
+  // ── Top Bar Update Button ─────────────────────────────────────────────────
+  els.topUpdateBtn?.addEventListener('click', () => els.updateNoticeModal?.classList.remove('hidden'));
+
+  // ── Update Modal Buttons ──────────────────────────────────────────────────
+  document.getElementById('updateModalDownloadBtn')?.addEventListener('click', () => {
+    els.updateNoticeModal?.classList.add('hidden');
+    triggerDownload();
+  });
+  document.getElementById('updateModalRestartBtn')?.addEventListener('click', triggerInstall);
+  document.getElementById('updateModalSkipBtn')?.addEventListener('click', skipVersion);
+  els.updateModalDismissBtn?.addEventListener('click', () => els.updateNoticeModal?.classList.add('hidden'));
+
+  // ── Floating Banner Buttons ───────────────────────────────────────────────
+  els.floatingUpdateCloseBtn?.addEventListener('click', () => els.floatingUpdateBanner?.classList.add('hidden'));
+  els.floatingUpdateDetailsBtn?.addEventListener('click', () => els.updateNoticeModal?.classList.remove('hidden'));
+  document.getElementById('floatingUpdateDownloadBtn')?.addEventListener('click', () => {
     els.floatingUpdateBanner?.classList.add('hidden');
+    triggerDownload();
   });
-  els.floatingUpdateDetailsBtn?.addEventListener('click', () => {
-    els.updateNoticeModal?.classList.remove('hidden');
-  });
+  document.getElementById('floatingUpdateSkipBtn')?.addEventListener('click', skipVersion);
   els.floatingUpdateInstallBtn?.addEventListener('click', triggerInstall);
 }
 
@@ -4210,4 +4359,3 @@ function showToast(msg) {
     els.toast.classList.add('hidden');
   }, 3500);
 }
-

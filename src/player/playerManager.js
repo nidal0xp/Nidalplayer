@@ -49,7 +49,7 @@ export class PlayerManager {
     this.retrying = false;
     this.generation = 0;
     this.resumeTime = 0;
-    this.currentBlobUrl = null;
+    this._blobUrls = [];  // Tracks ALL created blob URLs so every one is revoked on destroy
     this.volume = 1.0;
   }
 
@@ -117,7 +117,9 @@ export class PlayerManager {
     lines.push('#EXT-X-ENDLIST');
 
     const blob = new Blob([lines.join('\n')], { type: 'application/vnd.apple.mpegurl' });
-    return URL.createObjectURL(blob);
+    const blobUrl = URL.createObjectURL(blob);
+    this._blobUrls.push(blobUrl);
+    return blobUrl;
   }
 
   createLiveTsM3u8(tsUrl) {
@@ -130,7 +132,9 @@ export class PlayerManager {
       tsUrl
     ];
     const blob = new Blob([lines.join('\n')], { type: 'application/vnd.apple.mpegurl' });
-    return URL.createObjectURL(blob);
+    const blobUrl = URL.createObjectURL(blob);
+    this._blobUrls.push(blobUrl);
+    return blobUrl;
   }
 
   getStreamSourceUrl(item, attemptFallback = false) {
@@ -235,10 +239,11 @@ export class PlayerManager {
     this.stopFpsTracker();
     this.retrying = false;
 
-    if (this.currentBlobUrl) {
-      try { URL.revokeObjectURL(this.currentBlobUrl); } catch {}
-      this.currentBlobUrl = null;
+    // Revoke ALL tracked blob URLs to prevent memory leaks across channel switches
+    for (const url of this._blobUrls) {
+      try { URL.revokeObjectURL(url); } catch {}
     }
+    this._blobUrls = [];
 
     if (this.hls) {
       try { this.hls.stopLoad(); } catch {}
@@ -416,9 +421,7 @@ export class PlayerManager {
       streamUrl = this.createLiveTsM3u8(streamUrl);
     }
 
-    if (streamUrl.startsWith('blob:')) {
-      this.currentBlobUrl = streamUrl;
-    }
+    // Blob URL is already tracked in this._blobUrls by the create methods above
 
     if (!this.Hls?.isSupported()) {
       media.src = streamUrl;

@@ -1076,8 +1076,8 @@ ipcMain.handle('remote-info', async () => {
 /* ==========================================================================
    Auto-Updater System (GitHub Releases & electron-updater)
    ========================================================================== */
-autoUpdater.autoDownload = true;
-autoUpdater.autoInstallOnAppQuit = true;
+autoUpdater.autoDownload = false;         // User must explicitly choose to download
+autoUpdater.autoInstallOnAppQuit = false; // User must explicitly choose to install
 autoUpdater.allowPrerelease = false;
 autoUpdater.forceDevUpdateConfig = false;
 autoUpdater.logger = console;
@@ -1191,34 +1191,13 @@ ipcMain.handle('check-for-updates', async () => {
   }
 });
 
-ipcMain.handle('simulate-update-notification', () => {
+// User-initiated download: triggered only when the user clicks "Download Update"
+ipcMain.handle('trigger-update-download', async () => {
   try {
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send('updater-available', {
-        version: '4.2.0',
-        releaseDate: new Date().toISOString(),
-        releaseNotes: 'Simulated Notification: Testing in-app floating banner and native Windows notifications.'
-      });
-      setTimeout(() => {
-        if (mainWindow && !mainWindow.isDestroyed()) {
-          mainWindow.webContents.send('updater-downloaded', {
-            version: '4.2.0',
-            releaseNotes: 'Update ready to install.'
-          });
-          try {
-            if (Notification.isSupported()) {
-              new Notification({
-                title: 'Nidalplayer — Update Ready',
-                body: 'Version v4.2.0 has been downloaded. Click to restart and apply update.',
-                icon: path.join(__dirname, 'assets', 'logo.png')
-              }).show();
-            }
-          } catch (e) {}
-        }
-      }, 1500);
-    }
+    await autoUpdater.downloadUpdate();
     return { ok: true };
   } catch (err) {
+    console.warn('[AutoUpdater] User-triggered download error:', err?.message);
     return { ok: false, error: err?.message };
   }
 });

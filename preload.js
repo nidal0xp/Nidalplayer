@@ -55,7 +55,7 @@ contextBridge.exposeInMainWorld('streamline', {
   getAppVersion: () => ipcRenderer.invoke('get-app-version'),
   checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
   restartAndInstallUpdate: () => ipcRenderer.invoke('restart-and-install-update'),
-  simulateUpdateNotification: () => ipcRenderer.invoke('simulate-update-notification'),
+  triggerUpdateDownload: () => ipcRenderer.invoke('trigger-update-download'),
   onUpdaterChecking: handler => {
     const listener = () => handler();
     ipcRenderer.on('updater-checking', listener);

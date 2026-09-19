@@ -50,7 +50,7 @@
         </div>
         <div class="boot-status-row">
           <span id="bootStatus" class="boot-status-text">INITIALIZING HARDWARE ACCELERATION & CACHE…</span>
-          <span class="boot-version-badge">V4.1 PRO</span>
+          <span id="bootVersionBadge" class="boot-version-badge">V4.2 PRO</span>
         </div>
       </div>
 
@@ -72,7 +72,7 @@
         <img src="assets/logo.png" alt="NP" style="width:38px; height:38px; border-radius:8px; object-fit:cover; border:1px solid rgba(255,255,255,0.12); flex-shrink:0;">
         <div style="min-width:0;">
           <div class="brand-badge" style="letter-spacing:1px; line-height:1.2; font-size:14px;">NIDALPLAYER</div>
-          <div class="brand-meta" style="font-size:10px; color:var(--text-muted); margin-top:2px;">M3U MEDIA PLAYER <span class="version-tag">V4.1</span></div>
+          <div class="brand-meta" style="font-size:10px; color:var(--text-muted); margin-top:2px;">M3U MEDIA PLAYER <span id="sidebarVersionTag" class="version-tag">V4.2</span></div>
         </div>
       </div>
 
@@ -594,7 +594,7 @@
               <img src="assets/logo.png" alt="NP" style="width:56px; height:56px; border-radius:12px; object-fit:cover; border:1px solid rgba(255,69,26,0.35); box-shadow:0 6px 20px rgba(255,69,26,0.2); flex-shrink:0;">
               <div>
                 <div style="font-family:var(--font-mono); font-size:16px; font-weight:700; color:var(--text-primary); letter-spacing:0.5px;">NIDALPLAYER MEDIA CENTER</div>
-                <p style="font-size:11px; color:var(--text-muted); margin-top:4px;">Version 4.1.0 • Swiss Industrial Edition • Obsidian & International Signal Orange</p>
+                <p id="settingsVersionLine" style="font-size:11px; color:var(--text-muted); margin-top:4px;">Version 4.2.0 • Swiss Industrial Edition • Obsidian &amp; International Signal Orange</p>
               </div>
             </div>
 
@@ -715,11 +715,14 @@
                   <button id="settingsCheckUpdateBtn" class="btn-action">
                     <span id="settingsCheckUpdateIcon">↻</span> <span id="settingsCheckUpdateText">CHECK FOR UPDATES</span>
                   </button>
-                  <button id="settingsSimulateUpdateBtn" class="btn-action" title="Test in-app floating banner & native Windows notification">
-                    <span>🔔</span> <span>TEST NOTIFICATION</span>
+                  <button id="settingsDownloadUpdateBtn" class="btn-action primary hidden">
+                    <span>⬇</span> <span>DOWNLOAD UPDATE</span>
                   </button>
                   <button id="settingsInstallUpdateBtn" class="btn-action primary hidden">
-                    <span>⚡</span> <span>RESTART & INSTALL UPDATE</span>
+                    <span>⚡</span> <span>RESTART &amp; INSTALL UPDATE</span>
+                  </button>
+                  <button id="settingsSkipUpdateBtn" class="btn-action subtle hidden">
+                    <span>×</span> <span>SKIP THIS VERSION</span>
                   </button>
                 </div>
               </div>
@@ -1163,17 +1166,20 @@
 
   <!-- AUTO-UPDATE NOTIFICATION MODAL -->
   <div id="updateNoticeModal" class="app-modal hidden">
-    <div class="modal-card" style="width:520px; text-align:center; padding:32px;">
+    <div class="modal-card" style="width:540px; text-align:center; padding:32px;">
       <div style="font-size:42px; margin-bottom:12px;">🚀</div>
-      <div class="modal-kicker">APPLICATION UPDATE // AVAILABLE</div>
-      <h2 id="updateModalTitle" style="font-size:22px; margin-bottom:10px; color:var(--text-pure);">NEW UPDATE AVAILABLE</h2>
-      <p id="updateModalDesc" style="font-size:13px; color:var(--text-secondary); line-height:1.6; margin-bottom:20px;">
-        A new version of Nidalplayer has been downloaded and is ready to install.
+      <div class="modal-kicker">NIDALPLAYER // SOFTWARE UPDATE</div>
+      <h2 id="updateModalTitle" style="font-size:22px; margin-bottom:10px; color:var(--text-pure);">UPDATE AVAILABLE</h2>
+      <p id="updateModalDesc" style="font-size:13px; color:var(--text-secondary); line-height:1.6; margin-bottom:16px;">
+        A new version of Nidalplayer is available and ready to download.
       </p>
-      <div id="updateModalNotes" style="text-align:left; background:var(--bg-card); border:1px solid var(--border-subtle); padding:14px; border-radius:var(--radius-md); font-size:12px; max-height:160px; overflow-y:auto; margin-bottom:24px; color:var(--text-primary); font-family:var(--font-mono); white-space:pre-wrap;"></div>
+      <div id="updateModalNotes" style="text-align:left; background:var(--bg-card); border:1px solid var(--border-subtle); padding:14px; border-radius:var(--radius-md); font-size:12px; max-height:180px; overflow-y:auto; margin-bottom:8px; color:var(--text-primary); font-family:var(--font-mono); white-space:pre-wrap; line-height:1.6;"></div>
+      <p style="font-size:11px; color:var(--text-muted); margin-bottom:24px; text-align:left;">The update downloads in the background. You can continue using Nidalplayer while it downloads, and restart to apply it when ready.</p>
       <div class="modal-actions" style="justify-content:center; gap:12px;">
-        <button id="updateModalRestartBtn" class="btn-action primary" style="padding:10px 24px;">⚡ RESTART & INSTALL NOW</button>
-        <button id="updateModalDismissBtn" class="btn-action subtle" style="padding:10px 20px;">LATER (ON EXIT)</button>
+        <button id="updateModalDownloadBtn" class="btn-action primary" style="padding:10px 28px;">⬇ DOWNLOAD UPDATE</button>
+        <button id="updateModalRestartBtn" class="btn-action primary hidden" style="padding:10px 28px;">⚡ RESTART &amp; INSTALL NOW</button>
+        <button id="updateModalSkipBtn" class="btn-action subtle" style="padding:10px 20px;">✕ SKIP THIS VERSION</button>
+        <button id="updateModalDismissBtn" class="btn-action subtle" style="padding:10px 20px;">LATER</button>
       </div>
     </div>
   </div>
@@ -1186,17 +1192,19 @@
         <div class="floating-update-icon">⚡</div>
         <div class="floating-update-info">
           <div class="floating-update-kicker">SYSTEM NOTIFICATION // UPDATE</div>
-          <div id="floatingUpdateTitle" class="floating-update-title">NEW VERSION DETECTED</div>
+          <div id="floatingUpdateTitle" class="floating-update-title">NEW VERSION AVAILABLE</div>
         </div>
         <button id="floatingUpdateCloseBtn" class="floating-update-close" title="Dismiss">✕</button>
       </div>
-      <p id="floatingUpdateDesc" class="floating-update-desc">Nidalplayer update is downloading in background…</p>
+      <p id="floatingUpdateDesc" class="floating-update-desc">A new version of Nidalplayer is available.</p>
       <div id="floatingUpdateProgressTrack" class="floating-update-track hidden">
         <div id="floatingUpdateProgressBar" class="floating-update-bar" style="width: 0%;"></div>
       </div>
       <div class="floating-update-actions">
-        <button id="floatingUpdateInstallBtn" class="btn-action primary hidden">⚡ RESTART & INSTALL</button>
+        <button id="floatingUpdateInstallBtn" class="btn-action primary hidden">⚡ RESTART &amp; INSTALL</button>
+        <button id="floatingUpdateDownloadBtn" class="btn-action primary hidden">⬇ DOWNLOAD UPDATE</button>
         <button id="floatingUpdateDetailsBtn" class="btn-action subtle">VIEW DETAILS</button>
+        <button id="floatingUpdateSkipBtn" class="btn-action subtle">SKIP</button>
       </div>
     </div>
   </div>
