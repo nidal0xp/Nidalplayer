@@ -520,13 +520,19 @@ app.commandLine.appendSwitch('disable-web-security');
 app.commandLine.appendSwitch('allow-insecure-localhost');
 
 // Hardware Acceleration & GPU Video Decoding Tuning
+// NOTE: use-angle d3d11 is the most stable DirectX backend on Windows for HLS streaming.
+// Removed enable-zero-copy and enable-native-gpu-memory-buffers — these were causing GPU
+// process crashes on certain Windows GPU drivers (Intel/AMD) during live stream playback.
+// Removed VaapiVideoDecoder — this is a Linux-only VA-API flag; applying it on Windows
+// caused the GPU process to crash when switching streams or changing resolutions.
+// Added disable-gpu-process-crash-limit and in-process-gpu as resilience fallbacks.
 app.commandLine.appendSwitch('use-angle', 'd3d11');
 app.commandLine.appendSwitch('enable-accelerated-video-decode');
 app.commandLine.appendSwitch('enable-gpu-rasterization');
-app.commandLine.appendSwitch('enable-zero-copy');
-app.commandLine.appendSwitch('enable-native-gpu-memory-buffers');
-app.commandLine.appendSwitch('enable-features', 'PlatformHEVCDecoderSupport,VaapiVideoDecoder,CanvasOopRasterization');
-app.commandLine.appendSwitch('disable-features', 'HardwareMediaKeyHandling');
+app.commandLine.appendSwitch('enable-features', 'PlatformHEVCDecoderSupport,CanvasOopRasterization,D3D11VideoDecoder');
+app.commandLine.appendSwitch('disable-features', 'HardwareMediaKeyHandling,UseChromeOSDirectVideoDecoder');
+app.commandLine.appendSwitch('disable-gpu-process-crash-limit');
+app.commandLine.appendSwitch('in-process-gpu');
 
 // Secure DNS (DNS-over-HTTPS) via Cloudflare & Google to bypass ISP 451 blocks and censorship
 app.commandLine.appendSwitch('dns-over-https-mode', 'automatic');
@@ -1073,7 +1079,8 @@ ipcMain.handle('remote-info', async () => {
 autoUpdater.autoDownload = true;
 autoUpdater.autoInstallOnAppQuit = true;
 autoUpdater.allowPrerelease = false;
-autoUpdater.forceDevUpdateConfig = true;
+autoUpdater.forceDevUpdateConfig = false;
+autoUpdater.logger = console;
 
 // Optional: allow local private token from environment
 const updateToken = process.env.GH_TOKEN || process.env.GITHUB_TOKEN;
@@ -1172,6 +1179,9 @@ function initAutoUpdater() {
 
 ipcMain.handle('check-for-updates', async () => {
   try {
+    if (!app.isPackaged && !process.env.FORCE_UPDATE_CHECK) {
+      return { ok: true, dev: true, currentVersion: app.getVersion(), message: 'Auto-updates are active in packaged app builds.' };
+    }
     const res = await autoUpdater.checkForUpdates();
     return { ok: true, currentVersion: app.getVersion(), updateInfo: res?.updateInfo };
   } catch (err) {
