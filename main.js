@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, dialog, ipcMain, shell, session, safeStorage } = require('electron');
+const { app, BrowserWindow, Menu, dialog, ipcMain, shell, session, safeStorage, Notification } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const path = require('path');
 const fs = require('fs');
@@ -848,7 +848,7 @@ ipcMain.handle('fetch-playlist', async (_e, url) => {
       ok: response.ok,
       status: response.status,
       error: response.ok ? '' : (response.status === 451
-        ? 'HTTP 451 (Geo/ISP Blocked): Your internet provider or region is blocking this IPTV domain. Using a VPN or changing DNS will bypass this.'
+        ? 'HTTP 451 (Geo/ISP Blocked): Your internet provider or region is blocking this streaming domain. Using a VPN or changing DNS will bypass this.'
         : `Playlist URL returned HTTP ${response.status}${text ? `: ${text.slice(0, 160).replace(/\s+/g, ' ').trim()}` : '.'}`),
       text,
       contentType: response.headers.get('content-type') || '',
@@ -1073,6 +1073,7 @@ ipcMain.handle('remote-info', async () => {
 autoUpdater.autoDownload = true;
 autoUpdater.autoInstallOnAppQuit = true;
 autoUpdater.allowPrerelease = false;
+autoUpdater.forceDevUpdateConfig = true;
 
 // Optional: allow local private token from environment
 const updateToken = process.env.GH_TOKEN || process.env.GITHUB_TOKEN;
@@ -1129,6 +1130,21 @@ function initAutoUpdater() {
         releaseNotes: info?.releaseNotes
       });
     }
+    try {
+      if (Notification.isSupported()) {
+        const notif = new Notification({
+          title: 'Nidalplayer — Update Ready',
+          body: `Version v${info?.version || ''} has been downloaded. Click to restart and apply update.`,
+          icon: path.join(__dirname, 'assets', 'logo.png')
+        });
+        notif.on('click', () => {
+          autoUpdater.quitAndInstall(false, true);
+        });
+        notif.show();
+      }
+    } catch (e) {
+      console.warn('[AutoUpdater] Native notification notice:', e?.message);
+    }
   });
 
   autoUpdater.on('error', (err) => {
@@ -1156,14 +1172,44 @@ function initAutoUpdater() {
 
 ipcMain.handle('check-for-updates', async () => {
   try {
-    if (!app.isPackaged && !process.env.FORCE_UPDATE_CHECK) {
-      return { ok: true, dev: true, currentVersion: app.getVersion(), message: 'Auto-updates operate in packaged app builds.' };
-    }
     const res = await autoUpdater.checkForUpdates();
     return { ok: true, currentVersion: app.getVersion(), updateInfo: res?.updateInfo };
   } catch (err) {
-    console.warn('[AutoUpdater] Manual check error:', err?.message || err);
-    return { ok: false, currentVersion: app.getVersion(), error: err?.message || 'Update check failed.' };
+    const msg = err?.message || String(err);
+    console.warn('[AutoUpdater] Manual check error:', msg);
+    return { ok: false, currentVersion: app.getVersion(), error: msg };
+  }
+});
+
+ipcMain.handle('simulate-update-notification', () => {
+  try {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('updater-available', {
+        version: '4.2.0',
+        releaseDate: new Date().toISOString(),
+        releaseNotes: 'Simulated Notification: Testing in-app floating banner and native Windows notifications.'
+      });
+      setTimeout(() => {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('updater-downloaded', {
+            version: '4.2.0',
+            releaseNotes: 'Update ready to install.'
+          });
+          try {
+            if (Notification.isSupported()) {
+              new Notification({
+                title: 'Nidalplayer — Update Ready',
+                body: 'Version v4.2.0 has been downloaded. Click to restart and apply update.',
+                icon: path.join(__dirname, 'assets', 'logo.png')
+              }).show();
+            }
+          } catch (e) {}
+        }
+      }, 1500);
+    }
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err?.message };
   }
 });
 

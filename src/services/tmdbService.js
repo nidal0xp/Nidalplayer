@@ -1,9 +1,9 @@
 /**
  * TMDB API Service for Nidalplayer
  * Enriches Movies & TV Shows with 4K backdrops, IMDb ratings, cast headshots, and YouTube trailers.
+ * Requires a user-provided TMDB v3 API Key (stored locally in localStorage or passed via process.env.TMDB_API_KEY).
  */
 
-const TMDB_API_KEY = '8265bd1679663a7ea12ac168da84d2e8'; // Public TMDB API Key
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 const IMAGE_BASE_ORIGINAL = 'https://image.tmdb.org/t/p/original';
 const IMAGE_BASE_W500 = 'https://image.tmdb.org/t/p/w500';
@@ -12,7 +12,54 @@ const IMAGE_BASE_W185 = 'https://image.tmdb.org/t/p/w185';
 const cache = new Map();
 
 /**
- * Cleans noisy IPTV titles by stripping codec, year, resolution, and language tags.
+ * Retrieves the active TMDB API key from environment variable or local browser storage.
+ */
+export function getTMDBApiKey() {
+  if (typeof process !== 'undefined' && process.env?.TMDB_API_KEY) {
+    return process.env.TMDB_API_KEY.trim();
+  }
+  if (typeof localStorage !== 'undefined') {
+    return (localStorage.getItem('nidalplayer_tmdb_api_key') || '').trim();
+  }
+  return '';
+}
+
+/**
+ * Saves or removes the user's custom TMDB API key.
+ */
+export function setTMDBApiKey(key) {
+  if (typeof localStorage !== 'undefined') {
+    if (key && key.trim()) {
+      localStorage.setItem('nidalplayer_tmdb_api_key', key.trim());
+    } else {
+      localStorage.removeItem('nidalplayer_tmdb_api_key');
+    }
+  }
+  cache.clear();
+}
+
+/**
+ * Tests an API key by making a lightweight request to TMDB configuration endpoint.
+ */
+export async function testTMDBApiKey(key) {
+  const apiKey = (key || getTMDBApiKey() || '').trim();
+  if (!apiKey) {
+    return { ok: false, error: 'Please enter a TMDB API Key.' };
+  }
+  try {
+    const res = await fetch(`${TMDB_BASE_URL}/authentication?api_key=${encodeURIComponent(apiKey)}`);
+    const data = await res.json();
+    if (res.ok && data.success) {
+      return { ok: true, message: 'Valid TMDB API Key! Connection successful.' };
+    }
+    return { ok: false, error: data.status_message || `TMDB responded with HTTP ${res.status}` };
+  } catch (err) {
+    return { ok: false, error: err.message || 'Connection failed.' };
+  }
+}
+
+/**
+ * Cleans noisy stream titles by stripping codec, year, resolution, and language tags.
  */
 export function cleanTitle(rawTitle) {
   if (!rawTitle) return '';
@@ -38,7 +85,13 @@ export function extractYear(rawTitle) {
 /**
  * Searches TMDB for a movie or TV show.
  */
-export async function fetchTMDBDetails(title, type = 'movie', yearHint = '') {
+export async function fetchTMDBDetails(title, type = 'movie', yearHint = '', customKey = null) {
+  const apiKey = (customKey || getTMDBApiKey() || '').trim();
+  if (!apiKey) {
+    // Graceful exit if user hasn't configured a key
+    return null;
+  }
+
   const cleaned = cleanTitle(title);
   if (!cleaned) return null;
 
@@ -52,7 +105,7 @@ export async function fetchTMDBDetails(title, type = 'movie', yearHint = '') {
     const isTv = type === 'series' || type === 'tv';
     const searchEndpoint = isTv ? `${TMDB_BASE_URL}/search/tv` : `${TMDB_BASE_URL}/search/movie`;
     const params = new URLSearchParams({
-      api_key: TMDB_API_KEY,
+      api_key: apiKey,
       query: cleaned,
       include_adult: 'false',
       language: 'en-US'
@@ -69,7 +122,7 @@ export async function fetchTMDBDetails(title, type = 'movie', yearHint = '') {
     const id = result.id;
     const detailEndpoint = isTv ? `${TMDB_BASE_URL}/tv/${id}` : `${TMDB_BASE_URL}/movie/${id}`;
     const detailParams = new URLSearchParams({
-      api_key: TMDB_API_KEY,
+      api_key: apiKey,
       append_to_response: 'credits',
       language: 'en-US'
     });
@@ -110,6 +163,9 @@ export async function fetchTMDBDetails(title, type = 'movie', yearHint = '') {
 }
 
 export default {
+  getTMDBApiKey,
+  setTMDBApiKey,
+  testTMDBApiKey,
   fetchTMDBDetails,
   cleanTitle,
   extractYear

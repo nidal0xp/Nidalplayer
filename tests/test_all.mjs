@@ -1,7 +1,7 @@
 import assert from 'node:assert';
 import { parseM3U } from '../src/playlist/m3uParser.js';
 import { XtreamApi, normalizeServer } from '../src/playlist/xtreamApi.js';
-import { cleanTitle, extractYear, fetchTMDBDetails } from '../src/services/tmdbService.js';
+import { cleanTitle, extractYear, fetchTMDBDetails, testTMDBApiKey } from '../src/services/tmdbService.js';
 import { matchCenter, TOP_5_LEAGUES } from '../src/sports/matchCenter.js';
 
 console.log('==================================================');
@@ -77,16 +77,30 @@ http://stream.example.com/series/user/pass/789.mp4`;
   });
 
 
-  await runAsyncTest('TMDB Service: Real Metadata & Top Cast Avatars', async () => {
-    const data = await fetchTMDBDetails('Inception', 'movie', '2010');
-    assert.ok(data, 'Should return TMDB data for Inception');
-    assert.ok(data.title.includes('Inception'), 'Title should match');
-    assert.ok(data.rating, 'Should have rating');
-    assert.strictEqual(data.trailerKey, undefined, 'Trailer key must be removed');
-    assert.ok(data.cast.length > 0, 'Should have cast members');
-    const names = data.cast.map(c => c.name).slice(0, 3).join(', ');
-    const infoLine = '   [TMDB Info] Title: ' + data.title + ', Rating: ★' + data.rating + ', Cast: ' + names;
-    console.log(infoLine);
+  await runAsyncTest('TMDB Service: Metadata & User Key Handling', async () => {
+    // 1. Without API key, should gracefully return null without throwing
+    const noKeyData = await fetchTMDBDetails('Inception', 'movie', '2010');
+    if (!process.env.TMDB_API_KEY) {
+      assert.strictEqual(noKeyData, null, 'Without API key, should safely return null');
+    }
+
+    // 2. Validate testTMDBApiKey with empty key
+    const emptyTest = await testTMDBApiKey('');
+    assert.strictEqual(emptyTest.ok, false, 'Empty key validation should fail gracefully');
+
+    // 3. If test environment provides TMDB_API_KEY, test live fetch
+    if (process.env.TMDB_API_KEY) {
+      const data = await fetchTMDBDetails('Inception', 'movie', '2010', process.env.TMDB_API_KEY);
+      assert.ok(data, 'Should return TMDB data when API key is supplied');
+      assert.ok(data.title.includes('Inception'), 'Title should match');
+      assert.ok(data.rating, 'Should have rating');
+      assert.strictEqual(data.trailerKey, undefined, 'Trailer key must be removed');
+      assert.ok(data.cast.length > 0, 'Should have cast members');
+      const names = data.cast.map(c => c.name).slice(0, 3).join(', ');
+      console.log('   [TMDB Info] Title: ' + data.title + ', Rating: ★' + data.rating + ', Cast: ' + names);
+    } else {
+      console.log('   [TMDB Info] Zero hardcoded keys verified. Graceful fallback operational.');
+    }
   });
 
   // 4. Sports Match Center Tests

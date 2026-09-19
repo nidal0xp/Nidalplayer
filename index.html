@@ -38,7 +38,7 @@
           <span>SYSTEM INITIALIZATION // CINEMA ENGINE</span>
         </div>
         <h1 class="boot-brand-title">NIDAL<span>PLAYER</span></h1>
-        <p class="boot-brand-subtitle">ULTRA HD 4K IPTV & CINEMA ECOSYSTEM</p>
+        <p class="boot-brand-subtitle">ULTRA HD 4K STREAM & CINEMA ECOSYSTEM</p>
       </div>
 
       <!-- Laser Scanner Progress Box -->
@@ -50,7 +50,7 @@
         </div>
         <div class="boot-status-row">
           <span id="bootStatus" class="boot-status-text">INITIALIZING HARDWARE ACCELERATION & CACHE…</span>
-          <span class="boot-version-badge">V4.0 PRO</span>
+          <span class="boot-version-badge">V4.1 PRO</span>
         </div>
       </div>
 
@@ -72,7 +72,7 @@
         <img src="assets/logo.png" alt="NP" style="width:38px; height:38px; border-radius:8px; object-fit:cover; border:1px solid rgba(255,255,255,0.12); flex-shrink:0;">
         <div style="min-width:0;">
           <div class="brand-badge" style="letter-spacing:1px; line-height:1.2; font-size:14px;">NIDALPLAYER</div>
-          <div class="brand-meta" style="font-size:10px; color:var(--text-muted); margin-top:2px;">M3U MEDIA PLAYER <span class="version-tag">V4.0</span></div>
+          <div class="brand-meta" style="font-size:10px; color:var(--text-muted); margin-top:2px;">M3U MEDIA PLAYER <span class="version-tag">V4.1</span></div>
         </div>
       </div>
 
@@ -185,7 +185,7 @@
               <div class="hero-header-wrap">
                 <div class="hero-kicker" data-i18n="hero_kicker">EDITORIAL MEDIA CENTER — BASED ON HIGH PERFORMANCE</div>
                 <h1 class="hero-title"><span data-i18n="hero_title_1">STREAM</span> <span class="highlight" data-i18n="hero_title_2">WITH INTENT.</span></h1>
-                <p class="hero-manifesto" data-i18n="hero_manifesto">High bitrate IPTV engine with instant channel demuxing, EPG auto-matching & 4K metadata discovery.</p>
+                <p class="hero-manifesto" data-i18n="hero_manifesto">High bitrate streaming engine with instant channel demuxing, EPG auto-matching & 4K metadata discovery.</p>
               </div>
               <div id="heroFavClubContainer" class="hero-fav-club-container">
                 <!-- Dynamically rendered favorite club radar (Prompt to select or Next Fixture & Stats) -->
@@ -590,11 +590,19 @@
         <!-- 5. SETTINGS & PLAYLIST MANAGEMENT VIEW -->
         <section id="viewSettings" class="view-panel hidden">
           <div class="settings-container">
-            <div class="settings-section" style="background:var(--bg-card); border:1px solid var(--border-subtle); padding:20px; display:flex; align-items:center; gap:18px; margin-bottom:24px; border-radius:var(--radius-md);">
+            <div class="settings-section" style="background:var(--bg-card); border:1px solid var(--border-subtle); padding:20px; display:flex; align-items:center; gap:18px; margin-bottom:16px; border-radius:var(--radius-md);">
               <img src="assets/logo.png" alt="NP" style="width:56px; height:56px; border-radius:12px; object-fit:cover; border:1px solid rgba(255,69,26,0.35); box-shadow:0 6px 20px rgba(255,69,26,0.2); flex-shrink:0;">
               <div>
                 <div style="font-family:var(--font-mono); font-size:16px; font-weight:700; color:var(--text-primary); letter-spacing:0.5px;">NIDALPLAYER MEDIA CENTER</div>
-                <p style="font-size:11px; color:var(--text-muted); margin-top:4px;">Version 4.0.0 • Swiss Industrial Edition • Obsidian & International Signal Orange</p>
+                <p style="font-size:11px; color:var(--text-muted); margin-top:4px;">Version 4.1.0 • Swiss Industrial Edition • Obsidian & International Signal Orange</p>
+              </div>
+            </div>
+
+            <div class="settings-section" style="background:rgba(255,69,26,0.06); border:1px solid rgba(255,69,26,0.2); padding:14px 18px; display:flex; align-items:flex-start; gap:14px; margin-bottom:24px; border-radius:var(--radius-md);">
+              <span style="font-size:18px; line-height:1;">⚡</span>
+              <div style="font-size:12px; line-height:1.5; color:var(--text-secondary);">
+                <strong style="color:var(--primary); font-weight:600;">Vibe-Coded Architecture Notice:</strong>
+                This project was predominantly vibe-coded with AI pair programming. If you run into bugs, playback quirks, or issues, you can report them or contribute a fix on our public <a href="https://github.com/nidal0xp/Nidalplayer/issues" target="_blank" style="color:var(--primary); text-decoration:underline;">GitHub Issues tracker</a>.
               </div>
             </div>
 
@@ -678,6 +686,21 @@
                     </optgroup>
                   </select>
                 </div>
+                <div class="config-card" style="grid-column: 1 / -1;">
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <label style="margin:0; font-weight:600; letter-spacing:0.5px;">🎬 TMDB API KEY (POSTERS & 4K METADATA ENRICHMENT)</label>
+                    <a href="https://www.themoviedb.org/settings/api" target="_blank" style="font-size:11px; color:var(--primary); text-decoration:none;">Get Free TMDB API Key ↗</a>
+                  </div>
+                  <div style="display:flex; gap:8px; align-items:center;">
+                    <input type="password" id="settingTmdbApiKey" class="config-select" placeholder="Enter your 32-character TMDB v3 API Key..." style="flex:1; font-family:monospace; font-size:12px; padding:9px 12px;">
+                    <button id="settingToggleTmdbKeyVisBtn" class="btn-action" title="Toggle visibility" style="padding:0 12px;">👁</button>
+                    <button id="settingSaveTmdbKeyBtn" class="btn-action primary" style="padding:0 16px;">SAVE KEY</button>
+                    <button id="settingTestTmdbKeyBtn" class="btn-action" style="padding:0 14px;">TEST KEY</button>
+                  </div>
+                  <div id="settingTmdbStatus" style="font-size:11px; margin-top:6px; color:var(--text-muted); line-height:1.4;">
+                    Provides 4K posters, ratings, cast headshots, and plot synopses. Keys are stored locally on your device and are never sent to external servers.
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -685,12 +708,15 @@
               <div class="settings-title">APPLICATION UPDATES —</div>
               <div class="setting-row" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
                 <div>
-                  <strong id="settingsUpdateTitle">Version Status: v4.0.0</strong>
+                  <strong id="settingsUpdateTitle">Version Status: v4.1.0</strong>
                   <p class="settings-desc" id="settingsUpdateSubtitle" style="margin:0; font-size:11px;">Nidalplayer checks for updates automatically via GitHub Releases.</p>
                 </div>
-                <div style="display:flex; align-items:center; gap:10px;">
+                <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
                   <button id="settingsCheckUpdateBtn" class="btn-action">
                     <span id="settingsCheckUpdateIcon">↻</span> <span id="settingsCheckUpdateText">CHECK FOR UPDATES</span>
+                  </button>
+                  <button id="settingsSimulateUpdateBtn" class="btn-action" title="Test in-app floating banner & native Windows notification">
+                    <span>🔔</span> <span>TEST NOTIFICATION</span>
                   </button>
                   <button id="settingsInstallUpdateBtn" class="btn-action primary hidden">
                     <span>⚡</span> <span>RESTART & INSTALL UPDATE</span>
@@ -1148,6 +1174,29 @@
       <div class="modal-actions" style="justify-content:center; gap:12px;">
         <button id="updateModalRestartBtn" class="btn-action primary" style="padding:10px 24px;">⚡ RESTART & INSTALL NOW</button>
         <button id="updateModalDismissBtn" class="btn-action subtle" style="padding:10px 20px;">LATER (ON EXIT)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FLOATING IN-APP UPDATE NOTIFICATION TOAST -->
+  <div id="floatingUpdateBanner" class="floating-update-banner hidden">
+    <div class="floating-update-card">
+      <div class="floating-update-header">
+        <div class="floating-update-glow"></div>
+        <div class="floating-update-icon">⚡</div>
+        <div class="floating-update-info">
+          <div class="floating-update-kicker">SYSTEM NOTIFICATION // UPDATE</div>
+          <div id="floatingUpdateTitle" class="floating-update-title">NEW VERSION DETECTED</div>
+        </div>
+        <button id="floatingUpdateCloseBtn" class="floating-update-close" title="Dismiss">✕</button>
+      </div>
+      <p id="floatingUpdateDesc" class="floating-update-desc">Nidalplayer update is downloading in background…</p>
+      <div id="floatingUpdateProgressTrack" class="floating-update-track hidden">
+        <div id="floatingUpdateProgressBar" class="floating-update-bar" style="width: 0%;"></div>
+      </div>
+      <div class="floating-update-actions">
+        <button id="floatingUpdateInstallBtn" class="btn-action primary hidden">⚡ RESTART & INSTALL</button>
+        <button id="floatingUpdateDetailsBtn" class="btn-action subtle">VIEW DETAILS</button>
       </div>
     </div>
   </div>

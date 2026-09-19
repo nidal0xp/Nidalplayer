@@ -76,6 +76,7 @@ function setupDomElements() {
     settingsUpdateTitle: document.getElementById('settingsUpdateTitle'),
     settingsUpdateSubtitle: document.getElementById('settingsUpdateSubtitle'),
     settingsCheckUpdateBtn: document.getElementById('settingsCheckUpdateBtn'),
+    settingsSimulateUpdateBtn: document.getElementById('settingsSimulateUpdateBtn'),
     settingsCheckUpdateIcon: document.getElementById('settingsCheckUpdateIcon'),
     settingsCheckUpdateText: document.getElementById('settingsCheckUpdateText'),
     settingsInstallUpdateBtn: document.getElementById('settingsInstallUpdateBtn'),
@@ -89,6 +90,16 @@ function setupDomElements() {
     updateModalNotes: document.getElementById('updateModalNotes'),
     updateModalRestartBtn: document.getElementById('updateModalRestartBtn'),
     updateModalDismissBtn: document.getElementById('updateModalDismissBtn'),
+
+    // Floating Update Notification Banner
+    floatingUpdateBanner: document.getElementById('floatingUpdateBanner'),
+    floatingUpdateTitle: document.getElementById('floatingUpdateTitle'),
+    floatingUpdateDesc: document.getElementById('floatingUpdateDesc'),
+    floatingUpdateCloseBtn: document.getElementById('floatingUpdateCloseBtn'),
+    floatingUpdateProgressTrack: document.getElementById('floatingUpdateProgressTrack'),
+    floatingUpdateProgressBar: document.getElementById('floatingUpdateProgressBar'),
+    floatingUpdateInstallBtn: document.getElementById('floatingUpdateInstallBtn'),
+    floatingUpdateDetailsBtn: document.getElementById('floatingUpdateDetailsBtn'),
 
     // Sidebar
     sidebarLiveCount: document.getElementById('sidebarLiveCount'),
@@ -245,6 +256,11 @@ function setupDomElements() {
     settingEngineSelect: document.getElementById('settingEngineSelect'),
     settingLangSelect: document.getElementById('settingLangSelect'),
     settingFavTeamSelect: document.getElementById('settingFavTeamSelect'),
+    settingTmdbApiKey: document.getElementById('settingTmdbApiKey'),
+    settingToggleTmdbKeyVisBtn: document.getElementById('settingToggleTmdbKeyVisBtn'),
+    settingSaveTmdbKeyBtn: document.getElementById('settingSaveTmdbKeyBtn'),
+    settingTestTmdbKeyBtn: document.getElementById('settingTestTmdbKeyBtn'),
+    settingTmdbStatus: document.getElementById('settingTmdbStatus'),
     clearCacheBtn: document.getElementById('clearCacheBtn'),
     resetAllDataBtn: document.getElementById('resetAllDataBtn'),
 
@@ -832,6 +848,10 @@ function navigateTo(dest) {
   // Reparent playing video to the active view dock
   if (!state.isFullscreen && state.playerItem) {
     reparentVideoToPreview();
+  }
+
+  if (dest === 'settings' && els.settingTmdbApiKey) {
+    els.settingTmdbApiKey.value = tmdbService.getTMDBApiKey();
   }
 
   refreshActiveViewContent();
@@ -3318,6 +3338,60 @@ function setupEventListeners() {
     });
   }
 
+  // TMDB API Key Configuration
+  if (els.settingTmdbApiKey) {
+    els.settingTmdbApiKey.value = tmdbService.getTMDBApiKey();
+
+    els.settingToggleTmdbKeyVisBtn?.addEventListener('click', () => {
+      const isPass = els.settingTmdbApiKey.type === 'password';
+      els.settingTmdbApiKey.type = isPass ? 'text' : 'password';
+      if (els.settingToggleTmdbKeyVisBtn) {
+        els.settingToggleTmdbKeyVisBtn.textContent = isPass ? '🔒' : '👁';
+      }
+    });
+
+    els.settingSaveTmdbKeyBtn?.addEventListener('click', () => {
+      const key = els.settingTmdbApiKey.value.trim();
+      tmdbService.setTMDBApiKey(key);
+      if (els.settingTmdbStatus) {
+        els.settingTmdbStatus.textContent = key
+          ? '✓ TMDB API Key saved successfully. 4K metadata & poster discovery enabled.'
+          : 'TMDB API Key cleared. Default stream metadata will be used.';
+        els.settingTmdbStatus.style.color = key ? 'var(--accent-green, #2ec4b6)' : 'var(--text-muted)';
+      }
+      showToast(key ? 'TMDB API Key saved!' : 'TMDB API Key removed');
+    });
+
+    els.settingTestTmdbKeyBtn?.addEventListener('click', async () => {
+      const key = els.settingTmdbApiKey.value.trim();
+      if (!key) {
+        if (els.settingTmdbStatus) {
+          els.settingTmdbStatus.textContent = 'Please enter an API key to test.';
+          els.settingTmdbStatus.style.color = '#ff9f1c';
+        }
+        return;
+      }
+      if (els.settingTmdbStatus) {
+        els.settingTmdbStatus.textContent = 'Testing connection with TMDB…';
+        els.settingTmdbStatus.style.color = 'var(--text-muted)';
+      }
+      const res = await tmdbService.testTMDBApiKey(key);
+      if (res.ok) {
+        if (els.settingTmdbStatus) {
+          els.settingTmdbStatus.textContent = `✓ ${res.message}`;
+          els.settingTmdbStatus.style.color = 'var(--accent-green, #2ec4b6)';
+        }
+        showToast('TMDB Connection Verified!');
+      } else {
+        if (els.settingTmdbStatus) {
+          els.settingTmdbStatus.textContent = `✗ Verification failed: ${res.error}`;
+          els.settingTmdbStatus.style.color = '#e63946';
+        }
+        showToast(`TMDB Test Failed: ${res.error}`);
+      }
+    });
+  }
+
   els.topSyncBtn?.addEventListener('click', () => {
     const active = state.playlists.find(p => p.id === state.activePlaylistId);
     startPlaylistSync(active);
@@ -3988,6 +4062,15 @@ function setupUpdaterUI() {
       els.settingsUpdateSubtitle.textContent = `Update v${info?.version || ''} found. Downloading in background...`;
     }
     if (els.settingsUpdateProgressRow) els.settingsUpdateProgressRow.classList.remove('hidden');
+    
+    // Show Floating In-App Banner
+    if (els.floatingUpdateBanner) {
+      els.floatingUpdateBanner.classList.remove('hidden');
+      if (els.floatingUpdateTitle) els.floatingUpdateTitle.textContent = `UPDATE AVAILABLE // v${info?.version || ''}`;
+      if (els.floatingUpdateDesc) els.floatingUpdateDesc.textContent = `Nidalplayer v${info?.version || ''} is downloading in the background…`;
+      if (els.floatingUpdateProgressTrack) els.floatingUpdateProgressTrack.classList.remove('hidden');
+      if (els.floatingUpdateInstallBtn) els.floatingUpdateInstallBtn.classList.add('hidden');
+    }
     showToast(`New update v${info?.version || ''} available — downloading...`);
   });
 
@@ -3996,9 +4079,10 @@ function setupUpdaterUI() {
     if (els.settingsCheckUpdateBtn) els.settingsCheckUpdateBtn.disabled = false;
     if (els.settingsCheckUpdateText) els.settingsCheckUpdateText.textContent = 'CHECK FOR UPDATES';
     if (els.settingsUpdateSubtitle) {
-      els.settingsUpdateSubtitle.textContent = `Nidalplayer is up to date (v${info?.version || '4.0.0'}).`;
+      els.settingsUpdateSubtitle.textContent = `Nidalplayer is up to date (v${info?.version || '4.1.0'}).`;
     }
     if (els.settingsUpdateProgressRow) els.settingsUpdateProgressRow.classList.add('hidden');
+    if (els.floatingUpdateBanner) els.floatingUpdateBanner.classList.add('hidden');
     showToast('Nidalplayer is up to date.');
   });
 
@@ -4011,6 +4095,13 @@ function setupUpdaterUI() {
     if (els.settingsUpdateSpeedText && progress?.bytesPerSecond) {
       const speedMB = (progress.bytesPerSecond / (1024 * 1024)).toFixed(1);
       els.settingsUpdateSpeedText.textContent = `${speedMB} MB/s`;
+    }
+
+    // Update Floating Banner Progress
+    if (els.floatingUpdateProgressBar) els.floatingUpdateProgressBar.style.width = `${percent}%`;
+    if (els.floatingUpdateDesc) {
+      const speed = progress?.bytesPerSecond ? ` (${(progress.bytesPerSecond / (1024 * 1024)).toFixed(1)} MB/s)` : '';
+      els.floatingUpdateDesc.textContent = `Downloading update… ${percent}%${speed}`;
     }
   });
 
@@ -4030,6 +4121,16 @@ function setupUpdaterUI() {
     if (els.updateModalNotes) {
       els.updateModalNotes.textContent = info?.releaseNotes || 'Includes performance enhancements, stream engine optimizations, and stability fixes.';
     }
+
+    // Activate Floating In-App Banner for immediate installation
+    if (els.floatingUpdateBanner) {
+      els.floatingUpdateBanner.classList.remove('hidden');
+      if (els.floatingUpdateTitle) els.floatingUpdateTitle.textContent = `UPDATE READY // v${info?.version || ''}`;
+      if (els.floatingUpdateDesc) els.floatingUpdateDesc.textContent = `Version v${info?.version || ''} has been downloaded and is ready to install.`;
+      if (els.floatingUpdateProgressTrack) els.floatingUpdateProgressTrack.classList.add('hidden');
+      if (els.floatingUpdateInstallBtn) els.floatingUpdateInstallBtn.classList.remove('hidden');
+    }
+
     els.updateNoticeModal?.classList.remove('hidden');
     showToast(`Update v${info?.version || ''} downloaded. Restart to apply.`);
   });
@@ -4039,7 +4140,15 @@ function setupUpdaterUI() {
     if (els.settingsCheckUpdateBtn) els.settingsCheckUpdateBtn.disabled = false;
     if (els.settingsCheckUpdateText) els.settingsCheckUpdateText.textContent = 'CHECK FOR UPDATES';
     if (els.settingsUpdateProgressRow) els.settingsUpdateProgressRow.classList.add('hidden');
-    console.warn('[Updater UI] Notice:', err?.message);
+    const msg = String(err?.message || err || '');
+    console.warn('[Updater UI] Notice:', msg);
+    if (els.settingsUpdateSubtitle) {
+      if (msg.includes('404')) {
+        els.settingsUpdateSubtitle.innerHTML = '<span style="color:#ff9f1c;">⚠ GitHub 404: Repository is Private. Auto-updates will activate once the repository is set to Public on GitHub.</span>';
+      } else {
+        els.settingsUpdateSubtitle.textContent = `Update check notice: ${msg.slice(0, 80)}`;
+      }
+    }
   });
 
   // Manual Check Button
@@ -4049,7 +4158,7 @@ function setupUpdaterUI() {
     try {
       const res = await bridge.checkForUpdates();
       if (res?.dev) {
-        showToast(res.message || 'Auto-updates operate in packaged app builds.');
+        showToast(res.message || 'Auto-updates active in packaged builds.');
         if (els.settingsUpdateSubtitle) els.settingsUpdateSubtitle.textContent = res.message;
       }
     } catch {
@@ -4060,6 +4169,12 @@ function setupUpdaterUI() {
         if (els.settingsCheckUpdateText) els.settingsCheckUpdateText.textContent = 'CHECK FOR UPDATES';
       }, 2000);
     }
+  });
+
+  // Test Notification Simulation Button
+  els.settingsSimulateUpdateBtn?.addEventListener('click', async () => {
+    showToast('Testing update banner & native Windows notification…');
+    await bridge.simulateUpdateNotification?.();
   });
 
   // Install Handlers
@@ -4076,6 +4191,15 @@ function setupUpdaterUI() {
   els.updateModalDismissBtn?.addEventListener('click', () => {
     els.updateNoticeModal?.classList.add('hidden');
   });
+
+  // Floating Banner Event Listeners
+  els.floatingUpdateCloseBtn?.addEventListener('click', () => {
+    els.floatingUpdateBanner?.classList.add('hidden');
+  });
+  els.floatingUpdateDetailsBtn?.addEventListener('click', () => {
+    els.updateNoticeModal?.classList.remove('hidden');
+  });
+  els.floatingUpdateInstallBtn?.addEventListener('click', triggerInstall);
 }
 
 function showToast(msg) {

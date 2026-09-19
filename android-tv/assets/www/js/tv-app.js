@@ -870,9 +870,11 @@ function _resolveTmdbPoster(item, imgEl) {
     item.logo = _tmdbCache[q];
     return;
   }
+  var apiKey = (window.localStorage && localStorage.getItem('nidalplayer_tmdb_api_key')) || '';
+  if (!apiKey) { imgEl.src = item.logo || 'icon.png'; return; }
   var isTv = item._type === 'series';
   var endpoint = isTv ? 'https://api.themoviedb.org/3/search/tv' : 'https://api.themoviedb.org/3/search/movie';
-  var url = endpoint + '?api_key=8265bd1679663a7ea12ac168da84d2e8&query=' + encodeURIComponent(q) + '&include_adult=false';
+  var url = endpoint + '?api_key=' + encodeURIComponent(apiKey) + '&query=' + encodeURIComponent(q) + '&include_adult=false';
   fetch(url)
     .then(function(r){ return r.json(); })
     .then(function(d){
