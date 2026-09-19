@@ -11,6 +11,7 @@ build/*.msi
 
 # Explicitly allow root Windows release executables & update manifests
 !Nidalplayer-Portable.exe
+!Nidalplayer-Setup-*.exe
 !*.blockmap
 !latest.yml
 

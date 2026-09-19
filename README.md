@@ -2,18 +2,10 @@
 
 [![License: CC BY-NC-SA 4.0](https://img.shields.io/badge/License-CC_BY--NC--SA_4.0-orange.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows_x64-blue.svg)](https://github.com/nidal0xp/Nidalplayer/releases)
-[![Version](https://img.shields.io/badge/Version-4.1.0-success.svg)](https://github.com/nidal0xp/Nidalplayer/releases)
+[![Version](https://img.shields.io/badge/Version-4.2.1-success.svg)](https://github.com/nidal0xp/Nidalplayer/releases)
 [![Auto-Updates](https://img.shields.io/badge/Updates-Automatic_GitHub_Releases-brightgreen.svg)](https://github.com/nidal0xp/Nidalplayer/releases)
-[![Codebase: Vibe Coded](https://img.shields.io/badge/Codebase-Vibe_Coded_⚡-purple.svg)](#-vibe-coded-architecture-notice)
 
 **Nidalplayer** is a high-performance, modernist streaming media center engineered specifically for Windows. Designed with an industrial Swiss aesthetic, it combines lightning-fast stream startup, real-time sports intelligence, 4K metadata discovery, live preview playback, and zero-configuration mobile companion remote control.
-
-> [!NOTE]
-> ### ⚡ Vibe-Coded Architecture Notice
-> Most of this codebase was **vibe-coded** using AI pair programming. While extensively tested, feature-packed, and daily-driven with an automated test suite, **you may encounter occasional bugs, quirks, or edge-case issues**.
-> 
-> - 🐛 **Found a bug?** Please submit an issue on our [GitHub Issues tracker](https://github.com/nidal0xp/Nidalplayer/issues) with logs and reproduction steps.
-> - 🛠️ **Want to help improve it?** Pull requests, cleanups, and community bug fixes are warmly welcomed! Check out [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
@@ -70,9 +62,9 @@ Scan the in-app QR code with any smartphone on your local Wi-Fi to launch the in
 
 | Release Package | File | Size | Description |
 | :--- | :--- | :--- | :--- |
-| **Windows Installer** | [`Nidalplayer-Setup-4.1.0.exe`](https://github.com/nidal0xp/Nidalplayer/releases/download/v4.1.0/Nidalplayer-Setup-4.1.0.exe) | ~84 MB | Standard Windows Setup with desktop & start menu shortcuts |
-| **Portable Edition** | [`Nidalplayer-Portable.exe`](https://github.com/nidal0xp/Nidalplayer/releases/download/v4.1.0/Nidalplayer-Portable.exe) | ~75 MB | Standalone portable executable (no installation required) |
-| **Update Manifest** | [`latest.yml`](https://github.com/nidal0xp/Nidalplayer/releases/download/v4.1.0/latest.yml) | 350 B | Cryptographic SHA-512 update verification manifest |
+| **Windows Installer** | [`Nidalplayer-Setup-4.2.1.exe`](https://github.com/nidal0xp/Nidalplayer/releases/download/v4.2.1/Nidalplayer-Setup-4.2.1.exe) | ~85 MB | Standard Windows Setup with desktop & start menu shortcuts |
+| **Portable Edition** | [`Nidalplayer-Portable.exe`](https://github.com/nidal0xp/Nidalplayer/releases/download/v4.2.1/Nidalplayer-Portable.exe) | ~76 MB | Standalone portable executable (no installation required) |
+| **Update Manifest** | [`latest.yml`](https://github.com/nidal0xp/Nidalplayer/releases/download/v4.2.1/latest.yml) | 504 B | Cryptographic SHA-512 update verification manifest |
 
 ---
 
