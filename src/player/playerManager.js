@@ -365,7 +365,7 @@ export class PlayerManager {
             if (current() && this.current?.type === 'live' && !media.paused) {
               this.retry('Live stream stalled / buffering timeout', { stalled: true });
             }
-          }, 4500);
+          }, 15000);
         }
       }
     });
@@ -444,10 +444,12 @@ export class PlayerManager {
       nudgeMaxRetry: 10,
       maxBufferHole: 0.5,
       highBufferWatchdogPeriod: 2,
-      fragLoadingTimeOut: 6000,
-      manifestLoadingTimeOut: 6000,
-      manifestLoadingMaxRetry: 1,
-      fragLoadingMaxRetry: 2
+      fragLoadingTimeOut: 20000,
+      manifestLoadingTimeOut: 20000,
+      manifestLoadingMaxRetry: 4,
+      fragLoadingMaxRetry: 4,
+      levelLoadingTimeOut: 20000,
+      levelLoadingMaxRetry: 4
     });
 
     this.hls.on(this.Hls.Events.MANIFEST_PARSED, (_event, data) => {
@@ -511,7 +513,8 @@ export class PlayerManager {
             } else if (data.details === 'manifestParsingError' && streamUrl.startsWith('blob:')) {
               try {
                 this.hls.destroy();
-                this.loadNativeFile(media, item, ready);
+                const realUrl = this.getStreamSourceUrl(this.current) || this.current?.url || item.url;
+                this.loadNativeFile(media, { ...item, url: realUrl }, ready);
                 return;
               } catch {}
             }
@@ -946,7 +949,7 @@ export class PlayerManager {
     if (this.retrying) return;
     const isLive = this.current?.type === 'live';
 
-    if (isLive && this.retryCount >= 2) {
+    if (isLive && this.retryCount >= 4) {
       this.onState({
         status: 'offline',
         buffering: false,
@@ -972,7 +975,7 @@ export class PlayerManager {
       buffering: true,
       engine: this.engine,
       itemId: this.current?.id || '',
-      message: isLive ? ('Testing connection… (Attempt ' + this.retryCount + '/2)') : (reason + '; retrying… (attempt ' + this.retryCount + '/3)'),
+      message: isLive ? ('Testing connection… (Attempt ' + this.retryCount + '/4)') : (reason + '; retrying… (attempt ' + this.retryCount + '/3)'),
       details: { ...details, retryCount: this.retryCount, isLive }
     });
 

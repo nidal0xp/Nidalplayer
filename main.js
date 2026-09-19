@@ -520,19 +520,15 @@ app.commandLine.appendSwitch('disable-web-security');
 app.commandLine.appendSwitch('allow-insecure-localhost');
 
 // Hardware Acceleration & GPU Video Decoding Tuning
-// NOTE: use-angle d3d11 is the most stable DirectX backend on Windows for HLS streaming.
-// Removed enable-zero-copy and enable-native-gpu-memory-buffers — these were causing GPU
-// process crashes on certain Windows GPU drivers (Intel/AMD) during live stream playback.
-// Removed VaapiVideoDecoder — this is a Linux-only VA-API flag; applying it on Windows
-// caused the GPU process to crash when switching streams or changing resolutions.
-// Added disable-gpu-process-crash-limit and in-process-gpu as resilience fallbacks.
+// Direct3D 11 via ANGLE provides rock-solid hardware-accelerated video decode on Windows (Intel/AMD/Nvidia).
+// Problematic flags (enable-zero-copy, enable-native-gpu-memory-buffers, VaapiVideoDecoder, in-process-gpu)
+// have been removed to prevent GPU process crashes and video decoding failures on Windows GPUs.
 app.commandLine.appendSwitch('use-angle', 'd3d11');
 app.commandLine.appendSwitch('enable-accelerated-video-decode');
 app.commandLine.appendSwitch('enable-gpu-rasterization');
-app.commandLine.appendSwitch('enable-features', 'PlatformHEVCDecoderSupport,CanvasOopRasterization,D3D11VideoDecoder');
-app.commandLine.appendSwitch('disable-features', 'HardwareMediaKeyHandling,UseChromeOSDirectVideoDecoder');
-app.commandLine.appendSwitch('disable-gpu-process-crash-limit');
-app.commandLine.appendSwitch('in-process-gpu');
+app.commandLine.appendSwitch('enable-features', 'PlatformHEVCDecoderSupport');
+// Disable automatic HTTP-to-HTTPS upgrades and DNS SVCB/HTTPS record upgrades so that HTTP IPTV streams are never forcibly upgraded to HTTPS
+app.commandLine.appendSwitch('disable-features', 'HardwareMediaKeyHandling,UseDnsHttpsSvcb,UseDnsHttpsSvcbHttpUpgrade,HttpsUpgrades,AutoupgradeMixedContent');
 
 // Secure DNS (DNS-over-HTTPS) via Cloudflare & Google to bypass ISP 451 blocks and censorship
 app.commandLine.appendSwitch('dns-over-https-mode', 'automatic');

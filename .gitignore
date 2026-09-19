@@ -10,9 +10,8 @@ build/*.msi
 *.msi
 
 # Explicitly allow root Windows release executables & update manifests
-!Nidalplayer-Setup-4.1.0.exe
 !Nidalplayer-Portable.exe
-!Nidalplayer-Setup-4.1.0.exe.blockmap
+!*.blockmap
 !latest.yml
 
 # TV & Mobile platforms (reserved for future release)
@@ -73,6 +72,7 @@ Desktop.ini
 .gemini/
 *.sublime-project
 *.sublime-workspace
+*.code-workspace
 
 # Environment variables & local secrets
 .env
