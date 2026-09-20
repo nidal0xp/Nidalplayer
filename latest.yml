@@ -1,11 +1,8 @@
-version: 4.2.1
+version: 4.3.0
 files:
-  - url: Nidalplayer-Setup-4.2.1.exe
-    sha512: lolAVWBiOiRVNGYFuPhidUaZDgs4k4ZLNogRc/YpR3OzcH4acCQQndTgv7el6QXCbbA1/Mbt9e6+cVQ8kEdlww==
-    size: 89571091
-  - url: Nidalplayer-Portable.exe
-    sha512: v363E6UvuJvrNINhMCiAWzjx16uFnkOVdFR6e9gJXAmXQDrNGxY46TaZ4gFueVMcdF2fi2SPL3eFfi+6qDhtpw==
-    size: 80439439
-path: Nidalplayer-Setup-4.2.1.exe
-sha512: lolAVWBiOiRVNGYFuPhidUaZDgs4k4ZLNogRc/YpR3OzcH4acCQQndTgv7el6QXCbbA1/Mbt9e6+cVQ8kEdlww==
-releaseDate: '2026-09-19T21:25:18.280Z'
+  - url: Nidalplayer-Setup-4.3.0.exe
+    sha512: a183CAJfFWRijjCGQrTT17xkTpkG3NPX8OQOOcbqfhdMoXf9ke01aMKGBVsCwwkA2on/pxSVMgcOwQSTV0vfmA==
+    size: 89613229
+path: Nidalplayer-Setup-4.3.0.exe
+sha512: a183CAJfFWRijjCGQrTT17xkTpkG3NPX8OQOOcbqfhdMoXf9ke01aMKGBVsCwwkA2on/pxSVMgcOwQSTV0vfmA==
+releaseDate: '2026-09-20T23:23:22.559Z'

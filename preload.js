@@ -85,6 +85,20 @@ contextBridge.exposeInMainWorld('streamline', {
     const listener = (_event, error) => handler(error);
     ipcRenderer.on('updater-error', listener);
     return () => ipcRenderer.removeListener('updater-error', listener);
+  },
+
+  // GPU Acceleration Toggle & Diagnostics
+  getGpuAcceleration: () => ipcRenderer.invoke('get-gpu-acceleration'),
+  setGpuAcceleration: enabled => ipcRenderer.invoke('set-gpu-acceleration', enabled),
+  getGpuInfo: () => ipcRenderer.invoke('get-gpu-info'),
+
+  // Crash Logs
+  getCrashLogs: () => ipcRenderer.invoke('get-crash-logs'),
+  clearCrashLogs: () => ipcRenderer.invoke('clear-crash-logs'),
+  onCrashEvent: handler => {
+    const listener = (_event, entry) => handler(entry);
+    ipcRenderer.on('crash-event', listener);
+    return () => ipcRenderer.removeListener('crash-event', listener);
   }
 });
 

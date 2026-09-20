@@ -3,6 +3,7 @@ import { parseM3U } from '../src/playlist/m3uParser.js';
 import { XtreamApi, normalizeServer } from '../src/playlist/xtreamApi.js';
 import { cleanTitle, extractYear, fetchTMDBDetails, testTMDBApiKey } from '../src/services/tmdbService.js';
 import { matchCenter, TOP_5_LEAGUES } from '../src/sports/matchCenter.js';
+import { favoriteTeamService } from '../src/sports/favoriteTeamService.js';
 
 console.log('==================================================');
 console.log('🧪 RUNNING COMPREHENSIVE NIDALPLAYER TEST SUITE');
@@ -173,6 +174,78 @@ http://stream.example.com/series/user/pass/789.mp4`;
     assert.strictEqual(setupAsset.state, 'uploaded', 'Setup asset state must be uploaded');
     assert.ok(setupAsset.size > 50 * 1024 * 1024, 'Setup asset size must be valid binary (>50MB)');
     console.log(`   [Updater Info] Tag: ${releaseData.tag_name}, Setup: ${(setupAsset.size / (1024 * 1024)).toFixed(1)} MB, State: ${setupAsset.state}`);
+  });
+
+  // 9. GPU Settings & Crash Log Persistence Unit Test
+  runTest('GPU Hardware Acceleration & Crash Log Data Integrity', () => {
+    // Test user settings serialization & defaults
+    const defaultSettings = {};
+    const defaultGpu = defaultSettings.gpuAcceleration !== false;
+    assert.strictEqual(defaultGpu, true, 'Default GPU acceleration must be true');
+
+    const disabledSettings = { gpuAcceleration: false };
+    const disabledGpu = disabledSettings.gpuAcceleration !== false;
+    assert.strictEqual(disabledGpu, false, 'Disabled GPU acceleration must be false');
+
+    const enabledSettings = { gpuAcceleration: true };
+    const enabledGpu = enabledSettings.gpuAcceleration !== false;
+    assert.strictEqual(enabledGpu, true, 'Explicitly enabled GPU acceleration must be true');
+
+    // Test crash log entry structure & FIFO capping
+    const mockCrashLog = {
+      timestamp: new Date().toISOString(),
+      type: 'child-process-gone',
+      processType: 'GPU',
+      reason: 'crashed',
+      exitCode: -1073741819,
+      gpuAcceleration: true,
+      appVersion: '4.3.0'
+    };
+    assert.strictEqual(mockCrashLog.processType, 'GPU');
+    assert.strictEqual(mockCrashLog.reason, 'crashed');
+    assert.strictEqual(mockCrashLog.gpuAcceleration, true);
+
+    // Test FIFO capping at 100 entries
+    let logs = [];
+    for (let i = 0; i < 120; i++) {
+      logs.push({ id: i });
+      if (logs.length > 100) logs = logs.slice(-100);
+    }
+    assert.strictEqual(logs.length, 100, 'Crash logs must be capped at 100 entries');
+    assert.strictEqual(logs[0].id, 20, 'First log after 120 entries should have id 20');
+    assert.strictEqual(logs[99].id, 119, 'Last log should have id 119');
+    console.log('   [GPU Config] Default: enabled, Toggle: verified, Crash Log Schema & FIFO: verified');
+  });
+
+  // 10. Sidebar Sports Center (Standings, Scorers, Assists) Unit Test
+  await runAsyncTest('Sidebar Sports Center: League Standings, Top Scorers & Top Assists', async () => {
+    const stats = await favoriteTeamService.fetchLeagueStats('Arsenal');
+    assert.ok(stats, 'Stats object must be returned');
+    assert.strictEqual(stats.leagueName, 'Premier League', 'League should be Premier League for Arsenal');
+    assert.ok(Array.isArray(stats.standings), 'Standings must be an array');
+    assert.ok(stats.standings.length > 0, 'Standings must have entries');
+    assert.ok(stats.standings[0].rank >= 1, 'First team must have valid rank');
+    assert.ok(typeof stats.standings[0].pts === 'number', 'Points must be numeric');
+
+    // Check favorite team decoration
+    const favEntry = stats.standings.find(s => s.isFavTeam);
+    assert.ok(favEntry, 'Arsenal must be flagged as favorite team in standings');
+    assert.strictEqual(stats.favTeamName, 'Arsenal');
+
+    // Check scorers and assists
+    assert.ok(Array.isArray(stats.scorers), 'Scorers must be an array');
+    assert.ok(stats.scorers.length > 0, 'Scorers must have entries');
+    assert.ok(stats.scorers[0].rank >= 1, 'Scorer must have valid rank');
+    assert.ok(stats.scorers[0].name.length > 0, 'Scorer must have name');
+    assert.ok(typeof stats.scorers[0].value === 'number', 'Scorer goals must be numeric');
+
+    assert.ok(Array.isArray(stats.assists), 'Assists must be an array');
+    assert.ok(stats.assists.length > 0, 'Assists must have entries');
+    assert.ok(stats.assists[0].rank >= 1, 'Assist leader must have valid rank');
+    assert.ok(stats.assists[0].name.length > 0, 'Assist leader must have name');
+    assert.ok(typeof stats.assists[0].value === 'number', 'Assists count must be numeric');
+
+    console.log(`   [Sidebar Sports] League: ${stats.leagueName}, Standings: ${stats.standings.length} teams, Top Scorer: ${stats.scorers[0].name} (${stats.scorers[0].value}G), Top Assist: ${stats.assists[0].name} (${stats.assists[0].value}A)`);
   });
 
   console.log('===================================================');

@@ -26,6 +26,66 @@ const watchProgressFile = () => path.join(app.getPath('userData'), 'watch_progre
 const remoteTokenFile = () => path.join(app.getPath('userData'), 'remote_token.json');
 const cacheDir = () => path.join(app.getPath('userData'), 'cache');
 const playlistItemsFile = (id) => path.join(cacheDir(), `pl_${String(id || '').replace(/[^a-zA-Z0-9_-]/g, '_')}_items.json`);
+const userSettingsFile = () => path.join(app.getPath('userData'), 'user_settings.json');
+const crashLogFile = () => path.join(app.getPath('userData'), 'crash_logs.json');
+
+// Read user settings synchronously (needed before app.whenReady for GPU flags)
+function readUserSettings() {
+  try {
+    const file = userSettingsFile();
+    if (fs.existsSync(file)) {
+      return JSON.parse(fs.readFileSync(file, 'utf8'));
+    }
+  } catch (err) {
+    console.error('Error reading user settings:', err);
+  }
+  return {};
+}
+
+function saveUserSettings(settings) {
+  try {
+    const file = userSettingsFile();
+    const existing = readUserSettings();
+    const merged = { ...existing, ...settings };
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, JSON.stringify(merged, null, 2), 'utf8');
+    return true;
+  } catch (err) {
+    console.error('Error saving user settings:', err);
+    return false;
+  }
+}
+
+// Crash log persistence
+function appendCrashLog(entry) {
+  try {
+    const file = crashLogFile();
+    let logs = [];
+    try {
+      if (fs.existsSync(file)) {
+        logs = JSON.parse(fs.readFileSync(file, 'utf8'));
+      }
+    } catch {}
+    if (!Array.isArray(logs)) logs = [];
+    logs.push(entry);
+    // Keep only the last 100 crash logs
+    if (logs.length > 100) logs = logs.slice(-100);
+    fs.writeFileSync(file, JSON.stringify(logs, null, 2), 'utf8');
+  } catch (err) {
+    console.error('Error saving crash log:', err);
+  }
+}
+
+function readCrashLogs() {
+  try {
+    const file = crashLogFile();
+    if (fs.existsSync(file)) {
+      const logs = JSON.parse(fs.readFileSync(file, 'utf8'));
+      return Array.isArray(logs) ? logs : [];
+    }
+  } catch {}
+  return [];
+}
 
 function getPersistentRemoteToken() {
   try {
@@ -519,16 +579,16 @@ app.commandLine.appendSwitch('allow-running-insecure-content');
 app.commandLine.appendSwitch('disable-web-security');
 app.commandLine.appendSwitch('allow-insecure-localhost');
 
-// Hardware Acceleration & GPU Video Decoding Tuning
-// Direct3D 11 via ANGLE provides rock-solid hardware-accelerated video decode on Windows (Intel/AMD/Nvidia).
-// Problematic flags (enable-zero-copy, enable-native-gpu-memory-buffers, VaapiVideoDecoder, in-process-gpu)
-// have been removed to prevent GPU process crashes and video decoding failures on Windows GPUs.
-app.commandLine.appendSwitch('use-angle', 'd3d11');
+// Hardware Acceleration & GPU Video Decoding (Enabled by Default)
+// Direct hardware-accelerated video decode and HEVC are enabled for instant, zero-delay playback.
+// Aggressive flags that cause GPU crashes (enable-gpu-rasterization, forced use-angle d3d11) are omitted
+// so Chromium uses safe driver-approved rasterization without forcing 'enabled_force'.
+// disable-gpu-watchdog is enabled to eliminate Watchdog Exit Code 34 terminations completely.
 app.commandLine.appendSwitch('enable-accelerated-video-decode');
-app.commandLine.appendSwitch('enable-gpu-rasterization');
 app.commandLine.appendSwitch('enable-features', 'PlatformHEVCDecoderSupport');
-// Disable automatic HTTP-to-HTTPS upgrades and DNS SVCB/HTTPS record upgrades so that HTTP IPTV streams are never forcibly upgraded to HTTPS
+app.commandLine.appendSwitch('disable-gpu-watchdog');
 app.commandLine.appendSwitch('disable-features', 'HardwareMediaKeyHandling,UseDnsHttpsSvcb,UseDnsHttpsSvcbHttpUpgrade,HttpsUpgrades,AutoupgradeMixedContent');
+console.log('[GPU] Hardware acceleration ENABLED by default (Native Video Decode + HEVC, Watchdog disabled)');
 
 // Secure DNS (DNS-over-HTTPS) via Cloudflare & Google to bypass ISP 451 blocks and censorship
 app.commandLine.appendSwitch('dns-over-https-mode', 'automatic');
@@ -597,6 +657,32 @@ function createWindow() {
     console.log(`[Renderer L${level}] ${msg}`);
   });
 
+  // Capture renderer process crashes
+  mainWindow.webContents.on('render-process-gone', (_event, details) => {
+    const entry = {
+      timestamp: new Date().toISOString(),
+      type: 'render-process-gone',
+      reason: details.reason || 'unknown',
+      exitCode: details.exitCode,
+      gpuAcceleration: gpuAccelerationEnabled,
+      appVersion: app.getVersion()
+    };
+    console.error('[CrashLog] Renderer process gone:', JSON.stringify(entry));
+    appendCrashLog(entry);
+  });
+
+  // Capture unresponsive renderer
+  mainWindow.webContents.on('unresponsive', () => {
+    const entry = {
+      timestamp: new Date().toISOString(),
+      type: 'renderer-unresponsive',
+      gpuAcceleration: gpuAccelerationEnabled,
+      appVersion: app.getVersion()
+    };
+    console.error('[CrashLog] Renderer unresponsive:', JSON.stringify(entry));
+    appendCrashLog(entry);
+  });
+
   // Deliver playlist imports that arrived while the renderer was loading.
   mainWindow.webContents.on('did-finish-load', () => {
     while (pendingPhonePlaylistImports.length > 0) {
@@ -614,6 +700,51 @@ function createWindow() {
     mainWindow.loadFile('index.html');
   }
 }
+
+// Global Crash & Process Failure Logging
+app.on('child-process-gone', (_event, details) => {
+  const entry = {
+    timestamp: new Date().toISOString(),
+    type: 'child-process-gone',
+    processType: details.type || 'unknown',
+    reason: details.reason || 'unknown',
+    exitCode: details.exitCode,
+    serviceName: details.serviceName || '',
+    name: details.name || '',
+    gpuAcceleration: gpuAccelerationEnabled,
+    appVersion: app.getVersion()
+  };
+  console.error('[CrashLog] Child process gone:', JSON.stringify(entry));
+  appendCrashLog(entry);
+  try { mainWindow?.webContents?.send('crash-event', entry); } catch {}
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('[CrashLog] Uncaught exception:', err);
+  const entry = {
+    timestamp: new Date().toISOString(),
+    type: 'uncaught-exception',
+    message: err?.message || String(err),
+    stack: err?.stack || '',
+    gpuAcceleration: gpuAccelerationEnabled,
+    appVersion: app.getVersion()
+  };
+  appendCrashLog(entry);
+  try { mainWindow?.webContents?.send('crash-event', entry); } catch {}
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.error('[CrashLog] Unhandled rejection:', reason);
+  const entry = {
+    timestamp: new Date().toISOString(),
+    type: 'unhandled-rejection',
+    message: reason?.message || String(reason),
+    stack: reason?.stack || '',
+    gpuAcceleration: gpuAccelerationEnabled,
+    appVersion: app.getVersion()
+  };
+  appendCrashLog(entry);
+});
 
 app.whenReady().then(() => {
   app.setAppUserModelId('com.streamline.iptvplayer');
@@ -1214,3 +1345,51 @@ ipcMain.handle('get-app-version', () => {
   return app.getVersion();
 });
 
+// GPU Acceleration Toggle
+ipcMain.handle('get-gpu-acceleration', () => {
+  const settings = readUserSettings();
+  return settings.gpuAcceleration !== false; // default: true
+});
+
+ipcMain.handle('set-gpu-acceleration', async (_e, enabled) => {
+  try {
+    saveUserSettings({ gpuAcceleration: !!enabled });
+    return { ok: true, requiresRestart: true };
+  } catch (err) {
+    return { ok: false, error: err?.message };
+  }
+});
+
+// Crash Logs
+ipcMain.handle('get-crash-logs', () => {
+  return readCrashLogs();
+});
+
+ipcMain.handle('clear-crash-logs', async () => {
+  try {
+    const file = crashLogFile();
+    if (fs.existsSync(file)) fs.unlinkSync(file);
+    return true;
+  } catch {
+    return false;
+  }
+});
+
+ipcMain.handle('get-gpu-info', async () => {
+  try {
+    const featureStatus = app.getGPUFeatureStatus ? app.getGPUFeatureStatus() : {};
+    let gpuInfo = {};
+    try {
+      if (app.getGPUInfo) {
+        gpuInfo = await app.getGPUInfo('basic');
+      }
+    } catch {}
+    return {
+      featureStatus,
+      gpuInfo,
+      accelerationEnabled: gpuAccelerationEnabled
+    };
+  } catch (err) {
+    return { error: err?.message };
+  }
+});

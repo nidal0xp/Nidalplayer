@@ -1,4 +1,4 @@
-﻿import { state, activatePlaylist, clearActivePlaylistState, addRecent, toggleFavorite, updateWatchProgress } from './state.js';
+import { state, activatePlaylist, clearActivePlaylistState, addRecent, toggleFavorite, updateWatchProgress } from './state.js';
 import { XtreamApi, normalizeServer } from './playlist/xtreamApi.js';
 import { parseM3U } from './playlist/m3uParser.js';
 import { PlayerManager } from './player/playerManager.js';
@@ -261,8 +261,23 @@ function setupDomElements() {
     settingSaveTmdbKeyBtn: document.getElementById('settingSaveTmdbKeyBtn'),
     settingTestTmdbKeyBtn: document.getElementById('settingTestTmdbKeyBtn'),
     settingTmdbStatus: document.getElementById('settingTmdbStatus'),
+    settingGpuAccelSelect: document.getElementById('settingGpuAccelSelect'),
+    settingGpuStatus: document.getElementById('settingGpuStatus'),
+    gpuDiagnosticsStatus: document.getElementById('gpuDiagnosticsStatus'),
+    refreshCrashLogsBtn: document.getElementById('refreshCrashLogsBtn'),
+    clearCrashLogsBtn: document.getElementById('clearCrashLogsBtn'),
+    crashLogsContainer: document.getElementById('crashLogsContainer'),
+    crashLogsEmpty: document.getElementById('crashLogsEmpty'),
+    crashLogsList: document.getElementById('crashLogsList'),
     clearCacheBtn: document.getElementById('clearCacheBtn'),
     resetAllDataBtn: document.getElementById('resetAllDataBtn'),
+
+    // Sidebar Favorite Team Sports Widget
+    sidebarSportsWidget: document.getElementById('sidebarSportsWidget'),
+    sidebarSportsLeagueName: document.getElementById('sidebarSportsLeagueName'),
+    sidebarSportsTeamBadge: document.getElementById('sidebarSportsTeamBadge'),
+    sidebarSportsTabs: document.getElementById('sidebarSportsTabs'),
+    sidebarSportsContent: document.getElementById('sidebarSportsContent'),
 
     // Fullscreen Player & In-Stream HUD
     fullscreenPlayer: document.getElementById('fullscreenPlayer'),
@@ -478,6 +493,18 @@ async function bootstrapApp() {
     if (els?.topEngineSelect) els.topEngineSelect.value = state.playerEngine;
     if (els?.settingEngineSelect) els.settingEngineSelect.value = state.playerEngine;
     if (els?.previewEngine) els.previewEngine.textContent = state.playerEngine === 'artplayer' ? 'ArtPlayer' : 'HTML5 / HLS';
+
+    // Initialize GPU acceleration toggle
+    try {
+      const gpuEnabled = await bridge.getGpuAcceleration?.();
+      if (els?.settingGpuAccelSelect) els.settingGpuAccelSelect.value = gpuEnabled ? 'true' : 'false';
+    } catch {}
+
+    // Load crash logs
+    try { await loadCrashLogs(); } catch {}
+
+    // Favorite team sports widget (standings, scorers, assists)
+    try { initSidebarSportsWidget(); } catch (e) { console.error('Sidebar sports init error:', e); }
 
     try { initVirtualScrollers(); } catch (e) { console.error('VirtualScroller init error:', e); }
     try { refreshAllViews(); } catch (e) { console.error('refreshAllViews error:', e); }
@@ -1125,6 +1152,190 @@ function wireChangeFavTeamBtn(container) {
       }
     }, 150);
   });
+}
+
+/* ==========================================================================
+   SIDEBAR FAVORITE TEAM SPORTS WIDGET (STANDINGS, SCORERS, ASSISTS)
+   ========================================================================== */
+let currentSportsTab = 'table';
+let currentSportsData = null;
+
+function initSidebarSportsWidget() {
+  if (!els.sidebarSportsTabs) return;
+
+  const tabBtns = els.sidebarSportsTabs.querySelectorAll('.sidebar-tab-btn');
+  tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tab = btn.dataset.tab;
+      if (!tab || tab === currentSportsTab) return;
+      currentSportsTab = tab;
+      tabBtns.forEach(b => b.classList.toggle('active', b === btn));
+      renderSidebarSportsTab(currentSportsTab, currentSportsData);
+    });
+  });
+
+  // Clicking team badge opens Settings to pick a different club
+  els.sidebarSportsTeamBadge?.addEventListener('click', () => {
+    navigateTo('settings');
+    setTimeout(() => {
+      if (els.settingFavTeamSelect) {
+        els.settingFavTeamSelect.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        els.settingFavTeamSelect.focus();
+      }
+    }, 150);
+  });
+
+  updateSidebarSportsWidget();
+}
+
+async function updateSidebarSportsWidget(forceRefresh = false) {
+  if (!els.sidebarSportsContent) return;
+
+  const favTeam = favoriteTeamService.getFavoriteTeam() || 'Arsenal';
+
+  if (els.sidebarSportsTeamBadge) {
+    els.sidebarSportsTeamBadge.textContent = favTeam.toUpperCase();
+    els.sidebarSportsTeamBadge.title = `Click to change favorite club (${favTeam})`;
+    els.sidebarSportsTeamBadge.style.cursor = 'pointer';
+  }
+
+  if (!currentSportsData || forceRefresh) {
+    els.sidebarSportsContent.innerHTML = `
+      <div class="sidebar-sports-loading">
+        <div class="spinner" style="width:12px; height:12px; margin:0 auto 4px auto;"></div>
+        LOADING ${favTeam.toUpperCase()} STATS…
+      </div>
+    `;
+  }
+
+  try {
+    const data = await favoriteTeamService.fetchLeagueStats(favTeam);
+    currentSportsData = data;
+
+    if (els.sidebarSportsLeagueName && data?.leagueName) {
+      els.sidebarSportsLeagueName.textContent = data.leagueName.toUpperCase();
+    }
+
+    renderSidebarSportsTab(currentSportsTab, data);
+  } catch (err) {
+    console.warn('[updateSidebarSportsWidget] Error:', err);
+    if (!currentSportsData) {
+      els.sidebarSportsContent.innerHTML = `
+        <div class="sidebar-sports-empty">Live stats temporarily unavailable</div>
+      `;
+    }
+  }
+}
+
+function renderSidebarSportsTab(tab, data) {
+  if (!els.sidebarSportsContent || !data) return;
+
+  if (tab === 'table') {
+    const standings = data.standings || [];
+    if (standings.length === 0) {
+      els.sidebarSportsContent.innerHTML = `<div class="sidebar-sports-empty">No standings data</div>`;
+      return;
+    }
+
+    const headerHtml = `
+      <div class="sidebar-sports-table-header">
+        <span class="sports-col-rank">#</span>
+        <span class="sports-col-club">CLUB</span>
+        <span class="sports-col-num">P</span>
+        <span class="sports-col-num">GD</span>
+        <span class="sports-col-pts">PTS</span>
+      </div>
+    `;
+
+    const rowsHtml = standings.map(row => {
+      const favClass = row.isFavTeam ? 'fav-team' : '';
+      const gdStr = row.gd > 0 ? `+${row.gd}` : `${row.gd}`;
+      const logoTag = row.logo ? `<img class="sports-crest-img" src="${row.logo}" alt="" onerror="this.style.display='none'">` : '';
+
+      return `
+        <div class="sidebar-sports-row ${favClass}" title="${row.team} - Rank ${row.rank} (${row.pts} pts)">
+          <span class="sports-col-rank">${row.rank}</span>
+          <span class="sports-col-club">
+            ${logoTag}
+            <span class="sports-name-text">${row.short || row.team}</span>
+          </span>
+          <span class="sports-col-num">${row.played}</span>
+          <span class="sports-col-num">${gdStr}</span>
+          <span class="sports-col-pts">${row.pts}</span>
+        </div>
+      `;
+    }).join('');
+
+    els.sidebarSportsContent.innerHTML = headerHtml + rowsHtml;
+
+    // Auto-scroll to favorite team row so user always sees their club's position
+    const favRow = els.sidebarSportsContent.querySelector('.sidebar-sports-row.fav-team');
+    if (favRow) {
+      favRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  } else if (tab === 'scorers') {
+    const scorers = data.scorers || [];
+    if (scorers.length === 0) {
+      els.sidebarSportsContent.innerHTML = `<div class="sidebar-sports-empty">No scorers data</div>`;
+      return;
+    }
+
+    const headerHtml = `
+      <div class="sidebar-sports-table-header">
+        <span class="sports-col-rank">#</span>
+        <span class="sports-col-player">TOP SCORER</span>
+        <span class="sports-col-pts">GOALS</span>
+      </div>
+    `;
+
+    const rowsHtml = scorers.map(p => {
+      const logoTag = p.logo ? `<img class="sports-crest-img" src="${p.logo}" alt="" onerror="this.style.display='none'">` : '';
+
+      return `
+        <div class="sidebar-sports-row" title="${p.name} (${p.team}) - ${p.value} Goals">
+          <span class="sports-col-rank">${p.rank}</span>
+          <span class="sports-col-player">
+            ${logoTag}
+            <span class="sports-name-text"><strong>${p.name}</strong> <span style="color:var(--text-muted); font-size:8px;">${p.team}</span></span>
+          </span>
+          <span class="sports-col-pts"><span class="sports-stat-badge">${p.value}G</span></span>
+        </div>
+      `;
+    }).join('');
+
+    els.sidebarSportsContent.innerHTML = headerHtml + rowsHtml;
+  } else if (tab === 'assists') {
+    const assists = data.assists || [];
+    if (assists.length === 0) {
+      els.sidebarSportsContent.innerHTML = `<div class="sidebar-sports-empty">No assists data</div>`;
+      return;
+    }
+
+    const headerHtml = `
+      <div class="sidebar-sports-table-header">
+        <span class="sports-col-rank">#</span>
+        <span class="sports-col-player">TOP ASSIST</span>
+        <span class="sports-col-pts">ASSISTS</span>
+      </div>
+    `;
+
+    const rowsHtml = assists.map(p => {
+      const logoTag = p.logo ? `<img class="sports-crest-img" src="${p.logo}" alt="" onerror="this.style.display='none'">` : '';
+
+      return `
+        <div class="sidebar-sports-row" title="${p.name} (${p.team}) - ${p.value} Assists">
+          <span class="sports-col-rank">${p.rank}</span>
+          <span class="sports-col-player">
+            ${logoTag}
+            <span class="sports-name-text"><strong>${p.name}</strong> <span style="color:var(--text-muted); font-size:8px;">${p.team}</span></span>
+          </span>
+          <span class="sports-col-pts"><span class="sports-stat-badge assist">${p.value}A</span></span>
+        </div>
+      `;
+    }).join('');
+
+    els.sidebarSportsContent.innerHTML = headerHtml + rowsHtml;
+  }
 }
 
 async function renderSportsMatchCenter(forceRefresh = false) {
@@ -2668,6 +2879,89 @@ function showConfirmDialog({ icon = '⚠️', kicker = 'CONFIRM ACTION // 01', t
 }
 
 /* ==========================================================================
+   CRASH LOG VIEWER
+   ========================================================================== */
+async function loadCrashLogs() {
+  try {
+    const [logsResult, gpuInfoResult] = await Promise.allSettled([
+      bridge.getCrashLogs?.() || [],
+      bridge.getGpuInfo?.() || null
+    ]);
+
+    const logs = logsResult.status === 'fulfilled' ? logsResult.value : [];
+    renderCrashLogs(logs);
+
+    if (gpuInfoResult.status === 'fulfilled' && gpuInfoResult.value && els.gpuDiagnosticsStatus) {
+      const info = gpuInfoResult.value;
+      const feat = info.featureStatus || {};
+      const statusParts = [];
+      statusParts.push(`<strong>Mode:</strong> <span style="color:#4ade80;">Hardware Accelerated (Active by Default)</span>`);
+      if (feat.video_decode) statusParts.push(`<strong>Video Decode:</strong> ${feat.video_decode}`);
+      if (feat.rasterization) statusParts.push(`<strong>Rasterization:</strong> ${feat.rasterization}`);
+      if (feat.gpu_compositing) statusParts.push(`<strong>Compositing:</strong> ${feat.gpu_compositing}`);
+      els.gpuDiagnosticsStatus.innerHTML = statusParts.join(' &nbsp;•&nbsp; ');
+      els.gpuDiagnosticsStatus.style.display = 'block';
+    }
+  } catch (err) {
+    console.error('Failed to load crash logs:', err);
+  }
+}
+
+function renderCrashLogs(logs) {
+  if (!els.crashLogsList || !els.crashLogsEmpty) return;
+
+  if (!logs || logs.length === 0) {
+    els.crashLogsEmpty.style.display = 'block';
+    els.crashLogsList.innerHTML = '';
+    return;
+  }
+
+  els.crashLogsEmpty.style.display = 'none';
+
+  // Render newest-first
+  const reversedLogs = [...logs].reverse();
+  els.crashLogsList.innerHTML = reversedLogs.map((log, i) => {
+    const date = log.timestamp ? new Date(log.timestamp) : null;
+    const timeStr = date ? date.toLocaleString() : 'Unknown time';
+    const gpuLabel = log.gpuAcceleration ? 'GPU: ON' : 'GPU: OFF';
+
+    // Color-code by severity
+    let typeColor = '#ff6b6b';
+    let typeIcon = '🔴';
+    if (log.type === 'renderer-unresponsive') {
+      typeColor = '#ff9f1c';
+      typeIcon = '🟡';
+    } else if (log.type === 'child-process-gone' && log.processType === 'GPU') {
+      typeColor = '#ff3d00';
+      typeIcon = '💥';
+    } else if (log.type === 'child-process-gone') {
+      typeColor = '#f87171';
+      typeIcon = '⚠️';
+    }
+
+    const details = [];
+    if (log.processType) details.push(`Process: ${log.processType}`);
+    if (log.reason && log.reason !== 'unknown') details.push(`Reason: ${log.reason}`);
+    if (log.exitCode !== undefined && log.exitCode !== null) details.push(`Exit: ${log.exitCode}`);
+    if (log.serviceName) details.push(`Service: ${log.serviceName}`);
+    if (log.name) details.push(`Name: ${log.name}`);
+    if (log.message) details.push(`Message: ${log.message}`);
+    if (log.appVersion) details.push(`v${log.appVersion}`);
+
+    return `<div style="padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.06); ${i === 0 ? 'background:rgba(255,60,0,0.04); padding:10px; margin:-4px -4px 6px -4px; border-radius:6px;' : ''}">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:3px;">
+        <span>${typeIcon}</span>
+        <span style="color:${typeColor}; font-weight:600; text-transform:uppercase;">${log.type || 'Unknown'}</span>
+        <span style="color:var(--text-muted); margin-left:auto; font-size:10px;">${gpuLabel}</span>
+      </div>
+      <div style="color:var(--text-muted); font-size:10px;">${timeStr}</div>
+      ${details.length ? `<div style="color:var(--text-secondary); font-size:10px; margin-top:2px;">${details.join(' · ')}</div>` : ''}
+      ${log.stack ? `<pre style="margin-top:4px; padding:4px 8px; background:rgba(0,0,0,0.3); border-radius:4px; font-size:9px; color:#ff8080; white-space:pre-wrap; max-height:80px; overflow-y:auto;">${log.stack}</pre>` : ''}
+    </div>`;
+  }).join('');
+}
+
+/* ==========================================================================
    PLAYLIST MODAL
    ========================================================================== */
 async function openPlaylistModal(mode = 'add', playlistId = null) {
@@ -3334,6 +3628,7 @@ function setupEventListeners() {
     els.settingFavTeamSelect.addEventListener('change', e => {
       favoriteTeamService.setFavoriteTeam(e.target.value);
       renderHeroFavClub();
+      updateSidebarSportsWidget(true);
       showToast(e.target.value ? `Favorite club updated to ${e.target.value}` : 'Favorite club cleared');
     });
   }
@@ -3391,6 +3686,52 @@ function setupEventListeners() {
       }
     });
   }
+
+  // GPU Hardware Acceleration
+  if (els.settingGpuAccelSelect) {
+    els.settingGpuAccelSelect.addEventListener('change', async (e) => {
+      const enabled = e.target.value === 'true';
+      try {
+        const result = await bridge.setGpuAcceleration?.(enabled);
+        if (result?.ok) {
+          if (els.settingGpuStatus) {
+            els.settingGpuStatus.textContent = enabled
+              ? '✓ GPU HARDWARE ACCELERATION ENABLED BY DEFAULT.'
+              : '✓ Safe UI Mode selected (CPU UI rendering, video streams active). Restart required.';
+            els.settingGpuStatus.style.color = 'var(--accent-orange, #ff9f1c)';
+          }
+          showToast(`GPU mode updated to ${enabled ? 'Hardware Accelerated' : 'Safe UI Mode'} — restart required`);
+
+          // Show confirm dialog prompting restart
+          showConfirmDialog({
+            icon: '🖥️',
+            kicker: 'GPU CONFIGURATION CHANGE',
+            title: 'RESTART REQUIRED',
+            message: `GPU mode updated to ${enabled ? 'Hardware Accelerated' : 'Safe UI Mode'}. Restart required to apply. Restart now?`,
+            proceedText: '↻ RESTART NOW',
+            isDanger: false,
+            onConfirm: () => bridge.relaunchApp?.()
+          });
+        }
+      } catch (err) {
+        showToast('Failed to save GPU setting');
+      }
+    });
+  }
+
+  // Crash Logs
+  els.refreshCrashLogsBtn?.addEventListener('click', () => loadCrashLogs());
+  els.clearCrashLogsBtn?.addEventListener('click', async () => {
+    await bridge.clearCrashLogs?.();
+    loadCrashLogs();
+    showToast('Crash logs cleared');
+  });
+
+  // Listen for live crash events
+  bridge.onCrashEvent?.((entry) => {
+    loadCrashLogs();
+    showToast(`⚠ ${entry.type}: ${entry.reason || 'unknown'} (GPU: ${entry.gpuAcceleration ? 'ON' : 'OFF'})`, 8000);
+  });
 
   els.topSyncBtn?.addEventListener('click', () => {
     const active = state.playlists.find(p => p.id === state.activePlaylistId);

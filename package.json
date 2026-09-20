@@ -1,6 +1,6 @@
 {
   "name": "nidalplayer",
-  "version": "4.2.1",
+  "version": "4.3.0",
   "description": "Nidalplayer — Ultra-fast, high-performance M3U & Cinema media center for Windows. Features zero-delay M3U8 HLS streaming, Xtream API, Top 5 Football Match Center, 4K TMDB metadata, and mobile companion remote.",
   "main": "main.js",
   "author": "Nidalplayer",
