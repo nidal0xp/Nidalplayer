@@ -36,6 +36,11 @@ export class VirtualScroller {
     this.handleScroll = this.handleScroll.bind(this);
     this.handleResize = this.handleResize.bind(this);
 
+    this.lastStartIndex = -1;
+    this.lastEndIndex = -1;
+    this.lastColumns = -1;
+    this.lastTotalItems = -1;
+
     this.container.addEventListener('scroll', this.handleScroll, { passive: true });
     window.addEventListener('resize', this.handleResize);
 
@@ -63,6 +68,7 @@ export class VirtualScroller {
 
   setItems(items) {
     this.items = items || [];
+    this.lastStartIndex = -1; // Force re-render
     this.recalculateDimensions();
     this.render();
   }
@@ -70,6 +76,7 @@ export class VirtualScroller {
   scrollToTop() {
     this.container.scrollTop = 0;
     this.scrollTop = 0;
+    this.lastStartIndex = -1; // Force re-render
     this.render();
   }
 
@@ -87,6 +94,7 @@ export class VirtualScroller {
     if (!this.items || this.items.length === 0) {
       this.wrapper.style.height = '0px';
       this.wrapper.innerHTML = '';
+      this.lastStartIndex = -1;
       return;
     }
 
@@ -96,14 +104,29 @@ export class VirtualScroller {
     const totalRows = Math.ceil(totalItems / cols);
     const totalHeight = totalRows * rowHeight;
 
-    this.wrapper.style.height = `${totalHeight}px`;
-
     const startRow = Math.max(0, Math.floor(this.scrollTop / rowHeight) - 2);
     const visibleRowCount = Math.ceil(this.viewportHeight / rowHeight) + 4;
     const endRow = Math.min(totalRows, startRow + visibleRowCount);
 
     const startIndex = Math.max(0, startRow * cols);
     const endIndex = Math.min(totalItems, endRow * cols);
+
+    // Skip DOM rebuild if indices and layout parameters haven't changed
+    if (
+      this.lastStartIndex === startIndex &&
+      this.lastEndIndex === endIndex &&
+      this.lastColumns === cols &&
+      this.lastTotalItems === totalItems
+    ) {
+      return;
+    }
+
+    this.lastStartIndex = startIndex;
+    this.lastEndIndex = endIndex;
+    this.lastColumns = cols;
+    this.lastTotalItems = totalItems;
+
+    this.wrapper.style.height = `${totalHeight}px`;
 
     const fragment = document.createDocumentFragment();
 
