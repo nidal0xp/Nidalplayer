@@ -575,8 +575,6 @@ function setupNetworkInterceptors() {
 app.commandLine.appendSwitch('disable-http-cache');
 app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
 app.commandLine.appendSwitch('ignore-certificate-errors');
-app.commandLine.appendSwitch('allow-running-insecure-content');
-app.commandLine.appendSwitch('disable-web-security');
 app.commandLine.appendSwitch('allow-insecure-localhost');
 
 // Hardware Acceleration & GPU Video Decoding (Enabled by Default)
@@ -624,8 +622,8 @@ function createWindow() {
       nodeIntegration: false,
       sandbox: false,
       backgroundThrottling: false,
-      webSecurity: false,
-      allowRunningInsecureContent: true
+      webSecurity: true,
+      allowRunningInsecureContent: false
     }
   });
 
