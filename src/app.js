@@ -1863,20 +1863,33 @@ function filterAndRenderItems(sourceItems, scroller, countEl) {
     return true;
   });
 
+  // ⚡ Bolt Optimization: Pre-calculate watch progress to avoid O(N^2) complexity during sort
+  // sorting repeatedly calls getWatchProgressForSort which does an O(N) Object.values() iteration for series
+  const sortMetaMap = new Map();
+  for (let i = 0; i < filtered.length; i++) {
+    const item = filtered[i];
+    const watched = isItemWatchedOrProgress(item, curType);
+    let time = 0;
+    if (watched) {
+      const p = getWatchProgressForSort(item, curType);
+      time = (p && (p.updatedAt || p.lastWatched || p.currentTime)) || 0;
+    }
+    sortMetaMap.set(item, { watched, time });
+  }
+
   // Move watched to the TOP for all pages
   filtered.sort((a, b) => {
-    const watchedA = isItemWatchedOrProgress(a, curType);
-    const watchedB = isItemWatchedOrProgress(b, curType);
+    const metaA = sortMetaMap.get(a) || { watched: false, time: 0 };
+    const metaB = sortMetaMap.get(b) || { watched: false, time: 0 };
+
+    const watchedA = metaA.watched;
+    const watchedB = metaB.watched;
 
     if (watchedA && !watchedB) return -1;
     if (!watchedA && watchedB) return 1;
 
     if (watchedA && watchedB) {
-      const pA = getWatchProgressForSort(a, curType);
-      const pB = getWatchProgressForSort(b, curType);
-      const tA = (pA && (pA.updatedAt || pA.lastWatched || pA.currentTime)) || 0;
-      const tB = (pB && (pB.updatedAt || pB.lastWatched || pB.currentTime)) || 0;
-      if (tA !== tB) return tB - tA;
+      if (metaA.time !== metaB.time) return metaB.time - metaA.time;
     }
 
     return (a.providerOrder || 0) - (b.providerOrder || 0);
