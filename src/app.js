@@ -1703,7 +1703,21 @@ function renderContinueWatching() {
   });
 }
 
-function getWatchProgressForSort(item, type) {
+function buildSeriesProgressMap(wp) {
+  const map = new Map();
+  const vals = Object.values(wp || {});
+  for (let i = 0; i < vals.length; i++) {
+    const p = vals[i];
+    if (!p) continue;
+    const pSeriesId = String(p.seriesId || p.parentSeriesId || '').replace(/^series-/, '');
+    if (pSeriesId && !map.has(pSeriesId)) {
+      map.set(pSeriesId, p);
+    }
+  }
+  return map;
+}
+
+function getWatchProgressForSort(item, type, seriesProgressMap = null) {
   if (!item) return null;
   const wp = state.watchProgress || {};
   const itemId = String(item.id || '');
@@ -1716,25 +1730,30 @@ function getWatchProgressForSort(item, type) {
   if (seriesId && wp['series-' + seriesId]) return wp['series-' + seriesId];
 
   if (type === 'series') {
-    const vals = Object.values(wp);
-    for (let i = 0; i < vals.length; i++) {
-      const p = vals[i];
-      if (!p) continue;
-      const pSeriesId = String(p.seriesId || p.parentSeriesId || '').replace(/^series-/, '');
-      if (pSeriesId && (pSeriesId === cleanId || (seriesId && pSeriesId === seriesId))) {
-        return p;
+    if (seriesProgressMap) {
+      if (cleanId && seriesProgressMap.has(cleanId)) return seriesProgressMap.get(cleanId);
+      if (seriesId && seriesProgressMap.has(seriesId)) return seriesProgressMap.get(seriesId);
+    } else {
+      const vals = Object.values(wp);
+      for (let i = 0; i < vals.length; i++) {
+        const p = vals[i];
+        if (!p) continue;
+        const pSeriesId = String(p.seriesId || p.parentSeriesId || '').replace(/^series-/, '');
+        if (pSeriesId && (pSeriesId === cleanId || (seriesId && pSeriesId === seriesId))) {
+          return p;
+        }
       }
     }
   }
   return null;
 }
 
-function isItemWatchedOrProgress(item, type) {
+function isItemWatchedOrProgress(item, type, seriesProgressMap = null) {
   if (!item) return false;
   if (type === 'live') {
     return (state.recent && state.recent.includes(item.id)) || !!state.watchProgress[item.id];
   }
-  const prog = getWatchProgressForSort(item, type);
+  const prog = getWatchProgressForSort(item, type, seriesProgressMap);
   if (!prog) return false;
   if (prog.isWatched) return true;
   if (Number(prog.percentage || 0) >= 85) return true;
@@ -1769,7 +1788,8 @@ function renderCategoryPills(type, listEl, countEl, allCountEl, groupsMap, items
   listEl.appendChild(divider);
 
   // 1. Dedicated Section WATCHED Category Pill (ABOVE FAVORITES)
-  const watchedCount = (itemsList || []).filter(i => isItemWatchedOrProgress(i, type)).length;
+  const wpMap = type === 'series' ? buildSeriesProgressMap(state.watchProgress) : null;
+  const watchedCount = (itemsList || []).filter(i => isItemWatchedOrProgress(i, type, wpMap)).length;
   const watchedBtn = document.createElement('button');
   watchedBtn.className = `cat-pill pill-watched ${state.category === '__watched__' ? 'active' : ''}`;
   watchedBtn.setAttribute('data-category', '__watched__');
@@ -1834,11 +1854,12 @@ function filterAndRenderItems(sourceItems, scroller, countEl) {
 
   const curType = state.destination;
   let filtered = sourceItems || [];
+  const wpMap = curType === 'series' ? buildSeriesProgressMap(state.watchProgress) : null;
 
   // A search always covers the complete active page, regardless of the
   // category/favorites filter selected in the sidebar.
   if (!state.search && state.category === '__watched__') {
-    filtered = filtered.filter(i => isItemWatchedOrProgress(i, curType));
+    filtered = filtered.filter(i => isItemWatchedOrProgress(i, curType, wpMap));
   } else if (!state.search && state.category === '__favorites__') {
     filtered = filtered.filter(i => state.favorites.has(i.id));
   } else if (!state.search && state.category && state.category !== 'all') {
@@ -1868,10 +1889,10 @@ function filterAndRenderItems(sourceItems, scroller, countEl) {
   const sortMetaMap = new Map();
   for (let i = 0; i < filtered.length; i++) {
     const item = filtered[i];
-    const watched = isItemWatchedOrProgress(item, curType);
+    const watched = isItemWatchedOrProgress(item, curType, wpMap);
     let time = 0;
     if (watched) {
-      const p = getWatchProgressForSort(item, curType);
+      const p = getWatchProgressForSort(item, curType, wpMap);
       time = (p && (p.updatedAt || p.lastWatched || p.currentTime)) || 0;
     }
     sortMetaMap.set(item, { watched, time });
