@@ -5530,24 +5530,25 @@ kbd {
     overflow: hidden !important;
   }
 
-  /* Top-Docked Live Preview Player */
+  /* Top-Docked Live Preview Player (Full Width & Controls Down) */
   .col-preview {
     grid-area: preview !important;
     height: auto !important;
-    max-height: 290px !important;
+    max-height: clamp(380px, 46vh, 580px) !important;
     border-bottom: 1px solid var(--border-subtle) !important;
     border-right: none !important;
     background: var(--bg-surface) !important;
-    overflow: hidden !important;
+    overflow-y: auto !important;
     display: flex !important;
     flex-direction: column !important;
     transition: max-height var(--transition-smooth);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55) !important;
     z-index: 20;
   }
 
   .col-preview.dock-collapsed {
     max-height: 32px !important;
+    overflow: hidden !important;
   }
 
   .col-preview.dock-collapsed .preview-stage-wrap {
@@ -5555,7 +5556,7 @@ kbd {
   }
 
   .col-preview .column-header {
-    padding: 5px 14px !important;
+    padding: 6px 14px !important;
     font-size: 10px !important;
     height: 32px !important;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
@@ -5566,77 +5567,113 @@ kbd {
     flex-shrink: 0 !important;
   }
 
+  /* Preview Content Stage: Vertical column so controls are ALWAYS down below the video */
   .col-preview .preview-stage-wrap {
-    padding: 8px 14px !important;
+    padding: 10px 14px 14px 14px !important;
     display: flex !important;
-    flex-direction: row !important;
-    gap: 16px !important;
+    flex-direction: column !important;
+    gap: 10px !important;
     align-items: stretch !important;
-    height: calc(100% - 32px) !important;
-    overflow-y: auto !important;
+    height: auto !important;
+    overflow: visible !important;
     background: var(--bg-surface) !important;
   }
 
+  /* Large, Immersive 16:9 Video Box spanning full available width */
   .col-preview .embedded-video-box {
-    width: 360px !important;
-    min-width: 280px !important;
-    max-width: 420px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
     aspect-ratio: 16 / 9 !important;
     height: auto !important;
-    max-height: 215px !important;
+    max-height: clamp(240px, 32vh, 440px) !important;
     border-radius: var(--radius-sm) !important;
     flex-shrink: 0 !important;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6) !important;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.75) !important;
+    margin: 0 auto !important;
   }
 
+  /* Controls & Meta: Positioned directly down the preview */
   .col-preview .preview-dock-meta {
-    flex: 1 1 0 !important;
+    width: 100% !important;
+    flex: 0 0 auto !important;
     min-width: 0 !important;
     display: flex !important;
     flex-direction: column !important;
+    gap: 8px !important;
+    overflow: visible !important;
+  }
+
+  .col-preview .preview-title-row {
+    display: flex !important;
+    align-items: center !important;
     justify-content: space-between !important;
-    gap: 6px !important;
-    overflow-y: auto !important;
+    gap: 12px !important;
   }
 
   .col-preview .preview-stream-title {
-    font-size: 17px !important;
+    font-size: 18px !important;
     line-height: 1.25 !important;
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
     margin-bottom: 2px !important;
+    color: var(--text-pure) !important;
+    font-family: var(--font-display) !important;
+    letter-spacing: 0.5px !important;
   }
 
   .col-preview .preview-stream-group {
     font-size: 11px !important;
+    color: var(--accent-orange) !important;
+    font-family: var(--font-mono) !important;
   }
 
   .col-preview .preview-actions-grid {
     display: flex !important;
     align-items: center !important;
-    gap: 8px !important;
+    justify-content: space-between !important;
+    gap: 10px !important;
     flex-wrap: wrap !important;
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border-subtle) !important;
+    padding: 8px 12px !important;
+    border-radius: var(--radius-sm) !important;
   }
 
   .col-preview .preview-actions-grid .btn-action {
-    padding: 7px 12px !important;
+    padding: 8px 14px !important;
     font-size: 11px !important;
   }
 
   .col-preview .preview-subcontrols {
     display: flex !important;
     align-items: center !important;
-    gap: 6px !important;
+    gap: 8px !important;
+    flex: 1 1 auto !important;
+    justify-content: flex-end !important;
+  }
+
+  .col-preview .preview-subcontrols .volume-slider {
+    flex: 1 1 50px !important;
+    max-width: 100px !important;
   }
 
   .col-preview .preview-specs-box {
     display: grid !important;
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 4px 14px !important;
-    padding: 7px 10px !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 6px 12px !important;
+    padding: 6px 12px !important;
     font-size: 10px !important;
     border-radius: var(--radius-sm) !important;
+    background: var(--bg-obsidian) !important;
+    border: 1px solid var(--border-subtle) !important;
+  }
+
+  @media (max-width: 580px) {
+    .col-preview .preview-specs-box {
+      grid-template-columns: repeat(2, 1fr) !important;
+    }
   }
 
   /* ── 4. Categories Column (Scrollable Left Pane) ── */
@@ -5677,17 +5714,17 @@ kbd {
     padding: 8px 14px !important;
   }
 
-  /* Movies and Series Preview Docks */
+  /* Movies and Series Preview Docks: Stacked with controls down */
   #moviesPreviewCol .preview-stage-wrap,
   #seriesPreviewCol .preview-stage-wrap {
     display: flex !important;
-    flex-direction: row !important;
-    gap: 16px !important;
+    flex-direction: column !important;
+    gap: 10px !important;
   }
 
   #moviesPreviewCol .vod-plot,
   #seriesPreviewCol .vod-plot {
-    max-height: 48px !important;
+    max-height: 56px !important;
   }
 
   /* ── 6. Ultra-Narrow (<680px) Stacking Fallback ── */

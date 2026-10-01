@@ -1,8 +1,8 @@
 version: 4.4.0
 files:
   - url: Nidalplayer-Setup-4.4.0.exe
-    sha512: 7keyOMqgD9RRMApPRsKtyqXq5iGfoDbdgrMrRpUFtsORMRuP1+4YWVSBAfEN3lJGeNkUGc+k+DTN8GUKBCWq5Q==
-    size: 89642260
+    sha512: nY2HcTu4N6WBPlvD8q+lK3PZOAYWaAu59VaSv0+9evJTPNCzA4e9nWqqqwmBRmleCJGLu45mApWalLBkGIJTwg==
+    size: 89643955
 path: Nidalplayer-Setup-4.4.0.exe
-sha512: 7keyOMqgD9RRMApPRsKtyqXq5iGfoDbdgrMrRpUFtsORMRuP1+4YWVSBAfEN3lJGeNkUGc+k+DTN8GUKBCWq5Q==
-releaseDate: '2026-10-01T00:42:39.940Z'
+sha512: nY2HcTu4N6WBPlvD8q+lK3PZOAYWaAu59VaSv0+9evJTPNCzA4e9nWqqqwmBRmleCJGLu45mApWalLBkGIJTwg==
+releaseDate: '2026-10-01T00:51:29.157Z'
