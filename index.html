@@ -351,6 +351,15 @@
               </div>
               
               <div class="preview-stage-wrap">
+                <!-- 1. Channel Title & Group Row ABOVE the Preview -->
+                <div class="preview-title-row">
+                  <div class="preview-title-wrap">
+                    <h3 id="previewTitle" class="preview-stream-title">No Channel Selected</h3>
+                    <span id="previewGroup" class="preview-stream-group">Live Television</span>
+                  </div>
+                </div>
+
+                <!-- 2. Video Preview Screen -->
                 <div class="embedded-video-box">
                   <div id="previewVideoContainer" class="preview-video-container">
                     <video id="nativeVideo" playsinline></video>
@@ -363,26 +372,16 @@
                   </div>
                 </div>
 
+                <!-- 3. Preview Controls Bar RIGHT DOWN the Preview with Fullscreen attached -->
                 <div class="preview-dock-meta">
-                  <div class="preview-title-row">
-                    <div>
-                      <h3 id="previewTitle" class="preview-stream-title">No Channel Selected</h3>
-                      <span id="previewGroup" class="preview-stream-group">Live Television</span>
-                    </div>
-                  </div>
-
-                  <div class="preview-actions-grid">
-                    <button id="previewExpandBtn" class="btn-action primary" title="Expand Fullscreen (F)">
-                      <span data-i18n="expand_fullscreen">⛶ EXPAND FULLSCREEN</span>
-                    </button>
-                    <div class="preview-subcontrols">
-                      <button id="previewSeekBackBtn" class="btn-tool btn-seek-back" title="Rewind 10s">⏪</button>
-                      <button id="previewPlayBtn" class="btn-tool play-pause-btn" title="Play/Pause">▶</button>
-                      <button id="previewSeekFwdBtn" class="btn-tool btn-seek-fwd" title="Forward 10s">⏩</button>
-                      <button id="previewMuteBtn" class="btn-tool" title="Mute/Unmute">🔊</button>
-                      <input type="range" id="previewVolumeSlider" min="0" max="1" step="0.05" value="1" class="volume-slider" title="Volume">
-                      <button id="liveFavBtn" class="btn-tool fav-btn" title="Toggle Favorite">★</button>
-                    </div>
+                  <div class="preview-subcontrols">
+                    <button id="previewSeekBackBtn" class="btn-tool btn-seek-back" title="Rewind 10s" aria-label="Rewind 10s">⏪</button>
+                    <button id="previewPlayBtn" class="btn-tool play-pause-btn" title="Play/Pause" aria-label="Play or Pause">▶</button>
+                    <button id="previewSeekFwdBtn" class="btn-tool btn-seek-fwd" title="Forward 10s" aria-label="Forward 10s">⏩</button>
+                    <button id="previewMuteBtn" class="btn-tool" title="Mute/Unmute" aria-label="Mute or Unmute">🔊</button>
+                    <input type="range" id="previewVolumeSlider" min="0" max="1" step="0.05" value="1" class="volume-slider" title="Volume" aria-label="Volume">
+                    <button id="liveFavBtn" class="btn-tool fav-btn" title="Toggle Favorite" aria-label="Toggle Favorite">★</button>
+                    <button id="previewExpandBtn" class="btn-tool btn-expand-fs" title="Expand Fullscreen (F)" aria-label="Expand Fullscreen">⛶</button>
                   </div>
 
                   <div class="preview-specs-box">
@@ -463,6 +462,19 @@
               </div>
 
               <div class="preview-stage-wrap">
+                <!-- 1. Movie Title & Meta Badges ABOVE the Preview -->
+                <div class="preview-title-row">
+                  <div class="preview-title-wrap">
+                    <h3 id="moviePreviewTitle" class="preview-stream-title">No Movie Selected</h3>
+                    <div class="vod-meta-row" style="margin-top: 4px;">
+                      <span id="moviePreviewRating" class="meta-badge rating">★ —</span>
+                      <span id="moviePreviewYear" class="meta-badge">—</span>
+                      <span id="moviePreviewGenre" class="meta-badge">—</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 2. Video Preview Screen -->
                 <div class="embedded-video-box">
                   <div id="moviesPreviewVideoContainer" class="preview-video-container"></div>
                   <div id="moviePlaceholder" class="preview-empty-state">
@@ -472,22 +484,10 @@
                   </div>
                 </div>
 
+                <!-- 3. Movie Scrub & Controls RIGHT DOWN the Preview with Fullscreen attached -->
                 <div class="preview-dock-meta">
-                  <div>
-                    <h3 id="moviePreviewTitle" class="preview-stream-title">No Movie Selected</h3>
-                    <div class="vod-meta-row" style="margin-top: 6px; margin-bottom: 8px;">
-                      <span id="moviePreviewRating" class="meta-badge rating">★ —</span>
-                      <span id="moviePreviewYear" class="meta-badge">—</span>
-                      <span id="moviePreviewGenre" class="meta-badge">—</span>
-                    </div>
-                  </div>
-
-                  <p id="moviePreviewPlot" class="vod-plot" style="max-height: 100px; overflow-y: auto; font-size: 11px; margin-bottom: 0;">Select a movie to read its synopsis.</p>
-
-                  <div id="movieCastRow" class="vod-cast-row hidden" style="display:flex; gap:8px; overflow-x:auto; margin-top:8px; padding-bottom:4px; scrollbar-width:none;"></div>
-
                   <!-- Movie Scrub Progress Bar -->
-                  <div class="dock-progress-wrap" id="movieProgressWrap" style="margin-top: 8px; margin-bottom: 6px; cursor: pointer;">
+                  <div class="dock-progress-wrap" id="movieProgressWrap" style="margin-top: 2px; margin-bottom: 2px; cursor: pointer;">
                     <div class="hud-progress-bar" style="height: 6px; background: var(--bg-card);"><div id="movieProgressFill" class="hud-progress-fill" style="width: 0%;"></div></div>
                     <div class="hud-time-row" style="font-size: 10px; margin-top: 3px; color: var(--text-muted); display: flex; justify-content: space-between;">
                       <span id="movieCurrentTime">00:00</span>
@@ -495,19 +495,19 @@
                     </div>
                   </div>
 
-                  <div class="preview-actions-grid">
-                    <button id="movieExpandBtn" class="btn-action primary" title="Expand Fullscreen (F)">
-                      <span data-i18n="expand_fullscreen">⛶ EXPAND FULLSCREEN</span>
-                    </button>
-                    <div class="preview-subcontrols">
-                      <button id="movieSeekBackBtn" class="btn-tool btn-seek-back" title="Rewind 10s">⏪</button>
-                      <button id="moviePlayBtn" class="btn-tool play-pause-btn" title="Play/Pause (Space)">▶</button>
-                      <button id="movieSeekFwdBtn" class="btn-tool btn-seek-fwd" title="Forward 10s">⏩</button>
-                      <button id="movieMuteBtn" class="btn-tool" title="Mute/Unmute">🔊</button>
-                      <input type="range" id="movieVolumeSlider" min="0" max="1" step="0.05" value="1" class="volume-slider" title="Volume">
-                      <button id="movieFavBtn" class="btn-tool fav-btn" title="Toggle Favorite">★</button>
-                    </div>
+                  <div class="preview-subcontrols">
+                    <button id="movieSeekBackBtn" class="btn-tool btn-seek-back" title="Rewind 10s" aria-label="Rewind 10s">⏪</button>
+                    <button id="moviePlayBtn" class="btn-tool play-pause-btn" title="Play/Pause (Space)" aria-label="Play or Pause">▶</button>
+                    <button id="movieSeekFwdBtn" class="btn-tool btn-seek-fwd" title="Forward 10s" aria-label="Forward 10s">⏩</button>
+                    <button id="movieMuteBtn" class="btn-tool" title="Mute/Unmute" aria-label="Mute or Unmute">🔊</button>
+                    <input type="range" id="movieVolumeSlider" min="0" max="1" step="0.05" value="1" class="volume-slider" title="Volume" aria-label="Volume">
+                    <button id="movieFavBtn" class="btn-tool fav-btn" title="Toggle Favorite" aria-label="Toggle Favorite">★</button>
+                    <button id="movieExpandBtn" class="btn-tool btn-expand-fs" title="Expand Fullscreen (F)" aria-label="Expand Fullscreen">⛶</button>
                   </div>
+
+                  <p id="moviePreviewPlot" class="vod-plot" style="max-height: 80px; overflow-y: auto; font-size: 11px; margin-bottom: 0;">Select a movie to read its synopsis.</p>
+
+                  <div id="movieCastRow" class="vod-cast-row hidden" style="display:flex; gap:8px; overflow-x:auto; margin-top:4px; padding-bottom:4px; scrollbar-width:none;"></div>
                 </div>
               </div>
             </aside>
@@ -554,6 +554,18 @@
               </div>
 
               <div class="preview-stage-wrap">
+                <!-- 1. Series Title & Episode Badge ABOVE the Preview -->
+                <div class="preview-title-row">
+                  <div class="preview-title-wrap">
+                    <h3 id="seriesPreviewTitle" class="preview-stream-title">No Series Selected</h3>
+                    <div class="vod-meta-row" style="margin-top: 4px;">
+                      <span id="seriesPreviewRating" class="meta-badge rating">★ —</span>
+                      <span id="seriesActiveEpLabel" class="meta-badge" style="color: var(--accent-orange);">Episode 1</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 2. Video Preview Screen -->
                 <div class="embedded-video-box">
                   <div id="seriesPreviewVideoContainer" class="preview-video-container"></div>
                   <div id="seriesPlaceholder" class="preview-empty-state">
@@ -563,19 +575,10 @@
                   </div>
                 </div>
 
+                <!-- 3. Series Scrub & Controls RIGHT DOWN the Preview with Fullscreen attached -->
                 <div class="preview-dock-meta">
-                  <div>
-                    <h3 id="seriesPreviewTitle" class="preview-stream-title">No Series Selected</h3>
-                    <div class="vod-meta-row" style="margin-top: 6px; margin-bottom: 6px;">
-                      <span id="seriesPreviewRating" class="meta-badge rating">★ —</span>
-                      <span id="seriesActiveEpLabel" class="meta-badge" style="color: var(--accent-orange);">Episode 1</span>
-                    </div>
-                  </div>
-
-                  <div id="seriesCastRow" class="vod-cast-row hidden" style="display:flex; gap:8px; overflow-x:auto; margin-top:6px; padding-bottom:4px; scrollbar-width:none;"></div>
-
                   <!-- Series Scrub Progress Bar -->
-                  <div class="dock-progress-wrap" id="seriesProgressWrap" style="margin-top: 8px; margin-bottom: 6px; cursor: pointer;">
+                  <div class="dock-progress-wrap" id="seriesProgressWrap" style="margin-top: 2px; margin-bottom: 2px; cursor: pointer;">
                     <div class="hud-progress-bar" style="height: 6px; background: var(--bg-card);"><div id="seriesProgressFill" class="hud-progress-fill" style="width: 0%;"></div></div>
                     <div class="hud-time-row" style="font-size: 10px; margin-top: 3px; color: var(--text-muted); display: flex; justify-content: space-between;">
                       <span id="seriesCurrentTime">00:00</span>
@@ -583,20 +586,16 @@
                     </div>
                   </div>
 
-                  <div class="preview-actions-grid">
-                    <button id="seriesExpandBtn" class="btn-action primary" title="Expand Fullscreen (F)">
-                      <span data-i18n="expand_fullscreen">⛶ EXPAND FULLSCREEN</span>
-                    </button>
-                    <div class="preview-subcontrols">
-                      <button id="seriesPrevEpBtn" class="btn-tool btn-ep-nav" title="Previous Episode">⏮</button>
-                      <button id="seriesSeekBackBtn" class="btn-tool btn-seek-back" title="Rewind 10s">⏪</button>
-                      <button id="seriesPlayBtn" class="btn-tool play-pause-btn" title="Play/Pause (Space)">▶</button>
-                      <button id="seriesSeekFwdBtn" class="btn-tool btn-seek-fwd" title="Forward 10s">⏩</button>
-                      <button id="seriesNextEpBtn" class="btn-tool btn-ep-nav" title="Next Episode">⏭</button>
-                      <button id="seriesMuteBtn" class="btn-tool" title="Mute/Unmute">🔊</button>
-                      <input type="range" id="seriesVolumeSlider" min="0" max="1" step="0.05" value="1" class="volume-slider" title="Volume">
-                      <button id="seriesFavBtn" class="btn-tool fav-btn" title="Toggle Favorite">★</button>
-                    </div>
+                  <div class="preview-subcontrols">
+                    <button id="seriesPrevEpBtn" class="btn-tool btn-ep-nav" title="Previous Episode" aria-label="Previous Episode">⏮</button>
+                    <button id="seriesSeekBackBtn" class="btn-tool btn-seek-back" title="Rewind 10s" aria-label="Rewind 10s">⏪</button>
+                    <button id="seriesPlayBtn" class="btn-tool play-pause-btn" title="Play/Pause (Space)" aria-label="Play or Pause">▶</button>
+                    <button id="seriesSeekFwdBtn" class="btn-tool btn-seek-fwd" title="Forward 10s" aria-label="Forward 10s">⏩</button>
+                    <button id="seriesNextEpBtn" class="btn-tool btn-ep-nav" title="Next Episode" aria-label="Next Episode">⏭</button>
+                    <button id="seriesMuteBtn" class="btn-tool" title="Mute/Unmute" aria-label="Mute or Unmute">🔊</button>
+                    <input type="range" id="seriesVolumeSlider" min="0" max="1" step="0.05" value="1" class="volume-slider" title="Volume" aria-label="Volume">
+                    <button id="seriesFavBtn" class="btn-tool fav-btn" title="Toggle Favorite" aria-label="Toggle Favorite">★</button>
+                    <button id="seriesExpandBtn" class="btn-tool btn-expand-fs" title="Expand Fullscreen (F)" aria-label="Expand Fullscreen">⛶</button>
                   </div>
 
                   <!-- Season Tabs & Episode List in the Right Dock -->

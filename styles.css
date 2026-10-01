@@ -1759,6 +1759,14 @@ button {
   height: 100%;
   min-height: 0;
   overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.col-preview::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .column-header {
@@ -1848,29 +1856,44 @@ button {
 .preview-dock-meta {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
+}
+
+.preview-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+}
+
+.preview-title-wrap {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .preview-stream-title {
   font-family: var(--font-display);
-  font-size: 18px;
-  letter-spacing: 1px;
+  font-size: 17px;
+  letter-spacing: 0.5px;
   color: var(--text-pure);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  margin: 0;
+  line-height: 1.25;
 }
 
 .preview-stream-group {
   font-family: var(--font-mono);
   font-size: 10px;
   color: var(--accent-orange);
-}
-
-.preview-actions-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
 }
 
 .preview-subcontrols {
@@ -1974,6 +1997,24 @@ button {
   height: 4px;
   accent-color: var(--accent-orange);
   cursor: pointer;
+}
+
+.preview-subcontrols .btn-tool.btn-expand-fs {
+  color: #fff;
+  background: var(--accent-orange);
+  border-color: var(--accent-orange);
+  font-size: 14px;
+  font-weight: bold;
+  padding: 0 8px;
+  margin-left: 2px;
+}
+
+.preview-subcontrols .btn-tool.btn-expand-fs:hover {
+  background: var(--accent-orange-hover);
+  border-color: var(--accent-orange-hover);
+  color: #fff;
+  box-shadow: 0 0 10px var(--accent-orange-glow);
+  transform: scale(1.05);
 }
 
 
@@ -5530,20 +5571,29 @@ kbd {
     overflow: hidden !important;
   }
 
-  /* Top-Docked Live Preview Player (Full Width & Controls Down) */
+  /* Top-Docked Live Preview Player (Full Width, Controls Down, Zero Scrollbar) */
   .col-preview {
     grid-area: preview !important;
     height: auto !important;
-    max-height: clamp(380px, 46vh, 580px) !important;
+    max-height: none !important;
     border-bottom: 1px solid var(--border-subtle) !important;
     border-right: none !important;
     background: var(--bg-surface) !important;
-    overflow-y: auto !important;
+    overflow: hidden !important;
+    overflow-y: hidden !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
     display: flex !important;
     flex-direction: column !important;
     transition: max-height var(--transition-smooth);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55) !important;
     z-index: 20;
+  }
+
+  .col-preview::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
   }
 
   .col-preview.dock-collapsed {
@@ -5569,89 +5619,105 @@ kbd {
 
   /* Preview Content Stage: Vertical column so controls are ALWAYS down below the video */
   .col-preview .preview-stage-wrap {
-    padding: 10px 14px 14px 14px !important;
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 10px !important;
-    align-items: stretch !important;
-    height: auto !important;
-    overflow: visible !important;
-    background: var(--bg-surface) !important;
-  }
-
-  /* Large, Immersive 16:9 Video Box spanning full available width */
-  .col-preview .embedded-video-box {
-    width: 100% !important;
-    min-width: 0 !important;
-    max-width: 100% !important;
-    aspect-ratio: 16 / 9 !important;
-    height: auto !important;
-    max-height: clamp(240px, 32vh, 440px) !important;
-    border-radius: var(--radius-sm) !important;
-    flex-shrink: 0 !important;
-    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.75) !important;
-    margin: 0 auto !important;
-  }
-
-  /* Controls & Meta: Positioned directly down the preview */
-  .col-preview .preview-dock-meta {
-    width: 100% !important;
-    flex: 0 0 auto !important;
-    min-width: 0 !important;
+    padding: 8px 14px 10px 14px !important;
     display: flex !important;
     flex-direction: column !important;
     gap: 8px !important;
-    overflow: visible !important;
+    align-items: stretch !important;
+    height: auto !important;
+    overflow: hidden !important;
+    background: var(--bg-surface) !important;
   }
 
+  /* 1. Channel Title & Info Row ABOVE the Preview Video */
   .col-preview .preview-title-row {
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
     gap: 12px !important;
+    min-width: 0 !important;
+    padding: 0 2px !important;
+  }
+
+  .col-preview .preview-title-wrap {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
   }
 
   .col-preview .preview-stream-title {
-    font-size: 18px !important;
+    font-size: 16px !important;
     line-height: 1.25 !important;
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
-    margin-bottom: 2px !important;
+    margin: 0 !important;
     color: var(--text-pure) !important;
     font-family: var(--font-display) !important;
     letter-spacing: 0.5px !important;
   }
 
   .col-preview .preview-stream-group {
-    font-size: 11px !important;
+    font-size: 10px !important;
     color: var(--accent-orange) !important;
     font-family: var(--font-mono) !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
   }
 
-  .col-preview .preview-actions-grid {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: space-between !important;
-    gap: 10px !important;
-    flex-wrap: wrap !important;
-    background: var(--bg-card) !important;
-    border: 1px solid var(--border-subtle) !important;
-    padding: 8px 12px !important;
+  /* 2. Large, Immersive 16:9 Video Box spanning full available width */
+  .col-preview .embedded-video-box {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    aspect-ratio: 16 / 9 !important;
+    height: auto !important;
+    max-height: clamp(200px, 32vh, 440px) !important;
     border-radius: var(--radius-sm) !important;
+    flex-shrink: 0 !important;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.75) !important;
+    margin: 0 auto !important;
   }
 
-  .col-preview .preview-actions-grid .btn-action {
-    padding: 8px 14px !important;
-    font-size: 11px !important;
+  /* 3. Controls & Meta: Positioned directly down the preview with attached Fullscreen */
+  .col-preview .preview-dock-meta {
+    width: 100% !important;
+    flex: 0 0 auto !important;
+    min-width: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 6px !important;
+    overflow: hidden !important;
   }
 
   .col-preview .preview-subcontrols {
     display: flex !important;
     align-items: center !important;
-    gap: 8px !important;
-    flex: 1 1 auto !important;
     justify-content: flex-end !important;
+    gap: 6px !important;
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border-subtle) !important;
+    padding: 6px 10px !important;
+    border-radius: var(--radius-sm) !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+  }
+
+  .col-preview .preview-subcontrols .btn-tool {
+    height: 30px !important;
+    min-width: 30px !important;
+    font-size: 13px !important;
+    padding: 0 8px !important;
+  }
+
+  .col-preview .preview-subcontrols .btn-tool.btn-expand-fs {
+    background: var(--accent-orange) !important;
+    border-color: var(--accent-orange) !important;
+    color: #fff !important;
+    font-size: 15px !important;
+    min-width: 34px !important;
+    margin-left: 4px !important;
   }
 
   .col-preview .preview-subcontrols .volume-slider {
@@ -5660,20 +5726,11 @@ kbd {
   }
 
   .col-preview .preview-specs-box {
-    display: grid !important;
-    grid-template-columns: repeat(4, 1fr) !important;
-    gap: 6px 12px !important;
-    padding: 6px 12px !important;
-    font-size: 10px !important;
-    border-radius: var(--radius-sm) !important;
-    background: var(--bg-obsidian) !important;
-    border: 1px solid var(--border-subtle) !important;
+    display: none !important;
   }
 
-  @media (max-width: 580px) {
-    .col-preview .preview-specs-box {
-      grid-template-columns: repeat(2, 1fr) !important;
-    }
+  .col-preview .live-sidebar-lineup-dock {
+    display: none !important;
   }
 
   /* ── 4. Categories Column (Scrollable Left Pane) ── */
@@ -5719,12 +5776,16 @@ kbd {
   #seriesPreviewCol .preview-stage-wrap {
     display: flex !important;
     flex-direction: column !important;
-    gap: 10px !important;
+    gap: 6px !important;
   }
 
   #moviesPreviewCol .vod-plot,
   #seriesPreviewCol .vod-plot {
-    max-height: 56px !important;
+    display: none !important;
+  }
+
+  #seriesPreviewCol .dock-episodes-wrap {
+    display: none !important;
   }
 
   /* ── 6. Ultra-Narrow (<680px) Stacking Fallback ── */
@@ -5733,11 +5794,12 @@ kbd {
       grid-template-columns: 140px 1fr !important;
     }
     .col-preview {
-      max-height: 420px !important;
+      overflow: hidden !important;
+      max-height: none !important;
     }
     .col-preview .preview-stage-wrap {
       flex-direction: column !important;
-      align-items: center !important;
+      align-items: stretch !important;
     }
     .col-preview .embedded-video-box {
       width: 100% !important;
