@@ -67,6 +67,13 @@ button {
   background: none;
 }
 
+/* Global Keyboard Navigation Accessibility */
+:focus-visible {
+  outline: 2px solid var(--accent-orange) !important;
+  outline-offset: 2px !important;
+  border-radius: inherit;
+}
+
 .hidden {
   display: none !important;
 }
