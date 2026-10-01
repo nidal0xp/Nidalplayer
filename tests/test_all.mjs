@@ -1,9 +1,16 @@
 import assert from 'node:assert';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { parseM3U } from '../src/playlist/m3uParser.js';
 import { XtreamApi, normalizeServer } from '../src/playlist/xtreamApi.js';
 import { cleanTitle, extractYear, fetchTMDBDetails, testTMDBApiKey } from '../src/services/tmdbService.js';
 import { matchCenter, TOP_5_LEAGUES } from '../src/sports/matchCenter.js';
 import { favoriteTeamService } from '../src/sports/favoriteTeamService.js';
+import { VirtualScroller } from '../src/ui/virtualScroller.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 console.log('==================================================');
 console.log('🧪 RUNNING COMPREHENSIVE NIDALPLAYER TEST SUITE');
@@ -246,6 +253,131 @@ http://stream.example.com/series/user/pass/789.mp4`;
     assert.ok(typeof stats.assists[0].value === 'number', 'Assists count must be numeric');
 
     console.log(`   [Sidebar Sports] League: ${stats.leagueName}, Standings: ${stats.standings.length} teams, Top Scorer: ${stats.scorers[0].name} (${stats.scorers[0].value}G), Top Assist: ${stats.assists[0].name} (${stats.assists[0].value}A)`);
+  });
+
+  // 11. VirtualScroller Rendering Optimization Tests (Bolt PR #1)
+  runTest('VirtualScroller: Render Loop Optimization & DOM Thrash Prevention', () => {
+    const origWindow = global.window;
+    const origDoc = global.document;
+    const origRAF = global.requestAnimationFrame;
+
+    try {
+      global.window = {
+        innerHeight: 800,
+        innerWidth: 1200,
+        addEventListener: () => {},
+        removeEventListener: () => {}
+      };
+      global.requestAnimationFrame = (fn) => fn();
+
+      class MockNode {
+        constructor() {
+          this.style = {};
+          this.children = [];
+          this.innerHTML = '';
+          this.clientHeight = 800;
+          this.clientWidth = 1200;
+          this.scrollTop = 0;
+          this.listeners = {};
+        }
+        appendChild(child) { this.children.push(child); }
+        addEventListener(event, fn) { this.listeners[event] = fn; }
+        removeEventListener(event) { delete this.listeners[event]; }
+      }
+
+      global.document = {
+        createElement: () => new MockNode(),
+        createDocumentFragment: () => new MockNode()
+      };
+
+      let renderItemCount = 0;
+      const testItems = Array.from({ length: 500 }, (_, i) => ({ id: i, title: `Item ${i}` }));
+      const container = new MockNode();
+
+      const scroller = new VirtualScroller({
+        container,
+        itemHeight: 60,
+        minItemWidth: 200,
+        gap: 10,
+        mode: 'grid',
+        renderItem: () => {
+          renderItemCount++;
+          return new MockNode();
+        }
+      });
+
+      // Initial populate
+      scroller.setItems(testItems);
+      const initialCount = renderItemCount;
+      assert.ok(initialCount > 0, 'Initial render must create DOM elements');
+
+      // Small scroll: visible range does not shift -> DOM rebuild should be skipped
+      container.scrollTop = 5;
+      scroller.handleScroll();
+      assert.strictEqual(renderItemCount, initialCount, 'Small scroll within buffer MUST NOT rebuild DOM nodes');
+
+      container.scrollTop = 15;
+      scroller.handleScroll();
+      assert.strictEqual(renderItemCount, initialCount, 'Sub-item scroll within buffer MUST NOT rebuild DOM nodes');
+
+      // Large scroll: visible range shifts -> DOM rebuild must trigger
+      container.scrollTop = 600;
+      scroller.handleScroll();
+      assert.ok(renderItemCount > initialCount, 'Large scroll MUST render new visible items');
+
+      // Reset / Scroll to top
+      const beforeTopCount = renderItemCount;
+      scroller.scrollToTop();
+      assert.ok(renderItemCount > beforeTopCount, 'scrollToTop MUST force-render');
+
+      // Dimension recalculation
+      const beforeRecalc = renderItemCount;
+      container.scrollTop = 100;
+      scroller.recalculateDimensions();
+      scroller.render();
+      assert.ok(renderItemCount > beforeRecalc, 'recalculateDimensions MUST invalidate cache and force-render');
+    } finally {
+      global.window = origWindow;
+      global.document = origDoc;
+      global.requestAnimationFrame = origRAF;
+    }
+  });
+
+  // 12. Accessibility Validation: ARIA Labels & Roles (Palette PR #2 & #7)
+  runTest('Accessibility: Icon-Only Buttons, Reticle & Search ARIA Attributes', () => {
+    const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+
+    // Decorative reticle must have aria-hidden="true"
+    assert.match(html, /class="search-reticle"\s+aria-hidden="true"/, 'Search reticle must be aria-hidden="true"');
+
+    // Global search input must have aria-label
+    assert.match(html, /id="globalSearchInput"[^>]*aria-label="Search channels, movies, or shows"/, 'Global search input must have descriptive aria-label');
+
+    // Icon-only buttons must have aria-labels
+    const requiredAriaButtons = [
+      'clearSearchBtn',
+      'topRemoteBtn',
+      'btnShortcutsHelp',
+      'topWindowFullscreenBtn',
+      'closePlaylistModalBtn',
+      'closeRemoteModalBtn',
+      'closeMatchModalBtn',
+      'closeShortcutsModalBtn',
+      'floatingUpdateCloseBtn'
+    ];
+
+    for (const btnId of requiredAriaButtons) {
+      const regex = new RegExp(`id="${btnId}"[^>]*aria-label="[^"]+"`);
+      assert.match(html, regex, `Button #${btnId} must have an aria-label attribute`);
+    }
+  });
+
+  // 13. Keyboard Focus Accessibility: :focus-visible Styles (Palette PR #5)
+  runTest('Accessibility: Global :focus-visible Keyboard Ring in Design System', () => {
+    const css = fs.readFileSync(path.join(__dirname, '..', 'styles.css'), 'utf8');
+
+    // Must define :focus-visible rule with --accent-orange outline
+    assert.match(css, /:focus-visible\s*\{[^}]*outline:\s*2px\s+solid\s+var\(--accent-orange\)/, 'Design system must define :focus-visible with --accent-orange outline');
   });
 
   console.log('===================================================');
