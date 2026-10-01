@@ -3975,6 +3975,22 @@ function setupEventListeners() {
   els.seriesPreviewVideoContainer?.addEventListener('dblclick', expandFullscreenPlayer);
   attachProgressBarScrubber(els.seriesProgressWrap);
 
+  // Preview Dock Collapse & Expand Toggles (Portrait & Responsive)
+  function bindDockCollapse(btnId, colId) {
+    const btn = document.getElementById(btnId);
+    const col = document.getElementById(colId);
+    if (!btn || !col) return;
+    btn.addEventListener('click', () => {
+      const isCollapsed = col.classList.toggle('dock-collapsed');
+      btn.textContent = isCollapsed ? '▼' : '▲';
+      btn.title = isCollapsed ? 'Expand Preview Player' : 'Collapse Preview Player';
+      window.dispatchEvent(new Event('resize'));
+    });
+  }
+  bindDockCollapse('livePreviewCollapseBtn', 'livePreviewCol');
+  bindDockCollapse('moviePreviewCollapseBtn', 'moviesPreviewCol');
+  bindDockCollapse('seriesPreviewCollapseBtn', 'seriesPreviewCol');
+
   // Fullscreen HUD Return & Controls
   els.hudBackBtn?.addEventListener('click', closeFullscreenPlayer);
   els.hudExitFullBtn?.addEventListener('click', closeFullscreenPlayer);

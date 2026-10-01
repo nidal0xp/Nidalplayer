@@ -5336,3 +5336,397 @@ kbd {
   justify-content: flex-end;
 }
 
+/* ==========================================================================
+   DOCK COLLAPSE TOGGLE BUTTON (ALL ORIENTATIONS)
+   ========================================================================== */
+.btn-dock-collapse {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: var(--transition-fast);
+  line-height: 1.2;
+}
+
+.btn-dock-collapse:hover {
+  background: var(--accent-orange);
+  color: #fff;
+  border-color: var(--accent-orange);
+}
+
+/* ==========================================================================
+   PORTRAIT MODE & RESPONSIVE ULTRA-ADAPTIVE LAYOUT
+   Optimized for rotated screens, portrait displays (9:16), tablets & narrow windows
+   ========================================================================== */
+@media (orientation: portrait), (max-width: 960px) {
+
+  /* ── 1. App Shell & Compact Navigation Rail (68px) ── */
+  .app-sidebar {
+    width: 68px !important;
+    min-width: 68px !important;
+    max-width: 68px !important;
+    transition: width var(--transition-smooth);
+  }
+
+  .sidebar-brand {
+    padding: 12px 6px !important;
+    justify-content: center !important;
+    text-align: center !important;
+  }
+
+  .sidebar-brand > div {
+    display: none !important;
+  }
+
+  .sidebar-brand img {
+    width: 32px !important;
+    height: 32px !important;
+    margin: 0 auto !important;
+  }
+
+  .nav-section-title {
+    display: none !important;
+  }
+
+  .sidebar-nav {
+    padding: 10px 6px !important;
+    gap: 8px !important;
+    align-items: center !important;
+  }
+
+  .nav-item {
+    width: 46px !important;
+    height: 46px !important;
+    padding: 0 !important;
+    justify-content: center !important;
+    align-items: center !important;
+    border-radius: var(--radius-md) !important;
+    position: relative !important;
+  }
+
+  .nav-num,
+  .nav-text,
+  .nav-count {
+    display: none !important;
+  }
+
+  .nav-icon {
+    font-size: 19px !important;
+    margin: 0 !important;
+  }
+
+  .nav-item.active {
+    background: var(--accent-orange) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 14px rgba(255, 69, 26, 0.4) !important;
+  }
+
+  .nav-item.active .nav-icon {
+    color: #ffffff !important;
+  }
+
+  /* Minimize sports widget in narrow rail */
+  .sidebar-sports-widget {
+    display: none !important;
+  }
+
+  /* Compact Account Status Footer */
+  .sidebar-footer {
+    padding: 10px 4px !important;
+  }
+
+  .account-card {
+    padding: 6px 0 !important;
+    background: transparent !important;
+    border: none !important;
+    justify-content: center !important;
+    align-items: center !important;
+    display: flex !important;
+  }
+
+  .account-header {
+    margin: 0 !important;
+    justify-content: center !important;
+  }
+
+  .account-header strong,
+  .account-meta,
+  .expiry-badge-row,
+  .btn-sidebar-action {
+    display: none !important;
+  }
+
+  .status-indicator {
+    width: 10px !important;
+    height: 10px !important;
+  }
+
+  /* ── 2. Top Header Bar (Full Search Visibility) ── */
+  .app-topbar {
+    padding: 0 12px !important;
+    gap: 10px !important;
+    height: 54px !important;
+    min-height: 54px !important;
+  }
+
+  body.platform-win .app-topbar {
+    padding-right: 140px !important;
+  }
+
+  .topbar-left {
+    gap: 6px !important;
+  }
+
+  .view-indicator {
+    display: none !important;
+  }
+
+  .topbar-search {
+    max-width: none !important;
+    flex: 1 1 140px !important;
+    min-width: 110px !important;
+  }
+
+  .topbar-search input {
+    padding: 7px 28px 7px 30px !important;
+    font-size: 11px !important;
+  }
+
+  .topbar-actions {
+    gap: 5px !important;
+  }
+
+  .topbar-actions .btn-action:not(.icon-only) span:not(:first-child) {
+    display: none !important;
+  }
+
+  .topbar-actions .btn-action:not(.icon-only) {
+    padding: 7px 10px !important;
+    min-width: 34px !important;
+    justify-content: center !important;
+  }
+
+  .lang-dropdown {
+    padding: 5px 6px !important;
+    font-size: 11px !important;
+  }
+
+  .remote-status-badge span:not(.remote-status-dot) {
+    display: none !important;
+  }
+
+  /* ── 3. Three-Column Layout -> Top-Docked Player + Dual-Pane Split ── */
+  .three-column-layout {
+    display: grid !important;
+    grid-template-columns: 210px 1fr !important;
+    grid-template-rows: auto 1fr !important;
+    grid-template-areas:
+      "preview preview"
+      "categories content" !important;
+    height: calc(100vh - 54px) !important;
+    overflow: hidden !important;
+  }
+
+  /* Top-Docked Live Preview Player */
+  .col-preview {
+    grid-area: preview !important;
+    height: auto !important;
+    max-height: 290px !important;
+    border-bottom: 1px solid var(--border-subtle) !important;
+    border-right: none !important;
+    background: var(--bg-surface) !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    transition: max-height var(--transition-smooth);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45) !important;
+    z-index: 20;
+  }
+
+  .col-preview.dock-collapsed {
+    max-height: 32px !important;
+  }
+
+  .col-preview.dock-collapsed .preview-stage-wrap {
+    display: none !important;
+  }
+
+  .col-preview .column-header {
+    padding: 5px 14px !important;
+    font-size: 10px !important;
+    height: 32px !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+    background: rgba(0, 0, 0, 0.25) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    flex-shrink: 0 !important;
+  }
+
+  .col-preview .preview-stage-wrap {
+    padding: 8px 14px !important;
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 16px !important;
+    align-items: stretch !important;
+    height: calc(100% - 32px) !important;
+    overflow-y: auto !important;
+    background: var(--bg-surface) !important;
+  }
+
+  .col-preview .embedded-video-box {
+    width: 360px !important;
+    min-width: 280px !important;
+    max-width: 420px !important;
+    aspect-ratio: 16 / 9 !important;
+    height: auto !important;
+    max-height: 215px !important;
+    border-radius: var(--radius-sm) !important;
+    flex-shrink: 0 !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6) !important;
+  }
+
+  .col-preview .preview-dock-meta {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    gap: 6px !important;
+    overflow-y: auto !important;
+  }
+
+  .col-preview .preview-stream-title {
+    font-size: 17px !important;
+    line-height: 1.25 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    margin-bottom: 2px !important;
+  }
+
+  .col-preview .preview-stream-group {
+    font-size: 11px !important;
+  }
+
+  .col-preview .preview-actions-grid {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    flex-wrap: wrap !important;
+  }
+
+  .col-preview .preview-actions-grid .btn-action {
+    padding: 7px 12px !important;
+    font-size: 11px !important;
+  }
+
+  .col-preview .preview-subcontrols {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+  }
+
+  .col-preview .preview-specs-box {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 4px 14px !important;
+    padding: 7px 10px !important;
+    font-size: 10px !important;
+    border-radius: var(--radius-sm) !important;
+  }
+
+  /* ── 4. Categories Column (Scrollable Left Pane) ── */
+  .col-categories {
+    grid-area: categories !important;
+    width: 210px !important;
+    min-width: 170px !important;
+    max-width: 230px !important;
+    border-right: 1px solid var(--border-subtle) !important;
+    height: 100% !important;
+    overflow-y: auto !important;
+    background: var(--bg-surface) !important;
+  }
+
+  .col-categories .column-header {
+    padding: 10px 12px !important;
+    font-size: 10px !important;
+  }
+
+  .col-categories .cat-pill {
+    padding: 8px 10px !important;
+    font-size: 11px !important;
+  }
+
+  /* ── 5. Content Column (Channels Grid / Movies Grid) ── */
+  .col-content {
+    grid-area: content !important;
+    height: 100% !important;
+    overflow-y: auto !important;
+    background: var(--bg-obsidian) !important;
+    border-right: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    min-width: 0 !important;
+  }
+
+  .col-content .grid-toolbar {
+    padding: 8px 14px !important;
+  }
+
+  /* Movies and Series Preview Docks */
+  #moviesPreviewCol .preview-stage-wrap,
+  #seriesPreviewCol .preview-stage-wrap {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 16px !important;
+  }
+
+  #moviesPreviewCol .vod-plot,
+  #seriesPreviewCol .vod-plot {
+    max-height: 48px !important;
+  }
+
+  /* ── 6. Ultra-Narrow (<680px) Stacking Fallback ── */
+  @media (max-width: 680px) {
+    .three-column-layout {
+      grid-template-columns: 140px 1fr !important;
+    }
+    .col-preview {
+      max-height: 420px !important;
+    }
+    .col-preview .preview-stage-wrap {
+      flex-direction: column !important;
+      align-items: center !important;
+    }
+    .col-preview .embedded-video-box {
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+  }
+
+  /* ── 7. Home & Settings Views ── */
+  #viewHome {
+    padding: 16px 14px 36px !important;
+    gap: 16px !important;
+  }
+
+  .editorial-hero {
+    grid-template-columns: 1fr !important;
+    padding: 16px 16px !important;
+    gap: 14px !important;
+  }
+
+  .hero-manifesto {
+    max-width: 100% !important;
+  }
+
+  #viewSettings {
+    padding: 18px 14px 40px !important;
+  }
+}
+
+

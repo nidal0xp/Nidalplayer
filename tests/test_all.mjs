@@ -380,6 +380,27 @@ http://stream.example.com/series/user/pass/789.mp4`;
     assert.match(css, /:focus-visible\s*\{[^}]*outline:\s*2px\s+solid\s+var\(--accent-orange\)/, 'Design system must define :focus-visible with --accent-orange outline');
   });
 
+  // 14. Responsive & Portrait Mode Layout Validation
+  runTest('Responsive Layout: Portrait Mode Media Queries & Top-Docked Dual-Pane Grid', () => {
+    const css = fs.readFileSync(path.join(__dirname, '..', 'styles.css'), 'utf8');
+    const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+
+    // Must define portrait orientation media query
+    assert.match(css, /@media\s*\(\s*orientation:\s*portrait\s*\)/, 'Must include @media (orientation: portrait)');
+
+    // Must define grid-template-areas with top preview and split categories/content
+    assert.match(css, /grid-template-areas:\s*["']preview\s+preview["']\s*["']categories\s+content["']/, 'Must define top-docked preview and dual-pane split');
+
+    // Must have collapse buttons for preview docks
+    assert.match(html, /id="livePreviewCollapseBtn"[^>]*aria-label="Toggle Preview Player"/, 'livePreviewCollapseBtn must be present with aria-label');
+    assert.match(html, /id="moviePreviewCollapseBtn"[^>]*aria-label="Toggle Preview Player"/, 'moviePreviewCollapseBtn must be present with aria-label');
+    assert.match(html, /id="seriesPreviewCollapseBtn"[^>]*aria-label="Toggle Preview Player"/, 'seriesPreviewCollapseBtn must be present with aria-label');
+
+    // Navigation items must have title attributes for compact icon rail
+    assert.match(html, /data-dest="live"[^>]*title="[^"]+"/, 'Live TV nav-item must have title for icon rail');
+    assert.match(html, /data-dest="movies"[^>]*title="[^"]+"/, 'Movies nav-item must have title for icon rail');
+  });
+
   console.log('===================================================');
   console.log('TEST SUMMARY: ' + passed + ' / ' + total + ' TESTS PASSED (' + Math.round((passed / total) * 100) + '%)');
   console.log('===================================================');

@@ -78,30 +78,30 @@
 
       <nav class="sidebar-nav">
         <div class="nav-section-title" data-i18n="navigation">NAVIGATION —</div>
-        <button class="nav-item active" data-dest="home">
+        <button class="nav-item active" data-dest="home" title="Home Dashboard (01)" aria-label="Home Dashboard">
           <span class="nav-num">01/</span>
           <span class="nav-icon">▤</span>
           <span class="nav-text" data-i18n="nav_home">HOME</span>
         </button>
-        <button class="nav-item" data-dest="live">
+        <button class="nav-item" data-dest="live" title="Live TV (02)" aria-label="Live Television">
           <span class="nav-num">02/</span>
           <span class="nav-icon">●</span>
           <span class="nav-text" data-i18n="nav_live">LIVE TV</span>
           <span class="nav-count" id="sidebarLiveCount">0</span>
         </button>
-        <button class="nav-item" data-dest="movies">
+        <button class="nav-item" data-dest="movies" title="Movies Cinema (03)" aria-label="Movies Cinema">
           <span class="nav-num">03/</span>
           <span class="nav-icon">▶</span>
           <span class="nav-text" data-i18n="nav_movies">MOVIES</span>
           <span class="nav-count" id="sidebarMoviesCount">0</span>
         </button>
-        <button class="nav-item" data-dest="series">
+        <button class="nav-item" data-dest="series" title="TV Series (04)" aria-label="TV Series">
           <span class="nav-num">04/</span>
           <span class="nav-icon">▣</span>
           <span class="nav-text" data-i18n="nav_series">SERIES</span>
           <span class="nav-count" id="sidebarSeriesCount">0</span>
         </button>
-        <button class="nav-item" data-dest="settings">
+        <button class="nav-item" data-dest="settings" title="Playlists & Config (05)" aria-label="Playlists and Configuration">
           <span class="nav-num">05/</span>
           <span class="nav-icon">⚙</span>
           <span class="nav-text" data-i18n="nav_settings">PLAYLISTS & CONFIG</span>
@@ -344,7 +344,10 @@
             <aside class="col-preview" id="livePreviewCol">
               <div class="column-header">
                 <span data-i18n="live_preview">LIVE PREVIEW —</span>
-                <span id="previewStatusBadge" class="status-pill-small">STANDBY</span>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span id="previewStatusBadge" class="status-pill-small">STANDBY</span>
+                  <button id="livePreviewCollapseBtn" class="btn-dock-collapse" title="Collapse / Expand Preview Player" aria-label="Toggle Preview Player">▲</button>
+                </div>
               </div>
               
               <div class="preview-stage-wrap">
@@ -453,7 +456,10 @@
             <aside class="col-preview" id="moviesPreviewCol">
               <div class="column-header">
                 <span>MOVIE PREVIEW —</span>
-                <span id="movieStatusBadge" class="status-pill-small">CINEMA</span>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span id="movieStatusBadge" class="status-pill-small">CINEMA</span>
+                  <button id="moviePreviewCollapseBtn" class="btn-dock-collapse" title="Collapse / Expand Preview Player" aria-label="Toggle Preview Player">▲</button>
+                </div>
               </div>
 
               <div class="preview-stage-wrap">
@@ -541,7 +547,10 @@
             <aside class="col-preview" id="seriesPreviewCol">
               <div class="column-header">
                 <span>SERIES & EPISODES —</span>
-                <span id="seriesStatusBadge" class="status-pill-small">VOD</span>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span id="seriesStatusBadge" class="status-pill-small">VOD</span>
+                  <button id="seriesPreviewCollapseBtn" class="btn-dock-collapse" title="Collapse / Expand Preview Player" aria-label="Toggle Preview Player">▲</button>
+                </div>
               </div>
 
               <div class="preview-stage-wrap">
