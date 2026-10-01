@@ -206,7 +206,7 @@ http://stream.example.com/series/user/pass/789.mp4`;
       reason: 'crashed',
       exitCode: -1073741819,
       gpuAcceleration: true,
-      appVersion: '4.3.0'
+      appVersion: '4.4.0'
     };
     assert.strictEqual(mockCrashLog.processType, 'GPU');
     assert.strictEqual(mockCrashLog.reason, 'crashed');
