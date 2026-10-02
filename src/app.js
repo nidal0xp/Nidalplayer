@@ -1703,7 +1703,7 @@ function renderContinueWatching() {
   });
 }
 
-function getWatchProgressForSort(item, type) {
+function getWatchProgressForSort(item, type, seriesProgressMap = null) {
   if (!item) return null;
   const wp = state.watchProgress || {};
   const itemId = String(item.id || '');
@@ -1716,25 +1716,31 @@ function getWatchProgressForSort(item, type) {
   if (seriesId && wp['series-' + seriesId]) return wp['series-' + seriesId];
 
   if (type === 'series') {
-    const vals = Object.values(wp);
-    for (let i = 0; i < vals.length; i++) {
-      const p = vals[i];
-      if (!p) continue;
-      const pSeriesId = String(p.seriesId || p.parentSeriesId || '').replace(/^series-/, '');
-      if (pSeriesId && (pSeriesId === cleanId || (seriesId && pSeriesId === seriesId))) {
-        return p;
+    // ⚡ Bolt Optimization: Use pre-calculated map for O(1) lookups when available to prevent repeated Object.values()
+    if (seriesProgressMap) {
+      if (seriesProgressMap.has(cleanId)) return seriesProgressMap.get(cleanId);
+      if (seriesId && seriesProgressMap.has(seriesId)) return seriesProgressMap.get(seriesId);
+    } else {
+      const vals = Object.values(wp);
+      for (let i = 0; i < vals.length; i++) {
+        const p = vals[i];
+        if (!p) continue;
+        const pSeriesId = String(p.seriesId || p.parentSeriesId || '').replace(/^series-/, '');
+        if (pSeriesId && (pSeriesId === cleanId || (seriesId && pSeriesId === seriesId))) {
+          return p;
+        }
       }
     }
   }
   return null;
 }
 
-function isItemWatchedOrProgress(item, type) {
+function isItemWatchedOrProgress(item, type, seriesProgressMap = null) {
   if (!item) return false;
   if (type === 'live') {
     return (state.recent && state.recent.includes(item.id)) || !!state.watchProgress[item.id];
   }
-  const prog = getWatchProgressForSort(item, type);
+  const prog = getWatchProgressForSort(item, type, seriesProgressMap);
   if (!prog) return false;
   if (prog.isWatched) return true;
   if (Number(prog.percentage || 0) >= 85) return true;
@@ -1768,8 +1774,23 @@ function renderCategoryPills(type, listEl, countEl, allCountEl, groupsMap, items
   divider.style.cssText = 'height:1px; background:var(--border-subtle); margin:4px 2px; flex-shrink:0;';
   listEl.appendChild(divider);
 
+  // ⚡ Bolt Optimization: Pre-calculate series watch progress map for O(1) lookups during filter
+  let seriesProgressMap = null;
+  if (type === 'series' && state.watchProgress) {
+    seriesProgressMap = new Map();
+    const wpVals = Object.values(state.watchProgress);
+    for (let j = 0; j < wpVals.length; j++) {
+      const p = wpVals[j];
+      if (!p) continue;
+      const pSeriesId = String(p.seriesId || p.parentSeriesId || '').replace(/^series-/, '');
+      if (pSeriesId) {
+        seriesProgressMap.set(pSeriesId, p);
+      }
+    }
+  }
+
   // 1. Dedicated Section WATCHED Category Pill (ABOVE FAVORITES)
-  const watchedCount = (itemsList || []).filter(i => isItemWatchedOrProgress(i, type)).length;
+  const watchedCount = (itemsList || []).filter(i => isItemWatchedOrProgress(i, type, seriesProgressMap)).length;
   const watchedBtn = document.createElement('button');
   watchedBtn.className = `cat-pill pill-watched ${state.category === '__watched__' ? 'active' : ''}`;
   watchedBtn.setAttribute('data-category', '__watched__');
@@ -1835,10 +1856,26 @@ function filterAndRenderItems(sourceItems, scroller, countEl) {
   const curType = state.destination;
   let filtered = sourceItems || [];
 
+  // ⚡ Bolt Optimization: Pre-calculate watch progress map to convert O(N^2) lookups to O(N+M)
+  // This prevents UI freezing when rendering large series lists
+  let seriesProgressMap = null;
+  if (curType === 'series' && state.watchProgress) {
+    seriesProgressMap = new Map();
+    const wpVals = Object.values(state.watchProgress);
+    for (let j = 0; j < wpVals.length; j++) {
+      const p = wpVals[j];
+      if (!p) continue;
+      const pSeriesId = String(p.seriesId || p.parentSeriesId || '').replace(/^series-/, '');
+      if (pSeriesId) {
+        seriesProgressMap.set(pSeriesId, p);
+      }
+    }
+  }
+
   // A search always covers the complete active page, regardless of the
   // category/favorites filter selected in the sidebar.
   if (!state.search && state.category === '__watched__') {
-    filtered = filtered.filter(i => isItemWatchedOrProgress(i, curType));
+    filtered = filtered.filter(i => isItemWatchedOrProgress(i, curType, seriesProgressMap));
   } else if (!state.search && state.category === '__favorites__') {
     filtered = filtered.filter(i => state.favorites.has(i.id));
   } else if (!state.search && state.category && state.category !== 'all') {
@@ -1868,10 +1905,10 @@ function filterAndRenderItems(sourceItems, scroller, countEl) {
   const sortMetaMap = new Map();
   for (let i = 0; i < filtered.length; i++) {
     const item = filtered[i];
-    const watched = isItemWatchedOrProgress(item, curType);
+    const watched = isItemWatchedOrProgress(item, curType, seriesProgressMap);
     let time = 0;
     if (watched) {
-      const p = getWatchProgressForSort(item, curType);
+      const p = getWatchProgressForSort(item, curType, seriesProgressMap);
       time = (p && (p.updatedAt || p.lastWatched || p.currentTime)) || 0;
     }
     sortMetaMap.set(item, { watched, time });
