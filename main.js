@@ -683,6 +683,26 @@ function createWindow() {
     appendCrashLog(entry);
   });
 
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    try {
+      const parsed = new URL(url);
+      if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+        shell.openExternal(url);
+      }
+    } catch {}
+    return { action: 'deny' };
+  });
+
+  mainWindow.webContents.on('will-navigate', (event, url) => {
+    event.preventDefault();
+    try {
+      const parsed = new URL(url);
+      if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+        shell.openExternal(url);
+      }
+    } catch {}
+  });
+
   // Deliver playlist imports that arrived while the renderer was loading.
   mainWindow.webContents.on('did-finish-load', () => {
     while (pendingPhonePlaylistImports.length > 0) {
@@ -1179,7 +1199,16 @@ ipcMain.handle('relaunch-app', () => {
 ipcMain.handle('exit-app', () => {
   app.quit();
 });
-ipcMain.handle('open-external', async (_e, url) => { await shell.openExternal(url); return true; });
+ipcMain.handle('open-external', async (_e, url) => {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+      await shell.openExternal(url);
+      return true;
+    }
+  } catch {}
+  return false;
+});
 
 // Remote control
 ipcMain.on('remote-state-update', (_event, snapshot) => { remoteSnapshot = snapshot || remoteSnapshot; });
