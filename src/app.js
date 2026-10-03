@@ -1703,7 +1703,8 @@ function renderContinueWatching() {
   });
 }
 
-function getWatchProgressForSort(item, type) {
+// ⚡ Bolt Optimization: Accept pre-calculated seriesProgressMap to prevent O(N^2) lookup
+function getWatchProgressForSort(item, type, seriesProgressMap = null) {
   if (!item) return null;
   const wp = state.watchProgress || {};
   const itemId = String(item.id || '');
@@ -1716,25 +1717,31 @@ function getWatchProgressForSort(item, type) {
   if (seriesId && wp['series-' + seriesId]) return wp['series-' + seriesId];
 
   if (type === 'series') {
-    const vals = Object.values(wp);
-    for (let i = 0; i < vals.length; i++) {
-      const p = vals[i];
-      if (!p) continue;
-      const pSeriesId = String(p.seriesId || p.parentSeriesId || '').replace(/^series-/, '');
-      if (pSeriesId && (pSeriesId === cleanId || (seriesId && pSeriesId === seriesId))) {
-        return p;
+    if (seriesProgressMap) {
+      if (seriesProgressMap.has(cleanId)) return seriesProgressMap.get(cleanId);
+      if (seriesId && seriesProgressMap.has(seriesId)) return seriesProgressMap.get(seriesId);
+    } else {
+      const vals = Object.values(wp);
+      for (let i = 0; i < vals.length; i++) {
+        const p = vals[i];
+        if (!p) continue;
+        const pSeriesId = String(p.seriesId || p.parentSeriesId || '').replace(/^series-/, '');
+        if (pSeriesId && (pSeriesId === cleanId || (seriesId && pSeriesId === seriesId))) {
+          return p;
+        }
       }
     }
   }
   return null;
 }
 
-function isItemWatchedOrProgress(item, type) {
+// ⚡ Bolt Optimization: Accept pre-calculated seriesProgressMap
+function isItemWatchedOrProgress(item, type, seriesProgressMap = null) {
   if (!item) return false;
   if (type === 'live') {
     return (state.recent && state.recent.includes(item.id)) || !!state.watchProgress[item.id];
   }
-  const prog = getWatchProgressForSort(item, type);
+  const prog = getWatchProgressForSort(item, type, seriesProgressMap);
   if (!prog) return false;
   if (prog.isWatched) return true;
   if (Number(prog.percentage || 0) >= 85) return true;
@@ -1865,13 +1872,27 @@ function filterAndRenderItems(sourceItems, scroller, countEl) {
 
   // ⚡ Bolt Optimization: Pre-calculate watch progress to avoid O(N^2) complexity during sort
   // sorting repeatedly calls getWatchProgressForSort which does an O(N) Object.values() iteration for series
+  const seriesProgressMap = new Map();
+  if (curType === 'series') {
+    const wp = state.watchProgress || {};
+    for (const key in wp) {
+      const p = wp[key];
+      if (p) {
+        const pSeriesId = String(p.seriesId || p.parentSeriesId || '').replace(/^series-/, '');
+        if (pSeriesId) {
+          seriesProgressMap.set(pSeriesId, p);
+        }
+      }
+    }
+  }
+
   const sortMetaMap = new Map();
   for (let i = 0; i < filtered.length; i++) {
     const item = filtered[i];
-    const watched = isItemWatchedOrProgress(item, curType);
+    const watched = isItemWatchedOrProgress(item, curType, seriesProgressMap);
     let time = 0;
     if (watched) {
-      const p = getWatchProgressForSort(item, curType);
+      const p = getWatchProgressForSort(item, curType, seriesProgressMap);
       time = (p && (p.updatedAt || p.lastWatched || p.currentTime)) || 0;
     }
     sortMetaMap.set(item, { watched, time });
@@ -3339,26 +3360,51 @@ function publishRemoteState() {
     favorites: Array.from(state.favorites),
     categories,
     // Prioritize all favorited and watched items so they are never omitted by slice
+    // ⚡ Bolt Optimization: Replace slow array spreads/multiple filters with a single optimized loop pass
     channels: (() => {
       const favSet = state.favorites || new Set();
       const isFavOrWatched = c => favSet.has(c.id) || (state.watchProgress && (state.watchProgress[c.id] || state.watchProgress[String(c.id).replace(/^(?:series|movie|live)-/, '')]));
-      return [...liveChannels.filter(isFavOrWatched), ...liveChannels.filter(c => !isFavOrWatched(c))]
-        .slice(0, 2000)
-        .map(c => ({ id: c.id, name: c.name, group: c.group, logo: c.logo, type: 'live' }));
+      const top = [];
+      const rest = [];
+      for (let i = 0; i < liveChannels.length; i++) {
+        const c = liveChannels[i];
+        if (isFavOrWatched(c)) {
+          top.push({ id: c.id, name: c.name, group: c.group, logo: c.logo, type: 'live' });
+        } else if (rest.length < 2000) {
+          rest.push({ id: c.id, name: c.name, group: c.group, logo: c.logo, type: 'live' });
+        }
+      }
+      return top.concat(rest).slice(0, 2000);
     })(),
     movies: (() => {
       const favSet = state.favorites || new Set();
       const isFavOrWatched = m => favSet.has(m.id) || (state.watchProgress && (state.watchProgress[m.id] || state.watchProgress[String(m.id).replace(/^(?:series|movie|live)-/, '')]));
-      return [...movies.filter(isFavOrWatched), ...movies.filter(m => !isFavOrWatched(m))]
-        .slice(0, 2000)
-        .map(m => ({ id: m.id, name: m.name, group: m.group, logo: m.logo, type: 'movies', rating: m.rating, year: m.releaseDate }));
+      const top = [];
+      const rest = [];
+      for (let i = 0; i < movies.length; i++) {
+        const m = movies[i];
+        if (isFavOrWatched(m)) {
+          top.push({ id: m.id, name: m.name, group: m.group, logo: m.logo, type: 'movies', rating: m.rating, year: m.releaseDate });
+        } else if (rest.length < 2000) {
+          rest.push({ id: m.id, name: m.name, group: m.group, logo: m.logo, type: 'movies', rating: m.rating, year: m.releaseDate });
+        }
+      }
+      return top.concat(rest).slice(0, 2000);
     })(),
     series: (() => {
       const favSet = state.favorites || new Set();
       const isFavOrWatched = s => favSet.has(s.id) || (s.seriesId && favSet.has(s.seriesId)) || (state.watchProgress && (state.watchProgress[s.id] || (s.seriesId && state.watchProgress[s.seriesId])));
-      return [...series.filter(isFavOrWatched), ...series.filter(s => !isFavOrWatched(s))]
-        .slice(0, 2000)
-        .map(s => ({ id: s.id, seriesId: s.seriesId, name: s.name, group: s.group, logo: s.logo, type: 'series', rating: s.rating }));
+      const top = [];
+      const rest = [];
+      for (let i = 0; i < series.length; i++) {
+        const s = series[i];
+        if (isFavOrWatched(s)) {
+          top.push({ id: s.id, seriesId: s.seriesId, name: s.name, group: s.group, logo: s.logo, type: 'series', rating: s.rating });
+        } else if (rest.length < 2000) {
+          rest.push({ id: s.id, seriesId: s.seriesId, name: s.name, group: s.group, logo: s.logo, type: 'series', rating: s.rating });
+        }
+      }
+      return top.concat(rest).slice(0, 2000);
     })(),
     activeSeriesEpisodes: (activeSeriesEpisodes || []).slice(0, 300).map(e => ({ id: e.id, season: e.season, episodeNumber: e.episodeNumber, name: e.name, episodeTitle: e.episodeTitle, duration: e.duration })),
     watchProgress: state.watchProgress || {},
