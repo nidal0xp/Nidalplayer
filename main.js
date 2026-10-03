@@ -629,6 +629,40 @@ function createWindow() {
     }
   });
 
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    try {
+      const parsed = new URL(url);
+      if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+        shell.openExternal(url);
+      }
+    } catch (err) {
+      console.warn('[Security] Blocked window open for invalid URL:', url);
+    }
+    return { action: 'deny' };
+  });
+
+  mainWindow.webContents.on('will-navigate', (event, url) => {
+    try {
+      const parsed = new URL(url);
+      // Allow internal app navigation (file protocol or localhost for dev)
+      if (parsed.protocol === 'file:' || parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1') {
+        return;
+      }
+
+      // For external web links, open in system browser and prevent in-app navigation
+      if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+        event.preventDefault();
+        shell.openExternal(url);
+      } else {
+        event.preventDefault();
+        console.warn('[Security] Blocked unauthorized navigation to:', url);
+      }
+    } catch (err) {
+      event.preventDefault();
+      console.warn('[Security] Blocked navigation for invalid URL:', url);
+    }
+  });
+
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
   });
@@ -1179,7 +1213,18 @@ ipcMain.handle('relaunch-app', () => {
 ipcMain.handle('exit-app', () => {
   app.quit();
 });
-ipcMain.handle('open-external', async (_e, url) => { await shell.openExternal(url); return true; });
+ipcMain.handle('open-external', async (_e, url) => {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+      await shell.openExternal(url);
+      return true;
+    }
+  } catch (err) {
+    console.warn('[Security] Invalid URL passed to open-external:', url);
+  }
+  return false;
+});
 
 // Remote control
 ipcMain.on('remote-state-update', (_event, snapshot) => { remoteSnapshot = snapshot || remoteSnapshot; });
