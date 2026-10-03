@@ -1,0 +1,3 @@
+## 2025-05-18 - Icon-Only Button Accessibility
+**Learning:** The application's custom modals (e.g., `.btn-modal-close`) and search UI often rely purely on raw text symbols (e.g., '✕') lacking default semantics. Screen readers may misinterpret or ignore these symbols without proper context.
+**Action:** Always manually add `aria-label` or `title` to icon-only buttons, and wrap raw text symbols in `<span aria-hidden="true">` to prevent screen readers from reading the symbol out of context, improving overall accessibility for custom UI elements.
