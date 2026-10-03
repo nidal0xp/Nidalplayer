@@ -8,6 +8,7 @@ import { cleanTitle, extractYear, fetchTMDBDetails, testTMDBApiKey } from '../sr
 import { matchCenter, TOP_5_LEAGUES } from '../src/sports/matchCenter.js';
 import { favoriteTeamService } from '../src/sports/favoriteTeamService.js';
 import { VirtualScroller } from '../src/ui/virtualScroller.js';
+import remoteSecurity from '../src/desktop/remoteSecurity.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -44,6 +45,37 @@ async function runAsyncTest(name, fn) {
 }
 
 async function main() {
+  // 0. Desktop LAN remote security
+  runTest('Desktop remote: private-LAN and QR token authorization', () => {
+    assert.strictEqual(remoteSecurity.isPrivateLanAddress('192.168.1.24'), true);
+    assert.strictEqual(remoteSecurity.isPrivateLanAddress('::ffff:10.0.0.12'), true);
+    assert.strictEqual(remoteSecurity.isPrivateLanAddress('172.15.1.2'), false);
+    assert.strictEqual(remoteSecurity.isPrivateLanAddress('8.8.8.8'), false);
+
+    const expectedToken = '4dc2d51f7b6e9a0c3d4e5f6a';
+    const request = { socket: { remoteAddress: '192.168.1.24' }, headers: { 'x-remote-token': expectedToken } };
+    assert.strictEqual(remoteSecurity.hasRemoteAccess(request, new URL('http://desktop.local/api/action'), expectedToken), true);
+    assert.strictEqual(remoteSecurity.hasRemoteAccess({ ...request, headers: {} }, new URL('http://desktop.local/api/action?token=wrong'), expectedToken), false);
+    assert.strictEqual(remoteSecurity.hasRemoteAccess({ ...request, socket: { remoteAddress: '8.8.8.8' } }, new URL('http://desktop.local/api/action?token=' + expectedToken), expectedToken), false);
+  });
+
+  runTest('Match center: ranks confirmed EPG matches above league-channel candidates', () => {
+    const fixture = { homeTeam: 'Arsenal', awayTeam: 'Chelsea', leagueId: '4328', leagueName: 'English Premier League' };
+    const channels = [
+      { id: 'live-1', name: 'beIN Sports 1', group: 'Sports' },
+      { id: 'live-2', name: 'Sky Sports Premier League', group: 'Sports' },
+      { id: 'live-3', name: 'News 24', group: 'News' }
+    ];
+    const matches = matchCenter.findChannelsForMatch(fixture, channels, {
+      '1': { title: 'Arsenal v Chelsea', full: 'Arsenal v Chelsea · Live' },
+      '2': { title: 'Football Live', full: 'Football Live' }
+    });
+    assert.strictEqual(matches.length, 2);
+    assert.strictEqual(matches[0].confidence, 'confirmed');
+    assert.strictEqual(matches[0].channel.id, 'live-1');
+    assert.strictEqual(matches[1].confidence, 'candidate');
+  });
+
   // 1. M3U Parser Tests
   runTest('M3U Parser: Live, VOD, and Series classification', () => {
     const sampleM3U = `#EXTM3U
@@ -265,8 +297,8 @@ http://stream.example.com/series/user/pass/789.mp4`;
       global.window = {
         innerHeight: 800,
         innerWidth: 1200,
-        addEventListener: () => {},
-        removeEventListener: () => {}
+        addEventListener: () => { },
+        removeEventListener: () => { }
       };
       global.requestAnimationFrame = (fn) => fn();
 

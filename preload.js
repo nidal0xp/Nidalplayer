@@ -91,6 +91,7 @@ contextBridge.exposeInMainWorld('streamline', {
   getGpuAcceleration: () => ipcRenderer.invoke('get-gpu-acceleration'),
   setGpuAcceleration: enabled => ipcRenderer.invoke('set-gpu-acceleration', enabled),
   getGpuInfo: () => ipcRenderer.invoke('get-gpu-info'),
+  updateGpuPlaybackContext: context => ipcRenderer.send('gpu-playback-context', context),
 
   // Crash Logs
   getCrashLogs: () => ipcRenderer.invoke('get-crash-logs'),

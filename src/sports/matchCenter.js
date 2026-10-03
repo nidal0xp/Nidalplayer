@@ -34,6 +34,27 @@ const LEAGUE_BROADCASTER_MAP = {
   '4480': ['tnt sports', 'canal+ foot', 'bein sports', 'movistar liga de campeones', 'dazn', 'paramount+', 'supersport champions', 'sky sport austria']
 };
 
+const GENERIC_TEAM_TOKENS = new Set(['ac', 'afc', 'as', 'athletic', 'cf', 'city', 'club', 'de', 'fc', 'real', 'sc', 'ss', 'town', 'united']);
+
+function normalizeSearchText(value = '') {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function teamMentioned(team, text) {
+  const normalizedTeam = normalizeSearchText(team);
+  const normalizedText = normalizeSearchText(text);
+  if (!normalizedTeam || !normalizedText) return false;
+  if (normalizedText.includes(normalizedTeam)) return true;
+  const distinctiveTokens = normalizedTeam.split(' ').filter(token => token.length >= 3 && !GENERIC_TEAM_TOKENS.has(token));
+  return distinctiveTokens.length >= 2 && distinctiveTokens.every(token => normalizedText.includes(token));
+}
+
 export class SportsMatchCenter {
   constructor() {
     this.matchesCache = [];
@@ -243,15 +264,11 @@ export class SportsMatchCenter {
       return [];
     }
 
-    const homeLower = match.homeTeam.toLowerCase();
-    const awayLower = match.awayTeam.toLowerCase();
-    const homeTokens = homeLower.split(/\s+/).filter(t => t.length >= 3);
-    const awayTokens = awayLower.split(/\s+/).filter(t => t.length >= 3);
-
     const leagueBroadcasters = LEAGUE_BROADCASTER_MAP[match.leagueId] || [];
 
-    const exactMatch = [];
-    const broadcasterMatch = [];
+    const confirmed = [];
+    const likely = [];
+    const candidates = [];
     const seenChannelIds = new Set();
 
     for (let i = 0; i < allChannels.length; i++) {
@@ -260,38 +277,42 @@ export class SportsMatchCenter {
       const chId = String(ch.id);
       if (seenChannelIds.has(chId)) continue;
 
-      const chName = String(ch.name || '').toLowerCase();
-      const chGroup = String(ch.group || '').toLowerCase();
+      const chName = normalizeSearchText(ch.name);
       const streamId = String(ch.metadata?.stream_id || ch.id || '').replace(/^(?:live|movie|series)-/, '');
       const epg = epgCache[streamId] || null;
-      const epgText = epg ? (epg.full || epg.title || '').toLowerCase() : '';
+      const epgText = epg ? (epg.full || epg.title || '') : '';
+      const combinedText = `${epgText} ${chName}`;
+      const homeInEpg = teamMentioned(match.homeTeam, combinedText);
+      const awayInEpg = teamMentioned(match.awayTeam, combinedText);
+      const isBroadcaster = leagueBroadcasters.some(b => chName.includes(normalizeSearchText(b)));
 
-      // 1. Direct match: Home and/or Away team in channel name or current EPG programme
-      const homeInEpg = homeTokens.some(t => epgText.includes(t) || chName.includes(t));
-      const awayInEpg = awayTokens.some(t => epgText.includes(t) || chName.includes(t));
-      
       if (homeInEpg && awayInEpg) {
-        exactMatch.push({ channel: ch, matchReason: 'Direct Match: Both Teams in EPG / Channel', priority: 1, epg });
+        confirmed.push({ channel: ch, matchReason: 'CONFIRMED · BOTH TEAMS IN EPG', confidence: 'confirmed', priority: 1, epg });
         seenChannelIds.add(chId);
         continue;
       }
-      if (homeInEpg || awayInEpg) {
-        exactMatch.push({ channel: ch, matchReason: 'EPG match for ' + (homeInEpg ? match.homeTeam : match.awayTeam), priority: 2, epg });
+      if ((homeInEpg || awayInEpg) && isBroadcaster) {
+        likely.push({ channel: ch, matchReason: `LIKELY · ${homeInEpg ? match.homeTeam : match.awayTeam} IN EPG`, confidence: 'likely', priority: 2, epg });
         seenChannelIds.add(chId);
         continue;
       }
 
-      // 2. Official League Broadcasters (e.g. beIN Sports 1, Sky Sports Premier League, TNT Sports 1)
-      const isBroadcaster = leagueBroadcasters.some(b => chName.includes(b));
       if (isBroadcaster) {
-        broadcasterMatch.push({ channel: ch, matchReason: 'Official ' + match.leagueName + ' Broadcaster', priority: 3, epg });
+        candidates.push({ channel: ch, matchReason: 'LEAGUE CHANNEL · VERIFY IN GUIDE', confidence: 'candidate', priority: 3, epg });
         seenChannelIds.add(chId);
       }
     }
 
-    // Return strictly verified channels
-    const combined = [...exactMatch, ...broadcasterMatch];
-    return combined;
+    return [...confirmed, ...likely, ...candidates];
+  }
+
+  getEpgScanCandidates(match, allChannels = [], limit = 48) {
+    const broadcasters = LEAGUE_BROADCASTER_MAP[match?.leagueId] || [];
+    return allChannels.filter(channel => {
+      const name = normalizeSearchText(channel?.name);
+      const group = normalizeSearchText(channel?.group);
+      return broadcasters.some(b => name.includes(normalizeSearchText(b))) || /sport|football|soccer|be ?in|dazn|sky|tnt|canal/.test(group);
+    }).slice(0, limit);
   }
 }
 

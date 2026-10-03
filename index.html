@@ -651,11 +651,11 @@
                     <label style="margin:0;">🖥️ GPU HARDWARE ACCELERATION</label>
                     <span style="display:inline-flex; align-items:center; gap:5px; background:rgba(74,222,128,0.12); color:#4ade80; font-size:10px; font-weight:700; padding:3px 10px; border-radius:12px; border:1px solid rgba(74,222,128,0.3); font-family:var(--font-mono); letter-spacing:0.5px;">
                       <span style="width:6px; height:6px; background:#4ade80; border-radius:50%; display:inline-block; box-shadow:0 0 8px #4ade80;"></span>
-                      ENABLED BY DEFAULT
+                      RESTART REQUIRED
                     </span>
                   </div>
                   <div id="settingGpuStatus" style="font-size:11px; color:var(--text-secondary); line-height:1.5; padding:8px 10px; background:rgba(255,255,255,0.02); border:1px solid var(--border-subtle); border-radius:6px;">
-                    Hardware video decode &amp; HEVC streaming are active with crash protection safeguards (watchdog timeout suppression &amp; safe driver rasterization). Hardware acceleration is required for zero-delay IPTV playback.
+                    The saved preference is applied at startup. Chromium and your graphics driver determine which decode, rasterization, and compositing features are actually active. If GPU crashes continue, try Safe UI Mode and restart the app.
                   </div>
                 </div>
                 <div class="config-card">

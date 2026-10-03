@@ -58,16 +58,11 @@ class LineupService {
         const shortName = (ev.shortName || '').toLowerCase();
         const hasHome = homeTokens.some(t => name.includes(t) || shortName.includes(t));
         const hasAway = awayTokens.some(t => name.includes(t) || shortName.includes(t));
-        return hasHome || hasAway;
+        return hasHome && hasAway;
       });
 
       if (!matchedEvent) {
-        // Try fallback to first event if only 1 event today
-        if (events.length === 1) {
-          matchedEvent = events[0];
-        } else {
-          return { available: false, message: 'Lineups will be announced ~1 hour before kickoff' };
-        }
+        return { available: false, message: 'Official lineup is not available for this exact fixture yet' };
       }
 
       // 3. Fetch summary for rosters
@@ -105,7 +100,7 @@ class LineupService {
           teamId: r.team?.id,
           teamName: r.team?.displayName || match.homeTeam,
           logo: r.team?.logo || '',
-          formation: r.formation || '4-3-3',
+          formation: r.formation || '',
           starters,
           subs
         };

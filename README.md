@@ -2,7 +2,7 @@
 
 [![License: CC BY-NC-SA 4.0](https://img.shields.io/badge/License-CC_BY--NC--SA_4.0-orange.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows_x64-blue.svg)](https://github.com/nidal0xp/Nidalplayer/releases)
-[![Version](https://img.shields.io/badge/Version-4.4.0-success.svg)](https://github.com/nidal0xp/Nidalplayer/releases)
+[![Version](https://img.shields.io/badge/Version-4.4.1-success.svg)](https://github.com/nidal0xp/Nidalplayer/releases)
 [![Auto-Updates](https://img.shields.io/badge/Updates-Automatic_GitHub_Releases-brightgreen.svg)](https://github.com/nidal0xp/Nidalplayer/releases)
 
 **Nidalplayer** is a high-performance, modernist streaming media center engineered specifically for Windows. Designed with an industrial Swiss aesthetic, it combines lightning-fast stream startup, real-time sports intelligence, 4K metadata discovery, live preview playback, and zero-configuration mobile companion remote control.
@@ -35,7 +35,7 @@ Scan the in-app QR code with any smartphone on your local Wi-Fi to launch the in
   * Zero-delay stream initiation (<150ms startup).
   * High-compatibility synthetic byte-range M3U8 chunking for instant seeking (+10s / -10s) across all movies, episodes, and VOD streams.
   * Multi-track audio and subtitle selection with universal codec support (AAC, MP3, AC3, EAC3).
-  * **GPU Hardware Acceleration Enabled by Default**: Native hardware video decoding and HEVC support with driver watchdog crash protection.
+  * **Driver-Managed GPU Acceleration**: Chromium selects supported graphics features; repeated recent GPU crashes trigger a software-rendering fallback.
 
 * **🎬 Integrated Cinema Preview & VOD Grid**:
   * Side-by-side instant playback preview panel with audio controls, synopsis display, and one-click cinema fullscreen mode.
@@ -45,8 +45,8 @@ Scan the in-app QR code with any smartphone on your local Wi-Fi to launch the in
 * **⚽ Top 5 Football Leagues Match Center & Live Sidebar Widget**:
   * Real-time match fixtures, live scores, and schedules for Premier League, La Liga, Serie A, Bundesliga, Ligue 1, and UEFA Champions League.
   * **Sidebar Favorite Team Sports Center**: Live league standings table with active club highlight, plus one-touch switches for Top Scorers and Top Assists.
-  * Automated broadcaster channel matching: effortlessly detects which live streams in your playlist are broadcasting the active match.
-  * Tactical Starting XI lineups, substitutions, and team formations.
+  * EPG-assisted broadcaster suggestions ranked from available playlist and programme data; results are best-effort when provider EPG data is incomplete.
+  * Match lineups and formations are shown when published by available match data; unavailable details are clearly identified rather than guessed.
 
 * **🌟 4K TMDB Metadata Enrichment**:
   * Clean title sanitization strips codec and release tags to fetch original 4K backdrops, posters, ratings, plot synopses, and cast headshots.
@@ -64,9 +64,9 @@ Scan the in-app QR code with any smartphone on your local Wi-Fi to launch the in
 
 | Release Package | File | Size | Description |
 | :--- | :--- | :--- | :--- |
-| **Windows Installer** | [`Nidalplayer-Setup-4.4.0.exe`](https://github.com/nidal0xp/Nidalplayer/releases/download/v4.4.0/Nidalplayer-Setup-4.4.0.exe) | ~89 MB | Standard Windows Setup with desktop & start menu shortcuts |
-| **Portable Edition** | [`Nidalplayer-Portable.exe`](https://github.com/nidal0xp/Nidalplayer/releases/download/v4.4.0/Nidalplayer-Portable.exe) | ~89 MB | Standalone portable executable (no installation required) |
-| **Update Manifest** | [`latest.yml`](https://github.com/nidal0xp/Nidalplayer/releases/download/v4.4.0/latest.yml) | 350 B | Cryptographic SHA-512 update verification manifest |
+| **Windows Installer** | [`Nidalplayer-Setup-4.4.1.exe`](https://github.com/nidal0xp/Nidalplayer/releases/download/v4.4.1/Nidalplayer-Setup-4.4.1.exe) | ~89 MB | Standard Windows Setup with desktop & start menu shortcuts |
+| **Portable Edition** | [`Nidalplayer-Portable-4.4.1.exe`](https://github.com/nidal0xp/Nidalplayer/releases/download/v4.4.1/Nidalplayer-Portable-4.4.1.exe) | ~89 MB | Standalone portable executable (no installation required) |
+| **Update Manifest** | [`latest.yml`](https://github.com/nidal0xp/Nidalplayer/releases/download/v4.4.1/latest.yml) | generated at release | SHA-512 update verification manifest |
 
 ---
 

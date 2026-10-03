@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, dialog, ipcMain, shell, session, safeStorage, Notification } = require('electron');
+const { app, BrowserWindow, Menu, dialog, ipcMain, shell, session, safeStorage, Notification, crashReporter } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const path = require('path');
 const fs = require('fs');
@@ -6,6 +6,7 @@ const http = require('http');
 const crypto = require('crypto');
 const os = require('os');
 const QRCode = require('qrcode');
+const { hasRemoteAccess } = require('./src/desktop/remoteSecurity');
 
 const remoteHtml = path.join(__dirname, 'remote', 'index.html');
 const tvHtml = path.join(__dirname, 'tv', 'index.html');
@@ -105,6 +106,65 @@ function getPersistentRemoteToken() {
 }
 
 let remoteToken = '';
+let gpuRuntimeDiagnostics = { featureStatus: {}, gpuInfo: {}, capturedAt: null };
+let gpuPlaybackContext = { type: 'none', engine: 'none', status: 'idle', fullscreen: false };
+
+function captureGpuRuntimeDiagnostics() {
+  try { gpuRuntimeDiagnostics.featureStatus = app.getGPUFeatureStatus?.() || {}; } catch {}
+  gpuRuntimeDiagnostics.capturedAt = new Date().toISOString();
+  try {
+    app.getGPUInfo?.('complete').then(info => {
+      gpuRuntimeDiagnostics.gpuInfo = info || {};
+      gpuRuntimeDiagnostics.capturedAt = new Date().toISOString();
+    }).catch(() => {});
+  } catch {}
+}
+
+function crashDiagnosticsSnapshot() {
+  return {
+    gpuPreferenceEnabled: configuredGpuAcceleration,
+    gpuEnabledForLaunch: gpuAccelerationEnabled,
+    gpuFeatures: gpuRuntimeDiagnostics.featureStatus,
+    gpuAdapters: gpuRuntimeDiagnostics.gpuInfo?.gpuDevice || [],
+    gpuDiagnosticsCapturedAt: gpuRuntimeDiagnostics.capturedAt,
+    playbackContext: { ...gpuPlaybackContext },
+    fullscreen: Boolean(mainWindow && !mainWindow.isDestroyed() && mainWindow.isFullScreen()),
+    crashDumpDirectory: app.getPath('crashDumps')
+  };
+}
+
+function recentGpuCrashCount() {
+  const since = Date.now() - (24 * 60 * 60 * 1000);
+  return readCrashLogs().filter(entry => {
+    const timestamp = Date.parse(entry?.timestamp || '');
+    if (!Number.isFinite(timestamp) || timestamp < since) return false;
+    const processType = String(entry?.processType || '').toLowerCase();
+    const reason = String(entry?.reason || '').toLowerCase();
+    return processType.includes('gpu') || (entry?.type === 'render-process-gone' && reason === 'crashed');
+  }).length;
+}
+
+const configuredGpuAcceleration = readUserSettings().gpuAcceleration !== false;
+const gpuCrashLoopDetected = configuredGpuAcceleration && recentGpuCrashCount() >= 2;
+const gpuAccelerationEnabled = configuredGpuAcceleration && !gpuCrashLoopDetected;
+
+if (!gpuAccelerationEnabled) {
+  app.disableHardwareAcceleration();
+  console.warn(gpuCrashLoopDetected
+    ? '[GPU] Disabled for this launch after repeated recent GPU crashes. Re-enable it in Settings after updating the graphics driver.'
+    : '[GPU] Hardware acceleration disabled by user preference.');
+}
+
+// Capture local minidumps for native crashes; Electron is explicitly forbidden from uploading them.
+try {
+  crashReporter.start({
+    productName: 'Nidalplayer',
+    uploadToServer: false,
+    globalExtra: { appVersion: app.getVersion(), gpuPreferenceEnabled: String(configuredGpuAcceleration) }
+  });
+} catch (error) {
+  console.warn('[CrashReporter] Could not start local crash collection:', error?.message || error);
+}
 
 function readJson(file, fallback) {
   try {
@@ -250,19 +310,14 @@ function json(res, status, payload) {
   res.writeHead(status, {
     'Content-Type': 'application/json; charset=utf-8',
     'Cache-Control': 'no-store',
-    'Access-Control-Allow-Origin': '*'
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'DENY'
   });
   res.end(JSON.stringify(payload));
 }
 
-function isLanRequest(request) {
-  const ip = request.socket?.remoteAddress || '';
-  return ip.includes('127.0.0.1') || ip.includes('::1') || ip.includes('192.168.') || ip.includes('10.') || ip.includes('172.') || ip.startsWith('::ffff:192.168.') || ip.startsWith('::ffff:10.') || ip.startsWith('::ffff:127.');
-}
-
-function authorized(request) {
-  // Always authorize all local/LAN requests seamlessly so mobile remotes never get expired across restarts
-  return true;
+function authorized(request, url) {
+  return hasRemoteAccess(request, url, remoteToken);
 }
 
 let tvSnapshot = { activePlaylistId: '', activePlaylistName: '', playlists: [], channels: [], movies: [], series: [], playback: {} };
@@ -305,6 +360,12 @@ function startRemoteServer() {
     const url = new URL(request.url, `http://127.0.0.1:${remotePort}`);
     
     const pathname = (url.pathname || '').replace(/\/+$/, '') || '/';
+
+    // The companion remote is a desktop feature, but it is still a LAN web server.
+    // Require the QR-link token before serving either its UI or any API endpoint.
+    if (!authorized(request, url)) {
+      return json(response, 401, { error: 'Unauthorized remote request. Scan the QR code in Nidalplayer again.' });
+    }
     
     // Dedicated Desktop PC Companion Remote URL
     if (pathname === '/desktop' || pathname === '/pc' || pathname === '/windows') {
@@ -339,11 +400,6 @@ function startRemoteServer() {
       });
     }
 
-    // Tizen TVs use the desktop remote server as a small LAN relay.
-    if (url.pathname === '/api/pair' && request.method === 'GET') {
-      return json(response, 200, { ok: true, token: remoteToken, port: remotePort });
-    }
-
     // Android TV Downloader Direct APK Route
     if (url.pathname === '/apk' || url.pathname === '/nidalplayer.apk' || url.pathname === '/apk-tv') {
       const apkPath = path.join(__dirname, 'dist', 'Nidalplayer-AndroidTV.apk');
@@ -375,8 +431,6 @@ function startRemoteServer() {
       });
       return fs.createReadStream(apkPath).pipe(response);
     }
-
-    if (!authorized(request)) return json(response, 410, { error: 'Remote link expired. Scan a new QR code in Nidalplayer.' });
 
     markRemoteActive();
 
@@ -579,16 +633,11 @@ app.commandLine.appendSwitch('allow-running-insecure-content');
 app.commandLine.appendSwitch('disable-web-security');
 app.commandLine.appendSwitch('allow-insecure-localhost');
 
-// Hardware Acceleration & GPU Video Decoding (Enabled by Default)
-// Direct hardware-accelerated video decode and HEVC are enabled for instant, zero-delay playback.
-// Aggressive flags that cause GPU crashes (enable-gpu-rasterization, forced use-angle d3d11) are omitted
-// so Chromium uses safe driver-approved rasterization without forcing 'enabled_force'.
-// disable-gpu-watchdog is enabled to eliminate Watchdog Exit Code 34 terminations completely.
-app.commandLine.appendSwitch('enable-accelerated-video-decode');
-app.commandLine.appendSwitch('enable-features', 'PlatformHEVCDecoderSupport');
-app.commandLine.appendSwitch('disable-gpu-watchdog');
+// Hardware acceleration is enabled by Chromium only when the installed graphics
+// driver supports it. Do not force a decoder/backend or disable the GPU watchdog:
+// either can make a fullscreen driver hang escalate into a process crash.
 app.commandLine.appendSwitch('disable-features', 'HardwareMediaKeyHandling,UseDnsHttpsSvcb,UseDnsHttpsSvcbHttpUpgrade,HttpsUpgrades,AutoupgradeMixedContent');
-console.log('[GPU] Hardware acceleration ENABLED by default (Native Video Decode + HEVC, Watchdog disabled)');
+console.log(`[GPU] Hardware acceleration ${gpuAccelerationEnabled ? 'enabled with driver-approved defaults' : 'disabled'}.`);
 
 // Secure DNS (DNS-over-HTTPS) via Cloudflare & Google to bypass ISP 451 blocks and censorship
 app.commandLine.appendSwitch('dns-over-https-mode', 'automatic');
@@ -665,7 +714,8 @@ function createWindow() {
       reason: details.reason || 'unknown',
       exitCode: details.exitCode,
       gpuAcceleration: gpuAccelerationEnabled,
-      appVersion: app.getVersion()
+      appVersion: app.getVersion(),
+      ...crashDiagnosticsSnapshot()
     };
     console.error('[CrashLog] Renderer process gone:', JSON.stringify(entry));
     appendCrashLog(entry);
@@ -677,7 +727,8 @@ function createWindow() {
       timestamp: new Date().toISOString(),
       type: 'renderer-unresponsive',
       gpuAcceleration: gpuAccelerationEnabled,
-      appVersion: app.getVersion()
+      appVersion: app.getVersion(),
+      ...crashDiagnosticsSnapshot()
     };
     console.error('[CrashLog] Renderer unresponsive:', JSON.stringify(entry));
     appendCrashLog(entry);
@@ -712,7 +763,8 @@ app.on('child-process-gone', (_event, details) => {
     serviceName: details.serviceName || '',
     name: details.name || '',
     gpuAcceleration: gpuAccelerationEnabled,
-    appVersion: app.getVersion()
+    appVersion: app.getVersion(),
+    ...crashDiagnosticsSnapshot()
   };
   console.error('[CrashLog] Child process gone:', JSON.stringify(entry));
   appendCrashLog(entry);
@@ -750,6 +802,8 @@ app.whenReady().then(() => {
   app.setAppUserModelId('com.streamline.iptvplayer');
   remoteToken = getPersistentRemoteToken();
   createWindow();
+  setTimeout(captureGpuRuntimeDiagnostics, 2500);
+  setInterval(captureGpuRuntimeDiagnostics, 30000).unref?.();
   startRemoteServer();
   initAutoUpdater();
   app.on('activate', () => {
@@ -1377,19 +1431,35 @@ ipcMain.handle('clear-crash-logs', async () => {
 
 ipcMain.handle('get-gpu-info', async () => {
   try {
-    const featureStatus = app.getGPUFeatureStatus ? app.getGPUFeatureStatus() : {};
-    let gpuInfo = {};
-    try {
-      if (app.getGPUInfo) {
-        gpuInfo = await app.getGPUInfo('basic');
-      }
-    } catch {}
+    captureGpuRuntimeDiagnostics();
+    let gpuInfo = gpuRuntimeDiagnostics.gpuInfo;
+    if (!gpuInfo?.gpuDevice && app.getGPUInfo) {
+      try { gpuInfo = await app.getGPUInfo('complete'); } catch {}
+    }
     return {
-      featureStatus,
+      featureStatus: app.getGPUFeatureStatus ? app.getGPUFeatureStatus() : gpuRuntimeDiagnostics.featureStatus,
       gpuInfo,
-      accelerationEnabled: gpuAccelerationEnabled
+      accelerationEnabled: gpuAccelerationEnabled,
+      preferenceEnabled: configuredGpuAcceleration,
+      crashLoopFallbackActive: gpuCrashLoopDetected,
+      playbackContext: { ...gpuPlaybackContext },
+      crashDumpDirectory: app.getPath('crashDumps'),
+      dumpCollectionEnabled: true,
+      dumpsUploaded: false
     };
   } catch (err) {
     return { error: err?.message };
   }
+});
+
+ipcMain.on('gpu-playback-context', (event, context) => {
+  if (!mainWindow || event.sender !== mainWindow.webContents || !context || typeof context !== 'object') return;
+  gpuPlaybackContext = {
+    type: ['live', 'movies', 'series'].includes(context.type) ? context.type : 'none',
+    engine: ['html5', 'artplayer'].includes(context.engine) ? context.engine : 'none',
+    status: String(context.status || 'idle').slice(0, 24),
+    fullscreen: Boolean(context.fullscreen),
+    videoWidth: Number.isFinite(context.videoWidth) ? Math.min(16384, Math.max(0, context.videoWidth)) : 0,
+    videoHeight: Number.isFinite(context.videoHeight) ? Math.min(16384, Math.max(0, context.videoHeight)) : 0
+  };
 });

@@ -611,6 +611,7 @@ async function processEpgQueue() {
 
   const batch = epgQueue.splice(0, 8);
   await Promise.all(batch.map(async (streamId) => {
+    let resolvedEpg = null;
     try {
       const url = `${base.replace(/\/+$/, '')}/player_api.php?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&action=get_short_epg&stream_id=${encodeURIComponent(streamId)}&limit=4`;
       const res = await bridge.fetchPlaylist(url);
@@ -634,18 +635,20 @@ async function processEpgQueue() {
 
           if (currentProg) {
             const title = atobSafe(currentProg.title || currentProg.name || 'Live Broadcast');
+            const description = atobSafe(currentProg.description || currentProg.desc || '');
             const time = `${formatEpgTime(currentProg.start)} - ${formatEpgTime(currentProg.end)}`;
-            const epgObj = { title, time, full: `${time} • ${title}` };
+            const epgObj = { title, description, time, full: `${time} • ${title}${description ? ` · ${description}` : ''}` };
             epgCache[streamId] = epgObj;
-            const cbs = pendingEpgRequests.get(streamId) || [];
-            cbs.forEach(cb => {
-              try { cb(epgObj); } catch (_) {}
-            });
-            pendingEpgRequests.delete(streamId);
+            resolvedEpg = epgObj;
           }
         }
       }
     } catch (_) {}
+    const callbacks = pendingEpgRequests.get(streamId) || [];
+    callbacks.forEach(callback => {
+      try { callback(resolvedEpg); } catch (_) {}
+    });
+    pendingEpgRequests.delete(streamId);
   }));
 
   epgProcessing = false;
@@ -668,6 +671,10 @@ function requestChannelEpg(streamId, callback) {
     pendingEpgRequests.get(streamId).push(callback);
   }
   processEpgQueue();
+}
+
+function requestChannelEpgAsync(streamId) {
+  return new Promise(resolve => requestChannelEpg(streamId, resolve));
 }
 
 function renderChannelCard(item, _index) {
@@ -1415,7 +1422,7 @@ async function renderSportsMatchCenter(forceRefresh = false) {
   });
 }
 
-function openMatchChannelsModal(match) {
+function openMatchChannelsModal(match, refreshFromEpg = false) {
   if (!match || !els.matchChannelsModal) return;
 
   els.matchModalLeagueKicker.textContent = `${match.leagueIcon} ${match.leagueName.toUpperCase()} // ${t('match_broadcasters') || 'MATCH BROADCASTERS'}`;
@@ -1437,6 +1444,10 @@ function openMatchChannelsModal(match) {
   const matched = matchCenter.findChannelsForMatch(match, state.liveItems || state.items || [], epgCache);
   const grid = els.matchChannelsGrid;
 
+  if (!refreshFromEpg) {
+    void loadMatchChannelGuide(match);
+  }
+
   if (matched.length === 0) {
     grid.innerHTML = `
       <div class="modal-channel-empty">
@@ -1447,9 +1458,9 @@ function openMatchChannelsModal(match) {
     `;
   } else {
     grid.innerHTML = '';
-    matched.slice(0, 36).forEach(({ channel, matchReason, epg }) => {
+    matched.slice(0, 36).forEach(({ channel, matchReason, confidence, epg }) => {
       const card = document.createElement('div');
-      card.className = 'modal-channel-card';
+      card.className = `modal-channel-card match-confidence-${confidence || 'candidate'}`;
 
       const logoContent = channel.logo
         ? `<img src="${channel.logo}" alt="" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"><span style="display:none;">${channel.name.slice(0, 2).toUpperCase()}</span>`
@@ -1481,10 +1492,25 @@ function openMatchChannelsModal(match) {
     });
   }
 
-  // Load tactical lineup in background
-  loadMatchLineup(match);
+  // Load tactical lineup in background only once per modal open.
+  if (!refreshFromEpg) loadMatchLineup(match);
 
   els.matchChannelsModal.classList.remove('hidden');
+}
+
+async function loadMatchChannelGuide(match) {
+  const channels = state.liveItems || state.items || [];
+  const candidates = matchCenter.getEpgScanCandidates(match, channels);
+  if (candidates.length === 0) return;
+
+  await Promise.all(candidates.map(channel => {
+    const streamId = String(channel.metadata?.stream_id || channel.id || '').replace(/^(?:live|movie|series)-/, '');
+    return streamId ? requestChannelEpgAsync(streamId) : Promise.resolve();
+  }));
+
+  if (!els.matchChannelsModal?.classList.contains('hidden')) {
+    openMatchChannelsModal(match, true);
+  }
 }
 
 async function loadMatchLineup(match) {
@@ -1547,7 +1573,7 @@ async function loadMatchLineup(match) {
                   ${team.logo ? `<img src="${team.logo}" alt="${team.teamName}" class="lineup-team-logo" onerror="this.style.display='none';">` : ''}
                   <span class="lineup-team-name">${team.teamName}</span>
                 </div>
-                <span class="lineup-formation-badge">${team.formation ? `${t('formation') || 'Formation'}: ${team.formation}` : '4-3-3'}</span>
+                <span class="lineup-formation-badge">${team.formation ? `${t('formation') || 'Formation'}: ${team.formation}` : 'FORMATION NOT PUBLISHED'}</span>
               </div>
               <div class="lineup-section-heading">${t('starters') || 'STARTING XI'} (${team.starters.length})</div>
               <div class="lineup-players-list">
@@ -2195,6 +2221,7 @@ function playMedia(item, startTime = 0, forceFullscreen = false) {
 
   state.playerItem = item;
   state.isPlaying = true;
+  publishGpuPlaybackContext('starting-playback');
   // Do not let the previous movie/episode duration control the new scrubber.
   state.currentTime = 0;
   state.duration = 0;
@@ -2446,17 +2473,14 @@ function reparentVideoToPreview() {
   updateHomeMiniPlayerState();
 }
 
-async function expandFullscreenPlayer() {
-  state.isFullscreen = true;
+async function waitForFullscreenLayout() {
+  await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+}
 
-  if (els.fullscreenViewport) {
-    if (els.nativeVideo && els.nativeVideo.parentElement !== els.fullscreenViewport) {
-      els.fullscreenViewport.appendChild(els.nativeVideo);
-    }
-    if (els.artplayerMount && els.artplayerMount.parentElement !== els.fullscreenViewport) {
-      els.fullscreenViewport.appendChild(els.artplayerMount);
-    }
-  }
+async function expandFullscreenPlayer() {
+  if (state.isFullscreen) return;
+  state.isFullscreen = true;
+  publishGpuPlaybackContext('entering-fullscreen');
   els.fullscreenPlayer?.classList.remove('hidden');
 
   if (state.playerEngine === 'artplayer') {
@@ -2481,6 +2505,18 @@ async function expandFullscreenPlayer() {
     } else if (document.documentElement.requestFullscreen) {
       await document.documentElement.requestFullscreen().catch(() => {});
     }
+    // Changing the native window mode recreates compositor surfaces on Windows.
+    // Move the active video only after the fullscreen layout has settled, avoiding
+    // a concurrent video-surface move that can crash fragile GPU drivers.
+    await waitForFullscreenLayout();
+    if (els.fullscreenViewport) {
+      if (els.nativeVideo && els.nativeVideo.parentElement !== els.fullscreenViewport) {
+        els.fullscreenViewport.appendChild(els.nativeVideo);
+      }
+      if (els.artplayerMount && els.artplayerMount.parentElement !== els.fullscreenViewport) {
+        els.fullscreenViewport.appendChild(els.artplayerMount);
+      }
+    }
   } catch (err) {
     console.warn('Could not enter native fullscreen:', err);
   }
@@ -2498,10 +2534,12 @@ async function expandFullscreenPlayer() {
   if (artIconExpand) artIconExpand.textContent = '🗗';
 
   publishRemoteState();
+  publishGpuPlaybackContext(state.isPlaying ? 'playing' : 'paused');
 }
 
 async function closeFullscreenPlayer() {
   state.isFullscreen = false;
+  publishGpuPlaybackContext('leaving-fullscreen');
 
   try {
     if (bridge?.exitNativeFullscreen) {
@@ -2529,6 +2567,7 @@ async function closeFullscreenPlayer() {
   }
 
   publishRemoteState();
+  publishGpuPlaybackContext(state.isPlaying ? 'playing' : 'paused');
 }
 
 function showPlayerHud() {
@@ -2596,7 +2635,19 @@ function handlePlayerStateChange(status) {
     updatePlayPauseButtons(false);
     showToast(`Stream Notice: ${status.message || 'Unable to decode stream'}`);
   }
+  publishGpuPlaybackContext(status.status);
   publishRemoteState();
+}
+
+function publishGpuPlaybackContext(status = state.isPlaying ? 'playing' : 'idle') {
+  bridge.updateGpuPlaybackContext?.({
+    type: state.playerItem?.type || 'none',
+    engine: state.playerEngine || 'none',
+    status,
+    fullscreen: state.isFullscreen,
+    videoWidth: els.nativeVideo?.videoWidth || 0,
+    videoHeight: els.nativeVideo?.videoHeight || 0
+  });
 }
 
 function handlePlayerTelemetry(stats) {
@@ -2908,16 +2959,32 @@ async function loadCrashLogs() {
       const info = gpuInfoResult.value;
       const feat = info.featureStatus || {};
       const statusParts = [];
-      statusParts.push(`<strong>Mode:</strong> <span style="color:#4ade80;">Hardware Accelerated (Active by Default)</span>`);
-      if (feat.video_decode) statusParts.push(`<strong>Video Decode:</strong> ${feat.video_decode}`);
-      if (feat.rasterization) statusParts.push(`<strong>Rasterization:</strong> ${feat.rasterization}`);
-      if (feat.gpu_compositing) statusParts.push(`<strong>Compositing:</strong> ${feat.gpu_compositing}`);
+      const preference = info.preferenceEnabled ? 'Enabled' : 'Disabled';
+      const launchMode = info.crashLoopFallbackActive ? 'Software fallback (recent GPU crashes)' : (info.accelerationEnabled ? 'Hardware acceleration requested' : 'Software rendering requested');
+      statusParts.push(`<strong>Preference:</strong> ${escapeHtml(preference)}`);
+      statusParts.push(`<strong>Launch mode:</strong> ${escapeHtml(launchMode)}`);
+      if (feat.video_decode) statusParts.push(`<strong>Video Decode:</strong> ${escapeHtml(feat.video_decode)}`);
+      if (feat.rasterization) statusParts.push(`<strong>Rasterization:</strong> ${escapeHtml(feat.rasterization)}`);
+      if (feat.gpu_compositing) statusParts.push(`<strong>Compositing:</strong> ${escapeHtml(feat.gpu_compositing)}`);
+      const adapters = Array.isArray(info.gpuInfo?.gpuDevice) ? info.gpuInfo.gpuDevice : [];
+      const adapterLabels = adapters.map(adapter => escapeHtml([adapter.vendorString, adapter.deviceString, adapter.driverVersion ? `Driver ${adapter.driverVersion}` : ''].filter(Boolean).join(' — ')));
+      if (adapterLabels.length) statusParts.push(`<strong>Adapter:</strong> ${adapterLabels.join(' / ')}`);
+      if (info.crashDumpDirectory) statusParts.push(`<strong>Local crash dumps:</strong> ${escapeHtml(info.crashDumpDirectory)} (not uploaded)`);
+      if (info.playbackContext) {
+        const context = info.playbackContext;
+        const resolution = context.videoWidth && context.videoHeight ? ` ${context.videoWidth}×${context.videoHeight}` : '';
+        statusParts.push(`<strong>Current playback:</strong> ${escapeHtml(`${context.type} / ${context.engine} / ${context.status}${context.fullscreen ? ' / fullscreen' : ''}${resolution}`)}`);
+      }
       els.gpuDiagnosticsStatus.innerHTML = statusParts.join(' &nbsp;•&nbsp; ');
       els.gpuDiagnosticsStatus.style.display = 'block';
     }
   } catch (err) {
     console.error('Failed to load crash logs:', err);
   }
+}
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]);
 }
 
 function renderCrashLogs(logs) {
@@ -2936,7 +3003,9 @@ function renderCrashLogs(logs) {
   els.crashLogsList.innerHTML = reversedLogs.map((log, i) => {
     const date = log.timestamp ? new Date(log.timestamp) : null;
     const timeStr = date ? date.toLocaleString() : 'Unknown time';
-    const gpuLabel = log.gpuAcceleration ? 'GPU: ON' : 'GPU: OFF';
+    const gpuLabel = log.gpuPreferenceEnabled === undefined
+      ? `GPU preference: ${log.gpuAcceleration ? 'ON' : 'OFF'}`
+      : `GPU preference: ${log.gpuPreferenceEnabled ? 'ON' : 'OFF'}`;
 
     // Color-code by severity
     let typeColor = '#ff6b6b';
@@ -2960,6 +3029,16 @@ function renderCrashLogs(logs) {
     if (log.name) details.push(`Name: ${log.name}`);
     if (log.message) details.push(`Message: ${log.message}`);
     if (log.appVersion) details.push(`v${log.appVersion}`);
+    if (log.fullscreen !== undefined) details.push(`Fullscreen: ${log.fullscreen ? 'yes' : 'no'}`);
+    if (log.playbackContext) {
+      const context = log.playbackContext;
+      details.push(`Playback: ${context.type || 'none'} / ${context.engine || 'none'} / ${context.status || 'idle'}${context.videoWidth && context.videoHeight ? ` / ${context.videoWidth}x${context.videoHeight}` : ''}`);
+    }
+    if (log.gpuAdapters?.length) {
+      const adapter = log.gpuAdapters[0];
+      details.push(`Adapter: ${[adapter.vendorString, adapter.deviceString, adapter.driverVersion ? `Driver ${adapter.driverVersion}` : ''].filter(Boolean).join(' ')}`);
+    }
+    if (log.crashDumpDirectory) details.push(`Local crash dumps: ${log.crashDumpDirectory}`);
 
     return `<div style="padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.06); ${i === 0 ? 'background:rgba(255,60,0,0.04); padding:10px; margin:-4px -4px 6px -4px; border-radius:6px;' : ''}">
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:3px;">
@@ -2968,7 +3047,7 @@ function renderCrashLogs(logs) {
         <span style="color:var(--text-muted); margin-left:auto; font-size:10px;">${gpuLabel}</span>
       </div>
       <div style="color:var(--text-muted); font-size:10px;">${timeStr}</div>
-      ${details.length ? `<div style="color:var(--text-secondary); font-size:10px; margin-top:2px;">${details.join(' · ')}</div>` : ''}
+      ${details.length ? `<div style="color:var(--text-secondary); font-size:10px; margin-top:2px;">${escapeHtml(details.join(' · '))}</div>` : ''}
       ${log.stack ? `<pre style="margin-top:4px; padding:4px 8px; background:rgba(0,0,0,0.3); border-radius:4px; font-size:9px; color:#ff8080; white-space:pre-wrap; max-height:80px; overflow-y:auto;">${log.stack}</pre>` : ''}
     </div>`;
   }).join('');

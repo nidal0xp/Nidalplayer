@@ -4479,6 +4479,14 @@ html[dir="rtl"] .btn-clear-search {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
 
+.modal-channel-card.match-confidence-confirmed {
+  border-color: rgba(0, 230, 118, 0.8);
+}
+
+.modal-channel-card.match-confidence-likely {
+  border-color: rgba(255, 183, 3, 0.8);
+}
+
 .modal-channel-left {
   display: flex;
   align-items: center;
