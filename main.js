@@ -678,6 +678,22 @@ function createWindow() {
     }
   });
 
+  mainWindow.webContents.setWindowOpenHandler((details) => {
+    const url = details.url;
+    if (url.startsWith('http:') || url.startsWith('https:')) {
+      shell.openExternal(url);
+    }
+    return { action: 'deny' };
+  });
+
+  mainWindow.webContents.on('will-navigate', (event, url) => {
+    const parsed = new URL(url);
+    if (parsed.protocol !== 'file:' && parsed.hostname !== 'localhost' && parsed.hostname !== '127.0.0.1') {
+      console.warn('[Security] Blocked unauthorized navigation to:', url);
+      event.preventDefault();
+    }
+  });
+
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
   });
@@ -1233,7 +1249,7 @@ ipcMain.handle('relaunch-app', () => {
 ipcMain.handle('exit-app', () => {
   app.quit();
 });
-ipcMain.handle('open-external', async (_e, url) => { await shell.openExternal(url); return true; });
+ipcMain.handle('open-external', async (_e, url) => { if (typeof url === 'string' && (url.startsWith('http:') || url.startsWith('https:'))) { await shell.openExternal(url); return true; } return false; });
 
 // Remote control
 ipcMain.on('remote-state-update', (_event, snapshot) => { remoteSnapshot = snapshot || remoteSnapshot; });
