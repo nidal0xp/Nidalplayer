@@ -1,0 +1,4 @@
+## 2024-05-15 - Missing Navigation Security in Electron App
+**Vulnerability:** Lack of `will-navigate`, `setWindowOpenHandler` listeners and unfiltered `shell.openExternal` calls allowed remote code execution via unsafe protocols (like `file:` and `smb:`) or unwanted navigations.
+**Learning:** When `webSecurity` is `false`, navigation controls and protocol validation must be implemented manually at the navigation and IPC levels. Explicitly allowing the `file:` protocol in `will-navigate` is necessary to prevent breaking internal application navigation loaded via `loadFile()`.
+**Prevention:** Always restrict `open-external` IPC calls using `new URL()` to explicitly allow only safe protocols (`http:`, `https:`, `mailto:`), and implement `will-navigate` and `setWindowOpenHandler` listeners to block all unintended navigations and popups, taking care to whitelist development/local hosts and the `file:` protocol as needed.
