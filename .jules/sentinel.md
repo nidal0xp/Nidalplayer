@@ -1,0 +1,4 @@
+## 2024-05-18 - Missing strict navigation & window handling restrictions
+**Vulnerability:** Arbitrary window creation (`setWindowOpenHandler`) and navigation (`will-navigate`) events were not restricted to secure and known protocols. Additionally, `ipcMain.handle('open-external')` could execute insecure protocols.
+**Learning:** `mainWindow.webContents` wasn't locked down for external protocols out of the box. Due to `webSecurity: false` and `allowRunningInsecureContent: true`, limiting navigation and external openings is vital. We must allow local dev hosts (`localhost`, `127.0.0.1`) and `file:` to keep the application functional, while actively denying unsafe protocols.
+**Prevention:** Always implement `setWindowOpenHandler` and `will-navigate` in Electron webContents securely. And apply URL parsing before calling `shell.openExternal`.
