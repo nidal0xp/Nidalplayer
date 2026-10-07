@@ -1,0 +1,3 @@
+## 2024-11-20 - Raw Text Symbol Icons Lack Inherent Accessibility
+**Learning:** In the Nidalplayer UI, numerous icon-only buttons (like mini player controls, view toggles, and HUD controls) rely purely on raw text symbols (e.g., '⏯', '⏹', '⛶', '▦', '▣') rather than semantic SVG icons or icon fonts. These raw symbols lack inherent accessibility semantics and are not consistently interpreted by screen readers.
+**Action:** Always manually add explicit `aria-label` attributes to any interactive element that relies on raw text symbols for its visual representation to ensure screen reader users receive a meaningful description of the button's function.
