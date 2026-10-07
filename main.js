@@ -734,6 +734,33 @@ function createWindow() {
     appendCrashLog(entry);
   });
 
+  // Prevent unintended navigations out of the local file context
+  mainWindow.webContents.on('will-navigate', (event, navigationUrl) => {
+    try {
+      const parsedUrl = new URL(navigationUrl);
+      const isLocalHost = parsedUrl.hostname === 'localhost' || parsedUrl.hostname === '127.0.0.1';
+      if (parsedUrl.protocol !== 'file:' && !isLocalHost) {
+        event.preventDefault();
+        console.warn('[Security] Blocked unauthorized navigation to:', navigationUrl);
+      }
+    } catch (e) {
+      event.preventDefault();
+    }
+  });
+
+  // Control window creation
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    try {
+      const parsedUrl = new URL(url);
+      if (parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:') {
+        shell.openExternal(url);
+      }
+    } catch (e) {
+      // Ignore invalid URLs
+    }
+    return { action: 'deny' };
+  });
+
   // Deliver playlist imports that arrived while the renderer was loading.
   mainWindow.webContents.on('did-finish-load', () => {
     while (pendingPhonePlaylistImports.length > 0) {
@@ -1233,7 +1260,18 @@ ipcMain.handle('relaunch-app', () => {
 ipcMain.handle('exit-app', () => {
   app.quit();
 });
-ipcMain.handle('open-external', async (_e, url) => { await shell.openExternal(url); return true; });
+ipcMain.handle('open-external', async (_e, url) => {
+  try {
+    const parsedUrl = new URL(url);
+    if (parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:') {
+      await shell.openExternal(url);
+      return true;
+    }
+  } catch (e) {
+    // Ignore invalid URLs
+  }
+  return false;
+});
 
 // Remote control
 ipcMain.on('remote-state-update', (_event, snapshot) => { remoteSnapshot = snapshot || remoteSnapshot; });
