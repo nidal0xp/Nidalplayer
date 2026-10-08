@@ -1,0 +1,4 @@
+## 2025-05-18 - Electron Navigation Vulnerability
+**Vulnerability:** The Electron application allowed arbitrary `will-navigate` events and `window.open` requests, which could lead to navigation to untrusted local (e.g. `file://`) or remote domains, bypassing security controls. The `open-external` IPC handler allowed execution of unsafe protocols (e.g., `javascript:`, `file:`).
+**Learning:** In applications loading remote streaming sources, a malicious stream or link embedded via unvalidated parameters could trigger an unauthorized application context change or execute local scripts.
+**Prevention:** Implement an explicit protocol allowlist for `openExternal`, reject arbitrary window creation by intercepting `setWindowOpenHandler`, and secure `will-navigate` by restricting to trusted domains/protocols.
