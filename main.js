@@ -706,6 +706,33 @@ function createWindow() {
     console.log(`[Renderer L${level}] ${msg}`);
   });
 
+  // Window open restrictions
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    try {
+      const parsed = new URL(url);
+      if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+        shell.openExternal(url).catch(() => {});
+      }
+    } catch {}
+    return { action: 'deny' };
+  });
+
+  // Navigation restrictions
+  mainWindow.webContents.on('will-navigate', (event, url) => {
+    try {
+      const parsed = new URL(url);
+      if (parsed.protocol === 'file:') return; // Allow internal file loading
+      if (parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1') return; // Allow dev server
+
+      event.preventDefault();
+      if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+        shell.openExternal(url).catch(() => {});
+      }
+    } catch {
+      event.preventDefault();
+    }
+  });
+
   // Capture renderer process crashes
   mainWindow.webContents.on('render-process-gone', (_event, details) => {
     const entry = {
@@ -1233,7 +1260,16 @@ ipcMain.handle('relaunch-app', () => {
 ipcMain.handle('exit-app', () => {
   app.quit();
 });
-ipcMain.handle('open-external', async (_e, url) => { await shell.openExternal(url); return true; });
+ipcMain.handle('open-external', async (_e, url) => {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+      await shell.openExternal(url);
+      return true;
+    }
+  } catch (err) {}
+  return false;
+});
 
 // Remote control
 ipcMain.on('remote-state-update', (_event, snapshot) => { remoteSnapshot = snapshot || remoteSnapshot; });
