@@ -6,3 +6,7 @@
 **Learning:** Found a specific performance bottleneck in `app.js` during category/search sorting. It called `getWatchProgressForSort` for each item dynamically in the `sort()` function, leading to O(N^2) complexity because `getWatchProgressForSort` loops over the whole dictionary (`Object.values(wp)`) for each item.
 **Action:** When sorting large arrays of objects, specially those that require looking up external data structures with O(N) operations, pre-calculate that data into a `Map` *before* calling `.sort()` to bring the complexity down to O(N).
 
+
+## 2024-10-09 - Nidalplayer `publishRemoteState` array iterations bottleneck
+**Learning:** High-frequency polling loops (like `publishRemoteState` which executes every 2s) can cause huge memory allocations and CPU spikes if iterating over massive arrays (channels, movies, series can be 10,000+ each) multiple times with `.filter()` and spread operators (`[...arr1, ...arr2]`). Also, regex inside these hot loops for stripping IDs is too slow.
+**Action:** Always combine sequential `.filter` and `.map` calls into a single-pass loop (`for`), limiting iterations where possible using `break` or size bounds, and swap regex in loops for native fast string manipulations (`startsWith`, `slice`).
