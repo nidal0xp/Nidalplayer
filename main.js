@@ -673,8 +673,8 @@ function createWindow() {
       nodeIntegration: false,
       sandbox: false,
       backgroundThrottling: false,
-      webSecurity: false,
-      allowRunningInsecureContent: true
+      webSecurity: true,
+      allowRunningInsecureContent: false
     }
   });
 
