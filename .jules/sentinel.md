@@ -1,0 +1,4 @@
+## 2026-10-09 - [URL Validation in IPC & Navigation handlers]
+**Vulnerability:** URL protocols in Electron's setWindowOpenHandler, will-navigate and IPCs like open-external weren't filtered or validated correctly, permitting execution of unknown/malicious protocols. Parsing exceptions could also crash the application main process.
+**Learning:** By default, URL parsing in these core handlers needs protocol whitelists (e.g. file:, http:, https:) and specific local host rules for app navigation, along with try...catch to avoid unhandled exception crashes with malformed user input in a no-sandbox environment.
+**Prevention:** Always validate protocols (http:, https:) for external browser triggers, whitelist internal navigations (file:, localhost), and enclose new URL() in try...catch blocks in all future navigation handlers and external routing contexts.
