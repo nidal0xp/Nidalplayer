@@ -1,0 +1,4 @@
+## 2024-05-18 - Restrict Unrestricted Electron Navigation
+**Vulnerability:** Unrestricted window navigation (`will-navigate`) and external URL execution (`open-external`) in the Electron main process allows arbitrary local and remote URL loading.
+**Learning:** This application configures `webSecurity: false` and `allowRunningInsecureContent: true` to handle mixed content from M3U8 streams, which necessitates explicit navigation and window creation validation at the IPC and `webContents` level.
+**Prevention:** Always define `setWindowOpenHandler` and a `will-navigate` event listener to explicitly allowlist protocols (like `file:`, `http(s):`) and safe hostnames, while denying all others by default. In `ipcMain` handlers that launch URLs using `shell`, sanitize and validate the URL structure within a `try...catch` block.
