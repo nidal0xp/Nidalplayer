@@ -742,6 +742,25 @@ function createWindow() {
     }
   });
 
+  mainWindow.webContents.setWindowOpenHandler((details) => {
+    console.warn(`[Security] Blocked window.open attempt for: ${details.url}`);
+    return { action: 'deny' };
+  });
+
+  mainWindow.webContents.on('will-navigate', (event, urlString) => {
+    try {
+      const url = new URL(urlString);
+      if (url.protocol === 'file:' || ((url.protocol === 'http:' || url.protocol === 'https:') && (url.hostname === 'localhost' || url.hostname === '127.0.0.1'))) {
+        return; // Allow
+      }
+      console.warn(`[Security] Blocked unauthorized navigation attempt to: ${urlString}`);
+      event.preventDefault();
+    } catch (err) {
+      console.warn(`[Security] Blocked navigation attempt to invalid URL: ${urlString}`);
+      event.preventDefault();
+    }
+  });
+
   setupNetworkInterceptors();
   const isTvMode = process.argv.includes('--tv') || process.argv.includes('--smart-tv') || process.argv.includes('--tv-mode');
   if (isTvMode) {
@@ -1233,7 +1252,20 @@ ipcMain.handle('relaunch-app', () => {
 ipcMain.handle('exit-app', () => {
   app.quit();
 });
-ipcMain.handle('open-external', async (_e, url) => { await shell.openExternal(url); return true; });
+ipcMain.handle('open-external', async (_e, urlString) => {
+  try {
+    const url = new URL(urlString);
+    if (url.protocol === 'http:' || url.protocol === 'https:' || url.protocol === 'mailto:') {
+      await shell.openExternal(url.href);
+      return true;
+    }
+    console.warn(`[Security] Blocked external navigation to unsupported protocol: ${url.protocol}`);
+    return false;
+  } catch (err) {
+    console.warn(`[Security] Blocked external navigation to invalid URL: ${urlString}`);
+    return false;
+  }
+});
 
 // Remote control
 ipcMain.on('remote-state-update', (_event, snapshot) => { remoteSnapshot = snapshot || remoteSnapshot; });
