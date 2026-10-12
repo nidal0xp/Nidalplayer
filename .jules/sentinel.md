@@ -1,0 +1,4 @@
+## 2026-10-12 - [Fix timing attack in remote access token verification]
+**Vulnerability:** [The `hasRemoteAccess` function in `src/desktop/remoteSecurity.js` used strict equality (`===`) to compare the supplied remote access token against the expected token.]
+**Learning:** [Using strict equality on strings allows an attacker to deduce the contents of the expected token one character at a time by measuring the time it takes for the comparison to fail. The `===` operator returns false as soon as a mismatch is found, making comparisons that fail earlier faster than those that fail later.]
+**Prevention:** [Always use `crypto.timingSafeEqual()` when comparing secrets such as authentication tokens, passwords, or HMACs to ensure the comparison takes a constant amount of time regardless of whether or where the mismatch occurs.]
