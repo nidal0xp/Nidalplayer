@@ -243,9 +243,9 @@
                     <span id="homeMiniCategory" data-i18n="engine_ready">Nidalplayer Engine Ready</span>
                   </div>
                   <div class="home-mini-controls">
-                    <button id="homeMiniPlayPauseBtn" class="btn-mini-ctrl" title="Play / Pause">⏯</button>
-                    <button id="homeMiniStopBtn" class="btn-mini-ctrl" title="Stop Stream">⏹</button>
-                    <button id="homeMiniExpandBtn" class="btn-mini-ctrl primary" title="Open Fullscreen (F)">⛶</button>
+                    <button id="homeMiniPlayPauseBtn" class="btn-mini-ctrl" title="Play / Pause" aria-label="Play or Pause">⏯</button>
+                    <button id="homeMiniStopBtn" class="btn-mini-ctrl" title="Stop Stream" aria-label="Stop Stream">⏹</button>
+                    <button id="homeMiniExpandBtn" class="btn-mini-ctrl primary" title="Open Fullscreen (F)" aria-label="Open Fullscreen">⛶</button>
                   </div>
                 </div>
               </div>
@@ -333,8 +333,8 @@
                   <span id="liveShowingCount">Showing 0 channels</span>
                 </div>
                 <div class="toolbar-controls">
-                  <button id="liveGridBtn" class="btn-tool active" title="Grid View">▦</button>
-                  <button id="liveListBtn" class="btn-tool" title="List View">▤</button>
+                  <button id="liveGridBtn" class="btn-tool active" title="Grid View" aria-label="Grid View">▦</button>
+                  <button id="liveListBtn" class="btn-tool" title="List View" aria-label="List View">▤</button>
                 </div>
               </div>
               <div id="liveVirtualContainer" class="virtual-scroll-viewport"></div>
@@ -723,7 +723,7 @@
                   </div>
                   <div style="display:flex; gap:8px; align-items:center;">
                     <input type="password" id="settingTmdbApiKey" class="config-select" placeholder="Enter your 32-character TMDB v3 API Key..." style="flex:1; font-family:monospace; font-size:12px; padding:9px 12px;">
-                    <button id="settingToggleTmdbKeyVisBtn" class="btn-action" title="Toggle visibility" style="padding:0 12px;">👁</button>
+                    <button id="settingToggleTmdbKeyVisBtn" class="btn-action" title="Toggle visibility" aria-label="Toggle TMDB API Key visibility" style="padding:0 12px;">👁</button>
                     <button id="settingSaveTmdbKeyBtn" class="btn-action primary" style="padding:0 16px;">SAVE KEY</button>
                     <button id="settingTestTmdbKeyBtn" class="btn-action" style="padding:0 14px;">TEST KEY</button>
                   </div>
@@ -836,7 +836,7 @@
           <span id="hudResolution" class="hud-badge">AUTO</span>
           <span id="hudFps" class="hud-badge hidden">-- FPS</span>
           <span id="hudBitrate" class="hud-badge">HLS</span>
-          <button id="hudFavBtn" class="hud-btn" style="background:var(--bg-obsidian); border:1px solid var(--border-strong); color:#ffb703; font-size:14px; padding:6px 10px;" title="Toggle Favorite">★</button>
+          <button id="hudFavBtn" class="hud-btn" style="background:var(--bg-obsidian); border:1px solid var(--border-strong); color:#ffb703; font-size:14px; padding:6px 10px;" title="Toggle Favorite" aria-label="Toggle Favorite">★</button>
         </div>
       </div>
 
@@ -851,12 +851,12 @@
 
         <div class="hud-control-row">
           <div class="hud-left-controls">
-            <button id="hudPrevEpBtn" class="hud-btn-icon hud-ep-nav hidden" title="Previous Episode">⏮</button>
-            <button id="hudSeekBackBtn" class="hud-btn-icon" title="Rewind 10s">⏪</button>
-            <button id="hudPlayBtn" class="hud-btn-icon" title="Play/Pause (Space)">▶</button>
-            <button id="hudSeekFwdBtn" class="hud-btn-icon" title="Forward 10s">⏩</button>
-            <button id="hudNextEpBtn" class="hud-btn-icon hud-ep-nav hidden" title="Next Episode">⏭</button>
-            <button id="hudMuteBtn" class="hud-btn-icon" title="Mute/Unmute">🔊</button>
+            <button id="hudPrevEpBtn" class="hud-btn-icon hud-ep-nav hidden" title="Previous Episode" aria-label="Previous Episode">⏮</button>
+            <button id="hudSeekBackBtn" class="hud-btn-icon" title="Rewind 10s" aria-label="Rewind 10s">⏪</button>
+            <button id="hudPlayBtn" class="hud-btn-icon" title="Play/Pause (Space)" aria-label="Play or Pause">▶</button>
+            <button id="hudSeekFwdBtn" class="hud-btn-icon" title="Forward 10s" aria-label="Forward 10s">⏩</button>
+            <button id="hudNextEpBtn" class="hud-btn-icon hud-ep-nav hidden" title="Next Episode" aria-label="Next Episode">⏭</button>
+            <button id="hudMuteBtn" class="hud-btn-icon" title="Mute/Unmute" aria-label="Mute or Unmute">🔊</button>
             <input type="range" id="hudVolumeSlider" min="0" max="1" step="0.05" value="1" class="volume-slider">
           </div>
 
@@ -876,7 +876,7 @@
               <option value="1.5">1.5×</option>
               <option value="2">2.0×</option>
             </select>
-            <button id="hudPipBtn" class="hud-btn-icon" title="Picture in Picture">▣</button>
+            <button id="hudPipBtn" class="hud-btn-icon" title="Picture in Picture" aria-label="Picture in Picture">▣</button>
             <button id="hudExitFullBtn" class="hud-btn-icon highlight" title="Exit Fullscreen (Esc)">
               <span data-i18n="exit_fullscreen">🗗 EXIT FULLSCREEN</span>
             </button>
