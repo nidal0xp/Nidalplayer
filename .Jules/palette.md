@@ -6,3 +6,7 @@
 **Learning:** Found that multiple icon-only buttons (like 'X' close buttons on modals and clear search inputs) and search input were completely unlabelled for screen readers, meaning users would only hear 'button' or confusing generic text. Decorative symbols (like the '⌕' reticle) could also confuse screen readers.
 **Action:** Always add descriptive `aria-label` attributes to icon-only buttons and inputs, and add `aria-hidden="true"` to decorative symbols to ensure clear navigation for users relying on assistive technology.
 
+
+## 2026-10-13 - Adding aria-label to icon-only buttons
+**Learning:** Discovered several buttons (e.g., player controls, view toggles) that relied purely on visual symbols (⏹, ⛶, 👁, ▶) and 'title' attributes without explicit 'aria-label' attributes. Adding these significantly improves screen reader accessibility.
+**Action:** Add descriptive 'aria-label' attributes to all icon-only buttons to ensure they are fully understandable by assistive technologies.
