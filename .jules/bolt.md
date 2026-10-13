@@ -6,3 +6,7 @@
 **Learning:** Found a specific performance bottleneck in `app.js` during category/search sorting. It called `getWatchProgressForSort` for each item dynamically in the `sort()` function, leading to O(N^2) complexity because `getWatchProgressForSort` loops over the whole dictionary (`Object.values(wp)`) for each item.
 **Action:** When sorting large arrays of objects, specially those that require looking up external data structures with O(N) operations, pre-calculate that data into a `Map` *before* calling `.sort()` to bring the complexity down to O(N).
 
+
+## 2024-10-24 - [Single-pass iteration for large collections in hot paths]
+**Learning:** In Nidalplayer, `publishRemoteState` runs on a 2-second interval. Using multiple `.filter()` operations combined with spread operator `[...arr1, ...arr2]` over large collections like `liveChannels`, `movies`, and `series` creates a massive CPU and memory allocation footprint. This is worsened by using regular expressions (`.replace(/.../, '')`) on each item.
+**Action:** For frequently executed hot-paths over large data structures (e.g. `publishRemoteState`), merge `.filter()` logic into a single-pass loop (like a helper `getPrioritized` function) and replace regular expression parsing with faster string operations like `.startsWith()` and `.slice()`.
