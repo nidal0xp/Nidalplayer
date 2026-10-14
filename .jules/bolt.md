@@ -6,3 +6,6 @@
 **Learning:** Found a specific performance bottleneck in `app.js` during category/search sorting. It called `getWatchProgressForSort` for each item dynamically in the `sort()` function, leading to O(N^2) complexity because `getWatchProgressForSort` loops over the whole dictionary (`Object.values(wp)`) for each item.
 **Action:** When sorting large arrays of objects, specially those that require looking up external data structures with O(N) operations, pre-calculate that data into a `Map` *before* calling `.sort()` to bring the complexity down to O(N).
 
+## 2025-03-02 - [Interval Loop Overhead in state publishing]
+**Learning:** Functions running on a high-frequency interval (`publishRemoteState` running every 2 seconds) used heavy array chains (`.filter()...spread().slice().map()`) combined with Regex parsing over thousands of elements, leading to excessive garbage collection and blocking the main thread.
+**Action:** When filtering and capping large datasets for remote broadcasting or IPC, collapse array chains into a single-pass `for` loop and check bounding limits (`result.length < 2000`) eagerly. Use native string functions like `.startsWith()` and `.slice()` instead of `.replace(regex)` inside loops.
