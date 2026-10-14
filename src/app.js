@@ -1,4 +1,4 @@
-import { state, activatePlaylist, clearActivePlaylistState, addRecent, toggleFavorite, updateWatchProgress } from './state.js';
+import { state, activatePlaylist as setActivePlaylistState, clearActivePlaylistState, addRecent, toggleFavorite, updateWatchProgress } from './state.js';
 import { XtreamApi, normalizeServer } from './playlist/xtreamApi.js';
 import { parseM3U } from './playlist/m3uParser.js';
 import { PlayerManager } from './player/playerManager.js';
@@ -33,6 +33,32 @@ let searchDebounceTimer = null;
 let activeSeriesEpisodes = [];
 let currentSportsMatches = [];
 let selectedSportsLeague = 'all';
+let playlistSyncGeneration = 0;
+
+function activatePlaylist(record, { forceStop = false } = {}) {
+  const shouldStopPlayback = forceStop || (record && state.activePlaylistId && record.id !== state.activePlaylistId);
+  if (shouldStopPlayback) {
+    state.playerItem = null;
+    state.isPlaying = false;
+    state.selectedVod = null;
+    activeSeriesEpisodes = [];
+    player?.stop?.();
+    if (state.isFullscreen) closeFullscreenPlayer();
+    updatePlayPauseButtons(false);
+    if (els?.previewPlaceholder) els.previewPlaceholder.classList.remove('hidden');
+    if (els?.previewTitle) els.previewTitle.textContent = 'No Channel Selected';
+    if (els?.previewGroup) els.previewGroup.textContent = 'Live Television';
+    if (els?.previewStatusBadge) els.previewStatusBadge.textContent = 'STANDBY';
+    if (els?.moviePlaceholder) els.moviePlaceholder.classList.remove('hidden');
+    if (els?.moviePreviewTitle) els.moviePreviewTitle.textContent = 'No Movie Selected';
+    if (els?.seriesPlaceholder) els.seriesPlaceholder.classList.remove('hidden');
+    if (els?.seriesPreviewTitle) els.seriesPreviewTitle.textContent = 'No Series Selected';
+    if (els?.seriesActiveEpLabel) els.seriesActiveEpLabel.textContent = 'Select a season & episode';
+    if (els?.seriesDockSeasonTabs) els.seriesDockSeasonTabs.innerHTML = '';
+    if (els?.seriesDockEpisodeList) els.seriesDockEpisodeList.innerHTML = '';
+  }
+  setActivePlaylistState(record);
+}
 
 /* ==========================================================================
    INITIALIZATION & BOOT LIFECYCLE
@@ -332,6 +358,7 @@ function setupDomElements() {
     inputPlaylistTitle: document.getElementById('inputPlaylistTitle'),
     xtreamFieldsGroup: document.getElementById('xtreamFieldsGroup'),
     inputServerUrl: document.getElementById('inputServerUrl'),
+    inputBackupServerUrl: document.getElementById('inputBackupServerUrl'),
     inputUsername: document.getElementById('inputUsername'),
     inputPassword: document.getElementById('inputPassword'),
     testConnectionBtn: document.getElementById('testConnectionBtn'),
@@ -2007,11 +2034,12 @@ async function selectSeriesForPreview(series) {
     const username = creds.username || activeRec.provider?.username;
     const password = creds.password || activeRec.provider?.password;
     const base = activeRec.provider?.base || activeRec.sourceUrl;
+    const backupBases = activeRec.provider?.backupBases || [];
 
     if (username && password && base) {
       try {
         const rawSeriesId = String(series.seriesId || series.metadata?.series_id || series.id || '').replace(/^series-/, '');
-        const seriesData = await xtream.seriesInfo(base, username, password, rawSeriesId);
+        const seriesData = await xtream.seriesInfo(base, username, password, rawSeriesId, backupBases);
         if (seriesData && (seriesData.seasons?.length > 0 || seriesData.episodes?.length > 0)) {
           renderSeriesDockSeasons(seriesData);
         } else {
@@ -2728,6 +2756,8 @@ async function startPlaylistSync(record) {
     return;
   }
 
+  const syncGeneration = ++playlistSyncGeneration;
+
   els.syncOverlay.classList.remove('hidden');
   state.syncState = {
     active: true,
@@ -2752,8 +2782,12 @@ async function startPlaylistSync(record) {
         record.provider?.base || record.sourceUrl,
         creds.username,
         creds.password,
-        progress => updateSyncOverlayProgress(progress)
+        progress => {
+          if (syncGeneration === playlistSyncGeneration) updateSyncOverlayProgress(progress);
+        },
+        record.provider?.backupBases || []
       );
+      if (syncGeneration !== playlistSyncGeneration) return;
 
       const previousSeriesCount = Array.isArray(record.items)
         ? record.items.filter(item => item.type === 'series').length
@@ -2768,6 +2802,7 @@ async function startPlaylistSync(record) {
       record.items = result.items;
       record.account = result.account;
       record.categories = result.categories;
+      record.provider.lastWorkingBase = result.providerBase || record.provider.base;
       record.lastRefresh = Date.now();
       record.updatedAt = Date.now();
 
@@ -2775,6 +2810,7 @@ async function startPlaylistSync(record) {
       record.sourceUrl = normalizePlaylistUrl(record.sourceUrl);
       updateSyncOverlayProgress({ step: 1, totalSteps: 3, message: 'Downloading M3U playlist stream…', percent: 30 });
       const resp = await bridge.fetchPlaylist(record.sourceUrl);
+      if (syncGeneration !== playlistSyncGeneration) return;
       if (!resp.ok) {
         // A direct HLS manifest is playable by the media engine even when the
         // provider blocks catalogue downloads from Electron. Keep it usable as
@@ -2832,7 +2868,9 @@ async function startPlaylistSync(record) {
       activePlaylistId: state.activePlaylistId
     });
 
-    activatePlaylist(record);
+    if (syncGeneration !== playlistSyncGeneration) return;
+
+    if (state.activePlaylistId === record.id) activatePlaylist(record);
     refreshAllViews();
     showToast('Playlist synchronized successfully!');
 
@@ -2855,6 +2893,11 @@ async function startPlaylistSync(record) {
     }, 1200);
 
   } catch (error) {
+    if (syncGeneration !== playlistSyncGeneration) return;
+    if (state.activePlaylistId === record.id) {
+      activatePlaylist(record);
+      refreshAllViews();
+    }
     state.syncState = {
       ...state.syncState,
       active: false,
@@ -3087,6 +3130,7 @@ async function openPlaylistModal(mode = 'add', playlistId = null) {
         if (creds.username) els.inputUsername.value = creds.username;
         if (creds.password) els.inputPassword.value = creds.password;
       }
+      if (els.inputBackupServerUrl) els.inputBackupServerUrl.value = (record.provider?.backupBases || []).join(', ');
     } else if (type === 'url') {
       els.inputM3uUrl.value = record.sourceUrl || '';
     } else if (type === 'm3u') {
@@ -3100,6 +3144,7 @@ async function openPlaylistModal(mode = 'add', playlistId = null) {
     els.playlistModalTitle.textContent = t('add_playlist');
     els.editPlaylistId.value = '';
     els.playlistForm.reset();
+    if (els.inputBackupServerUrl) els.inputBackupServerUrl.value = '';
     
     switchPlaylistTab('xtream');
   }
@@ -3168,17 +3213,26 @@ async function handlePlaylistFormSubmit(e) {
   if (activeTab === 'xtream') {
     const rawServer = els.inputServerUrl.value.trim();
     const username = els.inputUsername.value.trim();
-    const password = els.inputPassword.value.trim();
+    let password = els.inputPassword.value.trim();
+    if (!password && editId) {
+      const savedCredentials = await store.loadCredentials(record.id);
+      password = savedCredentials?.password || '';
+    }
 
     if (!rawServer || !username || !password) {
-      showToast('Please fill in Server URL, Username, and Password.');
+      showToast('Please fill in Server URL, Username, and Password (or keep the saved password when editing).');
       return;
     }
 
     try {
       const base = normalizeServer(rawServer);
+      const backupBases = [...new Set(String(els.inputBackupServerUrl?.value || '')
+        .split(/[\n,;]+/)
+        .map(value => value.trim())
+        .filter(Boolean)
+        .map(normalizeServer))].filter(value => value !== base);
       record.sourceUrl = base;
-      record.provider = { base, username };
+      record.provider = { ...(record.provider || {}), base, username, backupBases, workingBase: base };
       await store.saveCredentials(record.id, { username, password }, true);
     } catch (err) {
       showToast(err.message);
@@ -3195,7 +3249,7 @@ async function handlePlaylistFormSubmit(e) {
   }
 
   if (isNew) state.playlists.push(record);
-  state.activePlaylistId = record.id;
+  activatePlaylist({ ...record, items: [] }, { forceStop: true });
   await store.saveMetadata({ playlists: state.playlists, activePlaylistId: state.activePlaylistId });
 
   els.playlistModal.classList.add('hidden');
@@ -3310,11 +3364,10 @@ function renderSettingsPlaylists() {
 
           // 3. Re-assign active playlist if needed
           if (state.activePlaylistId === targetId) {
-            if (player) player.stop();
             if (state.playlists.length > 0) {
-              state.activePlaylistId = state.playlists[0].id;
-              activatePlaylist(state.playlists[0]);
+              activatePlaylist(state.playlists[0], { forceStop: true });
             } else {
+              player?.stop?.();
               clearActivePlaylistState();
             }
           }
@@ -3527,10 +3580,10 @@ async function importPlaylistFromPhone(payload) {
 
   playlist.name = String(payload.name || playlist.name || 'Phone IPTV Account').trim();
   playlist.sourceUrl = base;
-  playlist.provider = { ...(playlist.provider || {}), base, username };
+  playlist.provider = { ...(playlist.provider || {}), base, username, backupBases: playlist.provider?.backupBases || [], workingBase: base };
   playlist.updatedAt = Date.now();
   if (!existing) state.playlists.push(playlist);
-  state.activePlaylistId = playlist.id;
+  activatePlaylist({ ...playlist, items: [] }, { forceStop: true });
 
   await store.saveCredentials(playlist.id, { username, password });
   await store.saveMetadata({ playlists: state.playlists, activePlaylistId: state.activePlaylistId });
@@ -3623,7 +3676,8 @@ function setupRemoteControlBridge() {
               activeRec.provider?.base || activeRec.sourceUrl,
               creds.username,
               creds.password,
-              rawSeriesId
+              rawSeriesId,
+              activeRec.provider?.backupBases || []
             );
             activeSeriesEpisodes = seriesData.episodes || [];
             result = { seasons: seriesData.seasons || [], episodes: seriesData.episodes || [] };
@@ -4141,7 +4195,15 @@ function setupEventListeners() {
 
     try {
       const base = normalizeServer(rawUrl);
-      const res = await bridge.testConnection(base);
+      const backupBases = [...new Set(String(els.inputBackupServerUrl?.value || '')
+        .split(/[\n,;]+/).map(value => value.trim()).filter(Boolean).map(normalizeServer))]
+        .filter(value => value !== base);
+      const servers = [base, ...backupBases];
+      let res = { ok: false, status: 'Timeout' };
+      for (const server of servers) {
+        res = await bridge.testConnection(server);
+        if (res?.ok) break;
+      }
       if (res.ok) {
         if (els.connectionTestStatus) {
           els.connectionTestStatus.textContent = `✓ Server Online (${res.latency}ms)`;
@@ -4181,9 +4243,8 @@ function setupEventListeners() {
       };
 
       state.playlists.push(record);
-      state.activePlaylistId = record.id;
+      activatePlaylist(record, { forceStop: true });
       await store.saveMetadata({ playlists: state.playlists, activePlaylistId: state.activePlaylistId });
-      activatePlaylist(record);
       els.playlistModal?.classList.add('hidden');
       refreshAllViews();
       updatePlaylistDropdowns();

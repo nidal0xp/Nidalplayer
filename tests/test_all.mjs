@@ -4,6 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseM3U } from '../src/playlist/m3uParser.js';
 import { XtreamApi, normalizeServer } from '../src/playlist/xtreamApi.js';
+import { PlayerManager } from '../src/player/playerManager.js';
 import { cleanTitle, extractYear, fetchTMDBDetails, testTMDBApiKey } from '../src/services/tmdbService.js';
 import { matchCenter, TOP_5_LEAGUES } from '../src/sports/matchCenter.js';
 import { favoriteTeamService } from '../src/sports/favoriteTeamService.js';
@@ -101,6 +102,49 @@ http://stream.example.com/series/user/pass/789.mp4`;
     assert.strictEqual(norm2, 'https://secure-stream.net');
     const api = new XtreamApi(async () => ({}));
     assert.ok(api, 'XtreamApi instantiated');
+  });
+
+  await runAsyncTest('Xtream API: Backup-domain sync failover and playback URLs', async () => {
+    const requests = [];
+    const api = new XtreamApi(async url => {
+      requests.push(url);
+      if (url.startsWith('http://primary.example/')) return { ok: false, status: 503, text: '' };
+      const action = new URL(url).searchParams.get('action');
+      const payloads = {
+        get_user_info: { user_info: { auth: 1, status: 'Active' } },
+        get_live_categories: [{ category_id: '7', category_name: 'News' }],
+        get_live_streams: [{ stream_id: 42, name: 'News One', category_id: '7' }],
+        get_vod_categories: [],
+        get_vod_streams: [],
+        get_series_categories: [],
+        get_series: []
+      };
+      return { ok: true, status: 200, text: JSON.stringify(payloads[action] ?? []) };
+    });
+
+    const result = await api.loadWithProgress(
+      'http://primary.example', 'user', 'pass', () => {}, ['http://backup.example']
+    );
+    assert.strictEqual(result.providerBase, 'http://backup.example');
+    assert.strictEqual(result.items.length, 1);
+    assert.ok(result.items[0].url.startsWith('http://backup.example/live/user/pass/42.m3u8'));
+    assert.deepStrictEqual(result.items[0].backupUrls, ['http://primary.example/live/user/pass/42.m3u8']);
+    assert.ok(requests.some(url => url.startsWith('http://primary.example/')));
+    assert.ok(requests.some(url => url.startsWith('http://backup.example/')));
+  });
+
+  runTest('Player: Retry rotates through backup provider domains', () => {
+    const player = new PlayerManager({});
+    const item = {
+      type: 'live',
+      url: 'http://primary.example/live/user/pass/42.m3u8',
+      fallbackUrl: 'http://primary.example/live/user/pass/42.ts',
+      backupUrls: ['http://backup.example/live/user/pass/42.m3u8']
+    };
+    assert.strictEqual(player.getStreamSourceUrl(item, 0), item.url);
+    assert.strictEqual(player.getStreamSourceUrl(item, 1), item.fallbackUrl);
+    assert.strictEqual(player.getStreamSourceUrl(item, 2), item.backupUrls[0]);
+    assert.strictEqual(player.getStreamSourceUrl(item, 3), 'http://backup.example/live/user/pass/42.ts');
   });
 
   // 3. TMDB Service Tests
@@ -419,6 +463,10 @@ http://stream.example.com/series/user/pass/789.mp4`;
 
     // Must define portrait orientation media query
     assert.match(css, /@media\s*\(\s*orientation:\s*portrait\s*\)/, 'Must include @media (orientation: portrait)');
+
+    // Compact landscape windows must collapse the sidebar and protect native window controls
+    assert.match(css, /@media\s*\(orientation:\s*landscape\)\s+and\s+\(min-width:\s*961px\)\s+and\s+\(max-width:\s*1200px\)/, 'Must define compact landscape desktop layout');
+    assert.match(css, /padding-right:\s*145px\s*!important/, 'Compact Windows toolbar must reserve space for native window controls');
 
     // Must define grid-template-areas with top preview and split categories/content
     assert.match(css, /grid-template-areas:\s*["']preview\s+preview["']\s*["']categories\s+content["']/, 'Must define top-docked preview and dual-pane split');

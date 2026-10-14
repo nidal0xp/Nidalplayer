@@ -43,7 +43,7 @@ function streamUrl(base, username, password, kind, id, extension = 'mp4') {
   return `${base}/${kind}/${encodeURIComponent(username)}/${encodeURIComponent(password)}/${encodeURIComponent(id)}.${safeExtension(extension)}`;
 }
 
-function normalizeStreams(payload, type, categories, base, username, password, orderOffset = 0) {
+function normalizeStreams(payload, type, categories, base, username, password, orderOffset = 0, backupBases = []) {
   const result = [];
   for (const [providerOrder, stream] of list(payload, ['live_streams', 'vod_streams', 'series', 'streams']).entries()) {
     const id = String(stream.stream_id ?? stream.series_id ?? stream.id ?? '');
@@ -69,27 +69,31 @@ function normalizeStreams(payload, type, categories, base, username, password, o
       });
     } else if (normalized === 'movies') {
       const ext = safeExtension(stream.container_extension || stream.extension);
+      const url = stream.direct_source || streamUrl(base, username, password, 'movie', id, ext);
       result.push({
         id: `movie-${id}`,
         name,
         group,
         type: 'movies',
         logo: stream.stream_icon || stream.cover || '',
-        url: stream.direct_source || streamUrl(base, username, password, 'movie', id, ext),
+        url,
+        backupUrls: stream.direct_source ? [] : backupBases.filter(candidate => candidate !== base).map(candidate => streamUrl(candidate, username, password, 'movie', id, ext)),
         metadata: stream,
         providerOrder: providerIndex,
         rating: stream.rating || stream.rating_5based || null,
         releaseDate: stream.releaseDate || stream.year || ''
       });
     } else {
+      const url = stream.direct_source || streamUrl(base, username, password, 'live', id, 'm3u8');
       result.push({
         id: `live-${id}`,
         name,
         group,
         type: 'live',
         logo: stream.stream_icon || stream.icon || '',
-        url: stream.direct_source || streamUrl(base, username, password, 'live', id, 'm3u8'),
+        url,
         fallbackUrl: stream.direct_source ? '' : streamUrl(base, username, password, 'live', id, 'ts'),
+        backupUrls: stream.direct_source ? [] : backupBases.filter(candidate => candidate !== base).map(candidate => streamUrl(candidate, username, password, 'live', id, 'm3u8')),
         metadata: stream,
         providerOrder: providerIndex
       });
@@ -135,7 +139,11 @@ export class XtreamApi {
         if (!response?.ok) throw new Error(`Provider request failed (${response?.status || 'network error'}).`);
         let payload;
         try { payload = JSON.parse(response.text); } catch { throw new Error('The provider returned an invalid API response.'); }
-        if (payload?.user_info && String(payload.user_info.auth) === '0') throw new Error('The provider rejected the login credentials.');
+        if (payload?.user_info && String(payload.user_info.auth) === '0') {
+          const error = new Error('The provider rejected the login credentials.');
+          error.code = 'AUTH_REJECTED';
+          throw error;
+        }
         return payload;
       } catch (error) {
         lastError = error;
@@ -145,7 +153,28 @@ export class XtreamApi {
     throw lastError || new Error('Provider request failed.');
   }
 
-  async loadWithProgress(base, username, password, onProgress = () => {}) {
+  async loadWithProgress(base, username, password, onProgress = () => {}, backupBases = []) {
+    const bases = [...new Set([base, ...(Array.isArray(backupBases) ? backupBases : [])].filter(Boolean))];
+    let lastError;
+    for (let index = 0; index < bases.length; index += 1) {
+      try {
+        if (index > 0) onProgress({
+          step: 1,
+          totalSteps: 5,
+          message: `Primary server unavailable; trying backup ${index} of ${bases.length - 1}…`,
+          percent: 15
+        });
+        const result = await this.loadFromBase(bases[index], username, password, onProgress, bases);
+        return { ...result, providerBase: bases[index] };
+      } catch (error) {
+        lastError = error;
+        if (error?.code === 'AUTH_REJECTED') throw error;
+      }
+    }
+    throw lastError || new Error('No provider server is configured.');
+  }
+
+  async loadFromBase(base, username, password, onProgress = () => {}, allBases = [base]) {
     onProgress({ step: 1, totalSteps: 5, message: 'Validating credentials & server handshake…', percent: 15 });
     // Do not fall back to an unauthenticated-looking raw response here. Some
     // providers return user_info.auth=0 for bad credentials, and the old
@@ -160,7 +189,8 @@ export class XtreamApi {
       this.request(base, username, password, 'get_live_streams').catch(() => [])
     ]);
     const liveCategories = categoryMap(liveCats);
-    const live = normalizeStreams(liveStreams, 'live', liveCategories, base, username, password, 0);
+    const backupBases = allBases.filter(candidate => candidate !== base);
+    const live = normalizeStreams(liveStreams, 'live', liveCategories, base, username, password, 0, backupBases);
 
     onProgress({
       step: 3,
@@ -174,7 +204,7 @@ export class XtreamApi {
       this.request(base, username, password, 'get_vod_streams').catch(() => [])
     ]);
     const vodCategories = categoryMap(vodCats);
-    const movies = normalizeStreams(vodStreams, 'movies', vodCategories, base, username, password, live.length);
+    const movies = normalizeStreams(vodStreams, 'movies', vodCategories, base, username, password, live.length, backupBases);
 
     onProgress({
       step: 4,
@@ -192,7 +222,7 @@ export class XtreamApi {
       })
     ]);
     let seriesCategories = categoryMap(seriesCats);
-    let series = normalizeStreams(seriesStreams, 'series', seriesCategories, base, username, password, live.length + movies.length);
+    let series = normalizeStreams(seriesStreams, 'series', seriesCategories, base, username, password, live.length + movies.length, backupBases);
 
     // Only recover by category when the provider returned no series at all.
     // Fetching every category for a normal small catalogue made refreshes
@@ -269,17 +299,22 @@ export class XtreamApi {
     return { series: [], categories: {} };
   }
 
-  async seriesInfo(base, username, password, seriesId) {
-    try {
-      const payload = await this.request(base, username, password, 'get_series_info', `&series_id=${encodeURIComponent(seriesId)}`);
-      if (payload && (payload.episodes || payload.seasons || payload.info)) {
-        return this.normalizeSeriesInfo(payload, base, username, password, { seriesId });
+  async seriesInfo(base, username, password, seriesId, backupBases = []) {
+    const bases = [...new Set([base, ...(Array.isArray(backupBases) ? backupBases : [])].filter(Boolean))];
+    for (const candidate of bases) {
+      try {
+        const payload = await this.request(candidate, username, password, 'get_series_info', `&series_id=${encodeURIComponent(seriesId)}`);
+        if (payload && (payload.episodes || payload.seasons || payload.info)) {
+          return this.normalizeSeriesInfo(payload, candidate, username, password, { seriesId }, bases.filter(value => value !== candidate));
+        }
+      } catch (error) {
+        if (error?.code === 'AUTH_REJECTED') break;
       }
-    } catch {}
+    }
     return { seasons: [], episodes: [] };
   }
 
-  normalizeSeriesInfo(payload, base, username, password, show = {}) {
+  normalizeSeriesInfo(payload, base, username, password, show = {}, backupBases = []) {
     const root = payload?.data && typeof payload.data === 'object' && (payload.data.episodes || payload.data.seasons || payload.data.info) ? payload.data : payload;
     const rawEpisodes = root?.episodes || {};
     const groups = Array.isArray(rawEpisodes) ? [['', rawEpisodes]] : Object.entries(rawEpisodes);
@@ -312,6 +347,7 @@ export class XtreamApi {
         const extension = safeExtension(ep.container_extension || ep.extension || ep.info?.container_extension);
         const title = String(ep.title || ep.name || ep.info?.name || `Episode ${episodeNumber}`);
 
+        const url = ep.direct_source || streamUrl(base, username, password, 'series', id, extension);
         episodes.push({
           id: `episode-${show.seriesId || show.id}-${id}`,
           episodeId: id,
@@ -324,7 +360,8 @@ export class XtreamApi {
           group: show.group || 'Other',
           type: 'series',
           logo: ep.info?.movie_image || ep.info?.cover_big || ep.cover || show.logo || '',
-          url: ep.direct_source || streamUrl(base, username, password, 'series', id, extension),
+          url,
+          backupUrls: ep.direct_source ? [] : backupBases.map(candidate => streamUrl(candidate, username, password, 'series', id, extension)),
           duration: ep.info?.duration_secs ? Math.round(ep.info.duration_secs / 60) : (ep.info?.duration || ''),
           plot: ep.info?.plot || ep.info?.description || '',
           metadata: ep,

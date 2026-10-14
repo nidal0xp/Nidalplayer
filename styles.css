@@ -38,6 +38,7 @@
   --transition-smooth: 250ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -5833,6 +5834,168 @@ kbd {
 
   #viewSettings {
     padding: 18px 14px 40px !important;
+  }
+}
+
+/* Let the portrait preview use the full dock width while preserving the
+   stream's 16:9 shape, so the video doesn't sit in a narrow centered frame. */
+@media (orientation: portrait) {
+  .col-preview .embedded-video-box {
+    width: 100% !important;
+    max-width: 100% !important;
+    aspect-ratio: 16 / 9 !important;
+    height: auto !important;
+    max-height: none !important;
+    margin-inline: auto !important;
+  }
+}
+
+/* In landscape, let the preview grow while keeping the channel list useful.
+   The center column is capped at three channel cards per row on wide displays;
+   the player gets the remaining width. */
+@media (orientation: landscape) and (min-width: 961px) and (max-width: 1599px) {
+  .three-column-layout {
+    grid-template-columns: 200px minmax(0, 1fr) clamp(320px, 32vw, 480px) !important;
+  }
+
+  .col-preview,
+  .col-content {
+    min-width: 0 !important;
+  }
+
+  .col-preview .embedded-video-box {
+    width: 100% !important;
+    max-width: 100% !important;
+    aspect-ratio: 16 / 9 !important;
+    height: auto !important;
+    max-height: none !important;
+  }
+}
+
+@media (orientation: landscape) and (min-width: 1600px) {
+  .three-column-layout {
+    grid-template-columns: 210px minmax(760px, 760px) minmax(360px, 1fr) !important;
+  }
+
+  .col-preview,
+  .col-content {
+    min-width: 0 !important;
+  }
+
+  .col-preview .embedded-video-box {
+    width: 100% !important;
+    max-width: 100% !important;
+    aspect-ratio: 16 / 9 !important;
+    height: auto !important;
+    max-height: none !important;
+  }
+}
+
+/* Compact desktop windows: keep navigation available as an icon rail and
+   tighten the utility bar so its actions stay clear of Windows' native controls. */
+@media (orientation: landscape) and (min-width: 961px) and (max-width: 1200px) {
+  .app-sidebar {
+    width: 64px !important;
+    min-width: 64px !important;
+    max-width: 64px !important;
+  }
+
+  .sidebar-brand {
+    padding: 12px 6px !important;
+    justify-content: center !important;
+    text-align: center !important;
+  }
+
+  .sidebar-brand > div,
+  .nav-section-title,
+  .nav-num,
+  .nav-text,
+  .nav-count,
+  .sidebar-sports-widget {
+    display: none !important;
+  }
+
+  .sidebar-brand img {
+    width: 32px !important;
+    height: 32px !important;
+    margin: 0 auto !important;
+  }
+
+  .sidebar-nav {
+    padding: 10px 6px !important;
+    align-items: center !important;
+  }
+
+  .nav-item {
+    width: 46px !important;
+    height: 46px !important;
+    padding: 0 !important;
+    justify-content: center !important;
+    position: relative !important;
+  }
+
+  .nav-icon {
+    margin: 0 !important;
+  }
+
+  .sidebar-footer {
+    padding: 10px 4px !important;
+  }
+
+  .account-card {
+    padding: 6px 0 !important;
+    background: transparent !important;
+    border: none !important;
+    justify-content: center !important;
+    align-items: center !important;
+  }
+
+  .account-header {
+    margin: 0 !important;
+    justify-content: center !important;
+  }
+
+  .account-header strong,
+  .account-meta,
+  .expiry-badge-row,
+  .btn-sidebar-action {
+    display: none !important;
+  }
+
+  .app-topbar {
+    gap: 8px !important;
+    padding-left: 12px !important;
+    padding-right: 145px !important;
+  }
+
+  .topbar-left {
+    gap: 6px !important;
+    flex: 0 0 auto !important;
+  }
+
+  .view-indicator {
+    display: none !important;
+  }
+
+  .topbar-search {
+    flex: 1 1 100px !important;
+    min-width: 80px !important;
+  }
+
+  .topbar-actions {
+    flex: 0 1 auto !important;
+    min-width: 0 !important;
+    gap: 4px !important;
+  }
+
+  .topbar-actions .btn-action:not(.icon-only) span:not(:first-child) {
+    display: none !important;
+  }
+
+  .topbar-actions .btn-action:not(.icon-only) {
+    min-width: 34px !important;
+    padding: 7px 9px !important;
+    justify-content: center !important;
   }
 }
 

@@ -137,20 +137,31 @@ export class PlayerManager {
     return blobUrl;
   }
 
-  getStreamSourceUrl(item, attemptFallback = false) {
+  getStreamSourceUrl(item, retryAttempt = 0) {
+    const attempt = typeof retryAttempt === 'boolean' ? Number(retryAttempt) : Math.max(0, Number(retryAttempt) || 0);
     let url = String(item?.url || '');
     if (!url) return '';
     if (url.startsWith('blob:')) return url;
 
-    if (attemptFallback && item?.fallbackUrl) {
+    if (attempt >= 2 && Array.isArray(item?.backupUrls) && item.backupUrls.length) {
+      const backupIndex = Math.min(item.backupUrls.length - 1, Math.floor((attempt - 2) / 2));
+      url = String(item.backupUrls[backupIndex] || url);
+      if (item?.type === 'live' && attempt % 2 === 1) {
+        if (/\.m3u8($|\?|#)/i.test(url)) return url.replace(/\.m3u8($|\?|#)/i, '.ts$1');
+        if (/\.ts($|\?|#)/i.test(url)) return url;
+      }
+      return url;
+    }
+
+    if (attempt === 1 && item?.fallbackUrl) {
       return item.fallbackUrl;
     }
 
-    if (attemptFallback && /\.m3u8(?:$|[?#])/i.test(url)) {
+    if (attempt === 1 && /\.m3u8(?:$|[?#])/i.test(url)) {
       return url.replace(/\.m3u8($|\?|#)/i, '.ts$1');
     }
 
-    if (attemptFallback && /\.ts(?:$|[?#])/i.test(url)) {
+    if (attempt === 1 && /\.ts(?:$|[?#])/i.test(url)) {
       return url.replace(/\.ts($|\?|#)/i, '.m3u8$1');
     }
 
@@ -279,6 +290,9 @@ export class PlayerManager {
 
   stop() {
     this.destroy();
+    this.current = null;
+    this.retryCount = 0;
+    this.resumeTime = 0;
   }
 
   async play(item, engine = 'html5', preserveRetry = false, startTime = 0) {
@@ -413,7 +427,7 @@ export class PlayerManager {
   loadHls(media, item, ready) {
     this.bindMediaEvents(media, 'hls');
 
-    let streamUrl = this.getStreamSourceUrl(item, this.retryCount > 0);
+    let streamUrl = this.getStreamSourceUrl(item, this.retryCount);
     const isLive = item?.type === 'live' || /\/live\//i.test(streamUrl);
     const isTs = /\.ts(?:$|[?#])/i.test(streamUrl) || (!streamUrl.includes('.m3u8') && isLive && !streamUrl.startsWith('blob:'));
 
@@ -493,11 +507,12 @@ export class PlayerManager {
               });
               return;
             }
-            if (data.response && data.response.code >= 400 && data.response.code < 500) {
-              this.retry('HTTP ' + data.response.code + ' on stream playlist, falling back to direct TS', { httpCode: data.response.code, fatal: true });
-            } else {
-              try { this.hls.startLoad(); } catch {}
-            }
+            this.retry(
+              data.response?.code
+                ? 'HTTP ' + data.response.code + ' on stream playlist; trying the next source'
+                : 'Stream server is not responding; trying the next source',
+              { httpCode: data.response?.code || 0, details: data.details, fatal: true }
+            );
             break;
           case this.Hls.ErrorTypes.MEDIA_ERROR:
             try { this.hls.recoverMediaError(); } catch {}
@@ -513,7 +528,7 @@ export class PlayerManager {
             } else if (data.details === 'manifestParsingError' && streamUrl.startsWith('blob:')) {
               try {
                 this.hls.destroy();
-                const realUrl = this.getStreamSourceUrl(this.current) || this.current?.url || item.url;
+                const realUrl = this.getStreamSourceUrl(this.current, this.retryCount) || this.current?.url || item.url;
                 this.loadNativeFile(media, { ...item, url: realUrl }, ready);
                 return;
               } catch {}
@@ -587,7 +602,7 @@ export class PlayerManager {
 
     const isHls = this.isHlsSource(item);
     const isSeries = item?.type === 'series' || Boolean(item?.season) || Boolean(item?.episodeNumber);
-    const streamUrl = this.getStreamSourceUrl(item);
+    const streamUrl = this.getStreamSourceUrl(item, this.retryCount);
 
     const artConfig = {
       container: this.artMount,

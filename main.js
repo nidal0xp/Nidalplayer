@@ -218,6 +218,7 @@ function compactItem(i) {
     logo: i.logo || '',
     url: i.url || '',
     fallbackUrl: i.fallbackUrl || undefined,
+    backupUrls: Array.isArray(i.backupUrls) ? i.backupUrls : undefined,
     seriesId: i.seriesId || undefined,
     rating: i.rating || undefined,
     year: i.releaseDate || i.year || undefined,

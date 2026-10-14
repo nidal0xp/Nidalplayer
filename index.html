@@ -620,7 +620,7 @@
               <img src="assets/logo.png" alt="NP" style="width:56px; height:56px; border-radius:12px; object-fit:cover; border:1px solid rgba(255,69,26,0.35); box-shadow:0 6px 20px rgba(255,69,26,0.2); flex-shrink:0;">
               <div>
                 <div style="font-family:var(--font-mono); font-size:16px; font-weight:700; color:var(--text-primary); letter-spacing:0.5px;">NIDALPLAYER MEDIA CENTER</div>
-                <p id="settingsVersionLine" style="font-size:11px; color:var(--text-muted); margin-top:4px;">Version 4.4.0 ⬤ Swiss Industrial Edition ⬤ Obsidian &amp; International Signal Orange</p>
+                <p id="settingsVersionLine" style="font-size:11px; color:var(--text-muted); margin-top:4px;">Version 4.4.2 ⬤ Swiss Industrial Edition ⬤ Obsidian &amp; International Signal Orange</p>
               </div>
             </div>
 
@@ -738,7 +738,7 @@
               <div class="settings-title">APPLICATION UPDATES —</div>
               <div class="setting-row" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
                 <div>
-                  <strong id="settingsUpdateTitle">Version Status: v4.4.0</strong>
+                  <strong id="settingsUpdateTitle">Version Status: v4.4.2</strong>
                   <p class="settings-desc" id="settingsUpdateSubtitle" style="margin:0; font-size:11px;">Nidalplayer checks for updates automatically via GitHub Releases.</p>
                 </div>
                 <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
@@ -982,6 +982,12 @@
           <div class="form-group">
             <label for="inputServerUrl" data-i18n="server_url_label">SERVER URL / HOST <span class="req">*</span></label>
             <input type="text" id="inputServerUrl" placeholder="http://example.com:8080" autocomplete="off">
+          </div>
+
+          <div class="form-group">
+            <label for="inputBackupServerUrl">BACKUP SERVER URL / HOST <span style="color:var(--text-muted); font-weight:400;">(OPTIONAL)</span></label>
+            <input type="text" id="inputBackupServerUrl" placeholder="http://backup.example.com:8080" autocomplete="off">
+            <small style="display:block; color:var(--text-muted); margin-top:5px;">Used automatically if the primary server is unreachable. Use the same provider account.</small>
           </div>
 
           <div class="form-row">
