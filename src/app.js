@@ -697,7 +697,7 @@ function renderChannelCard(item, _index) {
       <div class="channel-name" title="${item.name}">${item.name}</div>
       <div class="channel-group-tag channel-epg-tag" data-stream-id="${cleanStreamId}" title="${cachedEpg?.full || epgText}">${epgText}</div>
     </div>
-    <button class="channel-fav-btn ${isFav ? 'active' : ''}" title="Favorite">★</button>
+    <button class="channel-fav-btn ${isFav ? 'active' : ''}" title="Favorite" aria-label="Toggle Favorite">★</button>
   `;
 
   if (!cachedEpg && cleanStreamId) {
@@ -731,7 +731,7 @@ function renderMovieCard(item, _index) {
   card.className = 'poster-card';
 
   const isFav = state.favorites.has(item.id);
-  const favBtn = `<button class="card-fav-btn ${isFav ? 'active' : ''}" title="Favorite">★</button>`;
+  const favBtn = `<button class="card-fav-btn ${isFav ? 'active' : ''}" title="Favorite" aria-label="Toggle Favorite">★</button>`;
   const progressData = state.watchProgress[item.id];
   const isWatched = progressData?.isWatched || (progressData?.percentage >= 90);
 
@@ -785,7 +785,7 @@ function renderSeriesCard(item, _index) {
   card.className = 'poster-card';
 
   const isFav = state.favorites.has(item.id);
-  const favBtn = `<button class="card-fav-btn ${isFav ? 'active' : ''}" title="Favorite">★</button>`;
+  const favBtn = `<button class="card-fav-btn ${isFav ? 'active' : ''}" title="Favorite" aria-label="Toggle Favorite">★</button>`;
 
   const rawSeriesId = String(item.seriesId || item.id).replace(/^series-/, '');
   const seriesProgress = state.watchProgress[item.id] ||
@@ -1695,7 +1695,7 @@ function renderContinueWatching() {
     card.innerHTML = `
       <div class="poster-img-wrap">
         ${imgTag}
-        <button class="card-remove-btn" title="Remove from Continue Watching">✕</button>
+        <button class="card-remove-btn" title="Remove from Continue Watching" aria-label="Remove from Continue Watching">✕</button>
         ${badge}
         <div class="poster-watch-progress">
           <div class="poster-watch-fill" style="width: ${data.percentage}%; background:${isWatched ? '#00e676' : 'var(--accent-orange)'}"></div>
