@@ -2,7 +2,7 @@
 
 [![License: CC BY-NC-SA 4.0](https://img.shields.io/badge/License-CC_BY--NC--SA_4.0-orange.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows_x64-blue.svg)](https://github.com/nidal0xp/Nidalplayer/releases)
-[![Version](https://img.shields.io/badge/Version-4.4.1-success.svg)](https://github.com/nidal0xp/Nidalplayer/releases)
+[![Version](https://img.shields.io/badge/Version-4.4.2-success.svg)](https://github.com/nidal0xp/Nidalplayer/releases)
 [![Auto-Updates](https://img.shields.io/badge/Updates-Automatic_GitHub_Releases-brightgreen.svg)](https://github.com/nidal0xp/Nidalplayer/releases)
 
 **Nidalplayer** is a high-performance, modernist streaming media center engineered specifically for Windows. Designed with an industrial Swiss aesthetic, it combines lightning-fast stream startup, real-time sports intelligence, 4K metadata discovery, live preview playback, and zero-configuration mobile companion remote control.
