@@ -6,3 +6,7 @@
 **Learning:** Found a specific performance bottleneck in `app.js` during category/search sorting. It called `getWatchProgressForSort` for each item dynamically in the `sort()` function, leading to O(N^2) complexity because `getWatchProgressForSort` loops over the whole dictionary (`Object.values(wp)`) for each item.
 **Action:** When sorting large arrays of objects, specially those that require looking up external data structures with O(N) operations, pre-calculate that data into a `Map` *before* calling `.sort()` to bring the complexity down to O(N).
 
+
+## 2025-03-01 - [publishRemoteState High-Frequency Array Operations]
+**Learning:** Found a major performance bottleneck in `app.js` inside the `publishRemoteState` function, which is called very frequently via `setInterval` every 2s. The previous implementation used multiple `.filter()` calls, `.replace()` with Regular Expressions to sanitize IDs, and spread operators `[...a, ...b]` on potentially massive arrays (like `liveChannels`, `movies`, `series`) resulting in high CPU usage and garbage collection overhead.
+**Action:** For frequently executed loops that process large arrays with slicing (e.g. max 2000 items), replace `.filter()` and array spread operations with single-pass loops utilizing eager bounds checking (halting when limits are reached). Also, replace repetitive Regular Expression checks (`.replace(/.../)`) with faster string manipulation methods such as `.startsWith()` and `.slice()`.
