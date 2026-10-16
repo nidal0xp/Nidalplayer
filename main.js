@@ -743,6 +743,32 @@ function createWindow() {
     }
   });
 
+  // Security: Prevent arbitrary navigation inside the app shell
+  mainWindow.webContents.on('will-navigate', (event, urlStr) => {
+    try {
+      const url = new URL(urlStr);
+      // Allow file:// for local resources and http/https for local dev servers
+      if (url.protocol !== 'file:' && !['localhost', '127.0.0.1'].includes(url.hostname)) {
+        event.preventDefault();
+      }
+    } catch (e) {
+      event.preventDefault();
+    }
+  });
+
+  // Security: Prevent new windows from being created by web content
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    try {
+      const parsedUrl = new URL(url);
+      if (['http:', 'https:'].includes(parsedUrl.protocol)) {
+        shell.openExternal(parsedUrl.href);
+      }
+    } catch (e) {
+      console.warn('Blocked window open for invalid URL:', url);
+    }
+    return { action: 'deny' };
+  });
+
   setupNetworkInterceptors();
   const isTvMode = process.argv.includes('--tv') || process.argv.includes('--smart-tv') || process.argv.includes('--tv-mode');
   if (isTvMode) {
@@ -1234,7 +1260,18 @@ ipcMain.handle('relaunch-app', () => {
 ipcMain.handle('exit-app', () => {
   app.quit();
 });
-ipcMain.handle('open-external', async (_e, url) => { await shell.openExternal(url); return true; });
+ipcMain.handle('open-external', async (_e, urlStr) => {
+  try {
+    const parsedUrl = new URL(urlStr);
+    if (['http:', 'https:'].includes(parsedUrl.protocol)) {
+      await shell.openExternal(parsedUrl.href);
+      return true;
+    }
+  } catch (err) {
+    console.error('Blocked open-external for invalid URL:', urlStr);
+  }
+  return false;
+});
 
 // Remote control
 ipcMain.on('remote-state-update', (_event, snapshot) => { remoteSnapshot = snapshot || remoteSnapshot; });
