@@ -1,0 +1,3 @@
+## 2024-10-24 - Screen Reader Compatibility for Custom UI
+**Learning:** The application heavily relies on raw text symbols (e.g., '✕', '⏯', '⛶') inside icon-only `<button>` and `<span>` tags for its custom UI (like the media player HUD, sidebar toggles, and custom modals). These lack inherent semantic meaning for assistive technologies, rendering core playback and navigation controls invisible or confusing to screen reader users.
+**Action:** When adding or modifying custom icon-only UI elements, always pair them with descriptive `aria-label` attributes to ensure accessibility without disrupting the visual design system.
