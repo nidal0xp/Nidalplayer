@@ -6,3 +6,7 @@
 **Learning:** Found that multiple icon-only buttons (like 'X' close buttons on modals and clear search inputs) and search input were completely unlabelled for screen readers, meaning users would only hear 'button' or confusing generic text. Decorative symbols (like the '⌕' reticle) could also confuse screen readers.
 **Action:** Always add descriptive `aria-label` attributes to icon-only buttons and inputs, and add `aria-hidden="true"` to decorative symbols to ensure clear navigation for users relying on assistive technology.
 
+
+## 2026-10-18 - Media Control Accessibility
+**Learning:** Icon-only media controls in the Home Mini player and HUD lack ARIA labels, making them inaccessible to screen readers which will just announce 'button'.
+**Action:** Add explicit `aria-label` attributes to all icon-only media playback buttons.
