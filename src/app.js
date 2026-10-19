@@ -3451,6 +3451,40 @@ function publishRemoteState() {
   }
 
   const activeRec = state.playlists.find(p => p.id === state.activePlaylistId);
+
+  // Bolt: Optimize remote state publishing by avoiding multiple filter/spread calls and slow Regex
+  // Using a single pass loop and eager bounding instead to reduce memory allocation
+  const _getPrioritized = (sourceArray, mapFn) => {
+    const favSet = state.favorites || new Set();
+    const wp = state.watchProgress || {};
+
+    const isFavOrWatched = item => {
+      if (favSet.has(item.id) || (item.seriesId && favSet.has(item.seriesId))) return true;
+      if (wp[item.id] || (item.seriesId && wp[item.seriesId])) return true;
+      const strId = String(item.id);
+      let cleanId = strId;
+      if (strId.startsWith('series-')) cleanId = strId.slice(7);
+      else if (strId.startsWith('movie-')) cleanId = strId.slice(6);
+      else if (strId.startsWith('live-')) cleanId = strId.slice(5);
+      return !!wp[cleanId];
+    };
+
+    const prioritized = [];
+    const others = [];
+
+    for (let i = 0; i < sourceArray.length; i++) {
+      const item = sourceArray[i];
+      if (isFavOrWatched(item)) {
+        prioritized.push(mapFn(item));
+      } else if (others.length < 2000) {
+        others.push(mapFn(item));
+      }
+    }
+
+    const result = prioritized.concat(others);
+    return result.length > 2000 ? result.slice(0, 2000) : result;
+  };
+
   const snapshot = {
     language: getLang(),
     syncing: Boolean(state.syncState?.active),
@@ -3471,27 +3505,9 @@ function publishRemoteState() {
     favorites: Array.from(state.favorites),
     categories,
     // Prioritize all favorited and watched items so they are never omitted by slice
-    channels: (() => {
-      const favSet = state.favorites || new Set();
-      const isFavOrWatched = c => favSet.has(c.id) || (state.watchProgress && (state.watchProgress[c.id] || state.watchProgress[String(c.id).replace(/^(?:series|movie|live)-/, '')]));
-      return [...liveChannels.filter(isFavOrWatched), ...liveChannels.filter(c => !isFavOrWatched(c))]
-        .slice(0, 2000)
-        .map(c => ({ id: c.id, name: c.name, group: c.group, logo: c.logo, type: 'live' }));
-    })(),
-    movies: (() => {
-      const favSet = state.favorites || new Set();
-      const isFavOrWatched = m => favSet.has(m.id) || (state.watchProgress && (state.watchProgress[m.id] || state.watchProgress[String(m.id).replace(/^(?:series|movie|live)-/, '')]));
-      return [...movies.filter(isFavOrWatched), ...movies.filter(m => !isFavOrWatched(m))]
-        .slice(0, 2000)
-        .map(m => ({ id: m.id, name: m.name, group: m.group, logo: m.logo, type: 'movies', rating: m.rating, year: m.releaseDate }));
-    })(),
-    series: (() => {
-      const favSet = state.favorites || new Set();
-      const isFavOrWatched = s => favSet.has(s.id) || (s.seriesId && favSet.has(s.seriesId)) || (state.watchProgress && (state.watchProgress[s.id] || (s.seriesId && state.watchProgress[s.seriesId])));
-      return [...series.filter(isFavOrWatched), ...series.filter(s => !isFavOrWatched(s))]
-        .slice(0, 2000)
-        .map(s => ({ id: s.id, seriesId: s.seriesId, name: s.name, group: s.group, logo: s.logo, type: 'series', rating: s.rating }));
-    })(),
+    channels: _getPrioritized(liveChannels, c => ({ id: c.id, name: c.name, group: c.group, logo: c.logo, type: 'live' })),
+    movies: _getPrioritized(movies, m => ({ id: m.id, name: m.name, group: m.group, logo: m.logo, type: 'movies', rating: m.rating, year: m.releaseDate })),
+    series: _getPrioritized(series, s => ({ id: s.id, seriesId: s.seriesId, name: s.name, group: s.group, logo: s.logo, type: 'series', rating: s.rating })),
     activeSeriesEpisodes: (activeSeriesEpisodes || []).slice(0, 300).map(e => ({ id: e.id, season: e.season, episodeNumber: e.episodeNumber, name: e.name, episodeTitle: e.episodeTitle, duration: e.duration })),
     watchProgress: state.watchProgress || {},
     epgCache: epgCache || {},
