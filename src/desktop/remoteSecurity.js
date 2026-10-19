@@ -12,6 +12,8 @@ function isPrivateLanAddress(address) {
     || /^172\.(1[6-9]|2\d|3[0-1])\./.test(ip);
 }
 
+const crypto = require('crypto');
+
 function hasRemoteAccess(request, url, expectedToken) {
   if (!isPrivateLanAddress(request?.socket?.remoteAddress)) return false;
   const suppliedToken = String(
@@ -20,9 +22,14 @@ function hasRemoteAccess(request, url, expectedToken) {
       || url?.searchParams?.get('token')
       || ''
   );
-  return Boolean(expectedToken)
-    && suppliedToken.length === expectedToken.length
-    && suppliedToken === expectedToken;
+
+  if (!expectedToken) return false;
+
+  const expectedBuffer = Buffer.from(expectedToken);
+  const suppliedBuffer = Buffer.from(suppliedToken);
+
+  return expectedBuffer.byteLength === suppliedBuffer.byteLength
+    && crypto.timingSafeEqual(expectedBuffer, suppliedBuffer);
 }
 
 module.exports = { normalizeRemoteAddress, isPrivateLanAddress, hasRemoteAccess };
