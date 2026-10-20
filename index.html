@@ -836,7 +836,7 @@
           <span id="hudResolution" class="hud-badge">AUTO</span>
           <span id="hudFps" class="hud-badge hidden">-- FPS</span>
           <span id="hudBitrate" class="hud-badge">HLS</span>
-          <button id="hudFavBtn" class="hud-btn" style="background:var(--bg-obsidian); border:1px solid var(--border-strong); color:#ffb703; font-size:14px; padding:6px 10px;" title="Toggle Favorite">★</button>
+            <button id="hudFavBtn" class="hud-btn" style="background:var(--bg-obsidian); border:1px solid var(--border-strong); color:#ffb703; font-size:14px; padding:6px 10px;" title="Toggle Favorite" aria-label="Toggle Favorite">★</button>
         </div>
       </div>
 
@@ -851,32 +851,32 @@
 
         <div class="hud-control-row">
           <div class="hud-left-controls">
-            <button id="hudPrevEpBtn" class="hud-btn-icon hud-ep-nav hidden" title="Previous Episode">⏮</button>
-            <button id="hudSeekBackBtn" class="hud-btn-icon" title="Rewind 10s">⏪</button>
-            <button id="hudPlayBtn" class="hud-btn-icon" title="Play/Pause (Space)">▶</button>
-            <button id="hudSeekFwdBtn" class="hud-btn-icon" title="Forward 10s">⏩</button>
-            <button id="hudNextEpBtn" class="hud-btn-icon hud-ep-nav hidden" title="Next Episode">⏭</button>
-            <button id="hudMuteBtn" class="hud-btn-icon" title="Mute/Unmute">🔊</button>
-            <input type="range" id="hudVolumeSlider" min="0" max="1" step="0.05" value="1" class="volume-slider">
+            <button id="hudPrevEpBtn" class="hud-btn-icon hud-ep-nav hidden" title="Previous Episode" aria-label="Previous Episode">⏮</button>
+            <button id="hudSeekBackBtn" class="hud-btn-icon" title="Rewind 10s" aria-label="Rewind 10s">⏪</button>
+            <button id="hudPlayBtn" class="hud-btn-icon" title="Play/Pause (Space)" aria-label="Play or Pause">▶</button>
+            <button id="hudSeekFwdBtn" class="hud-btn-icon" title="Forward 10s" aria-label="Forward 10s">⏩</button>
+            <button id="hudNextEpBtn" class="hud-btn-icon hud-ep-nav hidden" title="Next Episode" aria-label="Next Episode">⏭</button>
+            <button id="hudMuteBtn" class="hud-btn-icon" title="Mute/Unmute" aria-label="Mute or Unmute">🔊</button>
+            <input type="range" id="hudVolumeSlider" min="0" max="1" step="0.05" value="1" class="volume-slider" title="Volume" aria-label="Volume">
           </div>
 
           <div class="hud-right-controls">
-            <select id="hudAudioTrackSelect" class="hud-select hidden" title="Select Audio Track / Language">
+            <select id="hudAudioTrackSelect" class="hud-select hidden" title="Select Audio Track / Language" aria-label="Select Audio Track or Language">
               <option value="0">Default Audio</option>
             </select>
-            <select id="hudAspectSelect" class="hud-select" title="Aspect Ratio">
+            <select id="hudAspectSelect" class="hud-select" title="Aspect Ratio" aria-label="Aspect Ratio">
               <option value="contain">Fit to Screen</option>
               <option value="cover">Fill Screen</option>
               <option value="fill">Stretch</option>
             </select>
-            <select id="hudSpeedSelect" class="hud-select" title="Playback Rate">
+            <select id="hudSpeedSelect" class="hud-select" title="Playback Rate" aria-label="Playback Rate">
               <option value="0.75">0.75×</option>
               <option value="1" selected>1.0×</option>
               <option value="1.25">1.25×</option>
               <option value="1.5">1.5×</option>
               <option value="2">2.0×</option>
             </select>
-            <button id="hudPipBtn" class="hud-btn-icon" title="Picture in Picture">▣</button>
+            <button id="hudPipBtn" class="hud-btn-icon" title="Picture in Picture" aria-label="Picture in Picture">▣</button>
             <button id="hudExitFullBtn" class="hud-btn-icon highlight" title="Exit Fullscreen (Esc)">
               <span data-i18n="exit_fullscreen">🗗 EXIT FULLSCREEN</span>
             </button>
