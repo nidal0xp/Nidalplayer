@@ -693,6 +693,28 @@ function createWindow() {
   mainWindow.setMenuBarVisibility(false);
   Menu.setApplicationMenu(null);
 
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    try {
+      const parsedUrl = new URL(url);
+      if (parsedUrl.protocol === 'file:' || ['localhost', '127.0.0.1'].includes(parsedUrl.hostname)) {
+        return { action: 'allow' };
+      }
+    } catch {}
+    return { action: 'deny' };
+  });
+
+  mainWindow.webContents.on('will-navigate', (event, url) => {
+    try {
+      const parsedUrl = new URL(url);
+      if (parsedUrl.protocol !== 'file:' && !['localhost', '127.0.0.1'].includes(parsedUrl.hostname)) {
+        event.preventDefault();
+        console.warn('[Security] Blocked main window navigation to:', url);
+      }
+    } catch {
+      event.preventDefault();
+    }
+  });
+
   mainWindow.on('enter-full-screen', () => {
     mainWindow.webContents?.send('native-fullscreen-change', true);
   });
@@ -1234,7 +1256,19 @@ ipcMain.handle('relaunch-app', () => {
 ipcMain.handle('exit-app', () => {
   app.quit();
 });
-ipcMain.handle('open-external', async (_e, url) => { await shell.openExternal(url); return true; });
+ipcMain.handle('open-external', async (_e, url) => {
+  if (typeof url !== 'string') return false;
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+      await shell.openExternal(parsed.href);
+      return true;
+    }
+  } catch (err) {
+    console.warn('[Security] Blocked malformed or unsafe external URL:', url);
+  }
+  return false;
+});
 
 // Remote control
 ipcMain.on('remote-state-update', (_event, snapshot) => { remoteSnapshot = snapshot || remoteSnapshot; });
