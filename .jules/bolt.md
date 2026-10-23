@@ -6,3 +6,7 @@
 **Learning:** Found a specific performance bottleneck in `app.js` during category/search sorting. It called `getWatchProgressForSort` for each item dynamically in the `sort()` function, leading to O(N^2) complexity because `getWatchProgressForSort` loops over the whole dictionary (`Object.values(wp)`) for each item.
 **Action:** When sorting large arrays of objects, specially those that require looking up external data structures with O(N) operations, pre-calculate that data into a `Map` *before* calling `.sort()` to bring the complexity down to O(N).
 
+
+## 2025-03-05 - publishRemoteState Array Serialization Overhead
+**Learning:** `publishRemoteState` runs every 2s, and utilizing multiple `.filter()` passes, spread operators, and string replace with regex on massive arrays (e.g. 100k+ `liveChannels`, `movies`, `series`) causes severe memory allocation and garbage collection overhead.
+**Action:** Replace multi-pass processing with eagerly bounded single-pass loops, breaking iteration early once display limits (e.g. 2000) are reached. Avoid repeatedly allocating and spreading large intermediary arrays.
