@@ -3473,24 +3473,65 @@ function publishRemoteState() {
     // Prioritize all favorited and watched items so they are never omitted by slice
     channels: (() => {
       const favSet = state.favorites || new Set();
-      const isFavOrWatched = c => favSet.has(c.id) || (state.watchProgress && (state.watchProgress[c.id] || state.watchProgress[String(c.id).replace(/^(?:series|movie|live)-/, '')]));
-      return [...liveChannels.filter(isFavOrWatched), ...liveChannels.filter(c => !isFavOrWatched(c))]
-        .slice(0, 2000)
-        .map(c => ({ id: c.id, name: c.name, group: c.group, logo: c.logo, type: 'live' }));
+      const wp = state.watchProgress || {};
+      const result = [];
+      const others = [];
+      const len = liveChannels.length;
+      for (let i = 0; i < len; i++) {
+        const c = liveChannels[i];
+        let cleanId = String(c.id);
+        if (cleanId.startsWith('live-')) cleanId = cleanId.slice(5);
+        else if (cleanId.startsWith('movie-')) cleanId = cleanId.slice(6);
+        else if (cleanId.startsWith('series-')) cleanId = cleanId.slice(7);
+        if (favSet.has(c.id) || wp[c.id] || wp[cleanId]) {
+          if (result.length < 2000) result.push({ id: c.id, name: c.name, group: c.group, logo: c.logo, type: 'live' });
+        } else if (others.length < 2000) {
+          others.push({ id: c.id, name: c.name, group: c.group, logo: c.logo, type: 'live' });
+        }
+        if (result.length >= 2000 && others.length >= 2000) break;
+      }
+      for (let i = 0; i < others.length && result.length < 2000; i++) result.push(others[i]);
+      return result;
     })(),
     movies: (() => {
       const favSet = state.favorites || new Set();
-      const isFavOrWatched = m => favSet.has(m.id) || (state.watchProgress && (state.watchProgress[m.id] || state.watchProgress[String(m.id).replace(/^(?:series|movie|live)-/, '')]));
-      return [...movies.filter(isFavOrWatched), ...movies.filter(m => !isFavOrWatched(m))]
-        .slice(0, 2000)
-        .map(m => ({ id: m.id, name: m.name, group: m.group, logo: m.logo, type: 'movies', rating: m.rating, year: m.releaseDate }));
+      const wp = state.watchProgress || {};
+      const result = [];
+      const others = [];
+      const len = movies.length;
+      for (let i = 0; i < len; i++) {
+        const m = movies[i];
+        let cleanId = String(m.id);
+        if (cleanId.startsWith('live-')) cleanId = cleanId.slice(5);
+        else if (cleanId.startsWith('movie-')) cleanId = cleanId.slice(6);
+        else if (cleanId.startsWith('series-')) cleanId = cleanId.slice(7);
+        if (favSet.has(m.id) || wp[m.id] || wp[cleanId]) {
+          if (result.length < 2000) result.push({ id: m.id, name: m.name, group: m.group, logo: m.logo, type: 'movies', rating: m.rating, year: m.releaseDate });
+        } else if (others.length < 2000) {
+          others.push({ id: m.id, name: m.name, group: m.group, logo: m.logo, type: 'movies', rating: m.rating, year: m.releaseDate });
+        }
+        if (result.length >= 2000 && others.length >= 2000) break;
+      }
+      for (let i = 0; i < others.length && result.length < 2000; i++) result.push(others[i]);
+      return result;
     })(),
     series: (() => {
       const favSet = state.favorites || new Set();
-      const isFavOrWatched = s => favSet.has(s.id) || (s.seriesId && favSet.has(s.seriesId)) || (state.watchProgress && (state.watchProgress[s.id] || (s.seriesId && state.watchProgress[s.seriesId])));
-      return [...series.filter(isFavOrWatched), ...series.filter(s => !isFavOrWatched(s))]
-        .slice(0, 2000)
-        .map(s => ({ id: s.id, seriesId: s.seriesId, name: s.name, group: s.group, logo: s.logo, type: 'series', rating: s.rating }));
+      const wp = state.watchProgress || {};
+      const result = [];
+      const others = [];
+      const len = series.length;
+      for (let i = 0; i < len; i++) {
+        const s = series[i];
+        if (favSet.has(s.id) || (s.seriesId && favSet.has(s.seriesId)) || wp[s.id] || (s.seriesId && wp[s.seriesId])) {
+          if (result.length < 2000) result.push({ id: s.id, seriesId: s.seriesId, name: s.name, group: s.group, logo: s.logo, type: 'series', rating: s.rating });
+        } else if (others.length < 2000) {
+          others.push({ id: s.id, seriesId: s.seriesId, name: s.name, group: s.group, logo: s.logo, type: 'series', rating: s.rating });
+        }
+        if (result.length >= 2000 && others.length >= 2000) break;
+      }
+      for (let i = 0; i < others.length && result.length < 2000; i++) result.push(others[i]);
+      return result;
     })(),
     activeSeriesEpisodes: (activeSeriesEpisodes || []).slice(0, 300).map(e => ({ id: e.id, season: e.season, episodeNumber: e.episodeNumber, name: e.name, episodeTitle: e.episodeTitle, duration: e.duration })),
     watchProgress: state.watchProgress || {},
