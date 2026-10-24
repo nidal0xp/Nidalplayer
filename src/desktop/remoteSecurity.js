@@ -20,9 +20,14 @@ function hasRemoteAccess(request, url, expectedToken) {
       || url?.searchParams?.get('token')
       || ''
   );
-  return Boolean(expectedToken)
-    && suppliedToken.length === expectedToken.length
-    && suppliedToken === expectedToken;
+  if (!expectedToken || !suppliedToken) return false;
+
+  const expectedBuf = Buffer.from(String(expectedToken), 'utf8');
+  const suppliedBuf = Buffer.from(String(suppliedToken), 'utf8');
+
+  if (expectedBuf.byteLength !== suppliedBuf.byteLength) return false;
+
+  return require('crypto').timingSafeEqual(expectedBuf, suppliedBuf);
 }
 
 module.exports = { normalizeRemoteAddress, isPrivateLanAddress, hasRemoteAccess };
