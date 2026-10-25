@@ -6,3 +6,6 @@
 **Learning:** Found a specific performance bottleneck in `app.js` during category/search sorting. It called `getWatchProgressForSort` for each item dynamically in the `sort()` function, leading to O(N^2) complexity because `getWatchProgressForSort` loops over the whole dictionary (`Object.values(wp)`) for each item.
 **Action:** When sorting large arrays of objects, specially those that require looking up external data structures with O(N) operations, pre-calculate that data into a `Map` *before* calling `.sort()` to bring the complexity down to O(N).
 
+## 2026-10-25 - Refactoring interval object mappings
+**Learning:** High-frequency intervals like `publishRemoteState` (every 2s) cause high memory allocation and CPU spikes when chaining multiple array methods (`.filter()`, `.slice()`, array spreads, and regex evaluations) over large datasets. The `[...arr.filter(a), ...arr.filter(!a)]` pattern essentially traverses the array twice and allocates intermediate arrays.
+**Action:** Use single-pass loops with eager bounding (stopping when limit like 2000 is reached) and replace regex evaluation in loops with native string manipulations like `startsWith` and `slice` to reduce GC overhead and avoid UI freezes.
