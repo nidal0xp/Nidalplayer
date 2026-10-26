@@ -6,3 +6,7 @@
 **Learning:** Found a specific performance bottleneck in `app.js` during category/search sorting. It called `getWatchProgressForSort` for each item dynamically in the `sort()` function, leading to O(N^2) complexity because `getWatchProgressForSort` loops over the whole dictionary (`Object.values(wp)`) for each item.
 **Action:** When sorting large arrays of objects, specially those that require looking up external data structures with O(N) operations, pre-calculate that data into a `Map` *before* calling `.sort()` to bring the complexity down to O(N).
 
+
+## 2025-03-01 - O(N) Array Bounding in publishRemoteState
+**Learning:** For frequently executed functions like `publishRemoteState` (running every 2s), using multiple `.filter()` calls and array spread operators on large data sets (e.g., `liveChannels`, `movies`, `series`) causes massive CPU overhead and garbage collection pauses. Object mappings (`.map()`) before slicing further degrade memory.
+**Action:** Use single-pass loops with eager bounding checks (e.g., stopping when limits like 2000 are reached), and defer object transformations until *after* the array is bounded/sliced to prevent severe memory allocation regressions. Avoid regex for simple prefix removal.
