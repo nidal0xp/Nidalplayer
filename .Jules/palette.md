@@ -6,3 +6,6 @@
 **Learning:** Found that multiple icon-only buttons (like 'X' close buttons on modals and clear search inputs) and search input were completely unlabelled for screen readers, meaning users would only hear 'button' or confusing generic text. Decorative symbols (like the '⌕' reticle) could also confuse screen readers.
 **Action:** Always add descriptive `aria-label` attributes to icon-only buttons and inputs, and add `aria-hidden="true"` to decorative symbols to ensure clear navigation for users relying on assistive technology.
 
+## 2026-10-28 - Missing Form Labels in Configuration Cards
+**Learning:** Form labels in this app's configuration cards frequently lack the 'for' attribute, breaking screen reader association with input fields.
+**Action:** Always explicitly add 'for' attributes matching the associated element's ID to ensure programmatic accessibility for form controls.
