@@ -6,3 +6,6 @@
 **Learning:** Found a specific performance bottleneck in `app.js` during category/search sorting. It called `getWatchProgressForSort` for each item dynamically in the `sort()` function, leading to O(N^2) complexity because `getWatchProgressForSort` loops over the whole dictionary (`Object.values(wp)`) for each item.
 **Action:** When sorting large arrays of objects, specially those that require looking up external data structures with O(N) operations, pre-calculate that data into a `Map` *before* calling `.sort()` to bring the complexity down to O(N).
 
+## 2026-10-30 - Avoid Array spread, filter and Regex in publishRemoteState
+**Learning:** In Nidalplayer's high-frequency `publishRemoteState` function, using `[...arr.filter(cond), ...arr.filter(!cond)]` with large datasets like `liveChannels` and repeated Regex (`.replace(/^(?:series|movie|live)-/, '')`) creates significant memory allocation and CPU overhead.
+**Action:** Use a single-pass loop with eager bounding (stopping at 2000 items) and native string methods (`startsWith`, `slice`) to check prefixes, mapping only the final bounded array.
