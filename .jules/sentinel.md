@@ -1,0 +1,4 @@
+## 2024-05-18 - [Fix timing attack vulnerability in remote access token validation]
+**Vulnerability:** [The `hasRemoteAccess` function in `src/desktop/remoteSecurity.js` was vulnerable to timing attacks due to the use of standard string comparison (`===`) for validating the remote access token.]
+**Learning:** [Using standard string equality operators for security tokens can leak the token character by character via timing differences. Furthermore, when using `crypto.timingSafeEqual`, it is critical to compare the `byteLength` of the buffers, not just the `.length` of the original strings, to avoid `TypeError` with multi-byte characters and prevent DoS vulnerabilities.]
+**Prevention:** [Always use `crypto.timingSafeEqual` for comparing secret tokens, and ensure both buffers have the exact same `byteLength` before comparison.]
