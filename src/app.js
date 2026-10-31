@@ -3473,24 +3473,67 @@ function publishRemoteState() {
     // Prioritize all favorited and watched items so they are never omitted by slice
     channels: (() => {
       const favSet = state.favorites || new Set();
-      const isFavOrWatched = c => favSet.has(c.id) || (state.watchProgress && (state.watchProgress[c.id] || state.watchProgress[String(c.id).replace(/^(?:series|movie|live)-/, '')]));
-      return [...liveChannels.filter(isFavOrWatched), ...liveChannels.filter(c => !isFavOrWatched(c))]
-        .slice(0, 2000)
-        .map(c => ({ id: c.id, name: c.name, group: c.group, logo: c.logo, type: 'live' }));
+      const wp = state.watchProgress || {};
+      const priority = [], normal = [];
+      for (let i = 0; i < liveChannels.length; i++) {
+        const c = liveChannels[i];
+        let rawId = String(c.id);
+        if (rawId.startsWith('live-')) rawId = rawId.slice(5);
+        if (favSet.has(c.id) || wp[c.id] || wp[rawId]) priority.push(c);
+        else if (normal.length < 2000) normal.push(c);
+      }
+      const result = [];
+      for (let i = 0; i < priority.length && result.length < 2000; i++) {
+        const c = priority[i];
+        result.push({ id: c.id, name: c.name, group: c.group, logo: c.logo, type: 'live' });
+      }
+      for (let i = 0; i < normal.length && result.length < 2000; i++) {
+        const c = normal[i];
+        result.push({ id: c.id, name: c.name, group: c.group, logo: c.logo, type: 'live' });
+      }
+      return result;
     })(),
     movies: (() => {
       const favSet = state.favorites || new Set();
-      const isFavOrWatched = m => favSet.has(m.id) || (state.watchProgress && (state.watchProgress[m.id] || state.watchProgress[String(m.id).replace(/^(?:series|movie|live)-/, '')]));
-      return [...movies.filter(isFavOrWatched), ...movies.filter(m => !isFavOrWatched(m))]
-        .slice(0, 2000)
-        .map(m => ({ id: m.id, name: m.name, group: m.group, logo: m.logo, type: 'movies', rating: m.rating, year: m.releaseDate }));
+      const wp = state.watchProgress || {};
+      const priority = [], normal = [];
+      for (let i = 0; i < movies.length; i++) {
+        const m = movies[i];
+        let rawId = String(m.id);
+        if (rawId.startsWith('movie-')) rawId = rawId.slice(6);
+        if (favSet.has(m.id) || wp[m.id] || wp[rawId]) priority.push(m);
+        else if (normal.length < 2000) normal.push(m);
+      }
+      const result = [];
+      for (let i = 0; i < priority.length && result.length < 2000; i++) {
+        const m = priority[i];
+        result.push({ id: m.id, name: m.name, group: m.group, logo: m.logo, type: 'movies', rating: m.rating, year: m.releaseDate });
+      }
+      for (let i = 0; i < normal.length && result.length < 2000; i++) {
+        const m = normal[i];
+        result.push({ id: m.id, name: m.name, group: m.group, logo: m.logo, type: 'movies', rating: m.rating, year: m.releaseDate });
+      }
+      return result;
     })(),
     series: (() => {
       const favSet = state.favorites || new Set();
-      const isFavOrWatched = s => favSet.has(s.id) || (s.seriesId && favSet.has(s.seriesId)) || (state.watchProgress && (state.watchProgress[s.id] || (s.seriesId && state.watchProgress[s.seriesId])));
-      return [...series.filter(isFavOrWatched), ...series.filter(s => !isFavOrWatched(s))]
-        .slice(0, 2000)
-        .map(s => ({ id: s.id, seriesId: s.seriesId, name: s.name, group: s.group, logo: s.logo, type: 'series', rating: s.rating }));
+      const wp = state.watchProgress || {};
+      const priority = [], normal = [];
+      for (let i = 0; i < series.length; i++) {
+        const s = series[i];
+        if (favSet.has(s.id) || (s.seriesId && favSet.has(s.seriesId)) || wp[s.id] || (s.seriesId && wp[s.seriesId])) priority.push(s);
+        else if (normal.length < 2000) normal.push(s);
+      }
+      const result = [];
+      for (let i = 0; i < priority.length && result.length < 2000; i++) {
+        const s = priority[i];
+        result.push({ id: s.id, seriesId: s.seriesId, name: s.name, group: s.group, logo: s.logo, type: 'series', rating: s.rating });
+      }
+      for (let i = 0; i < normal.length && result.length < 2000; i++) {
+        const s = normal[i];
+        result.push({ id: s.id, seriesId: s.seriesId, name: s.name, group: s.group, logo: s.logo, type: 'series', rating: s.rating });
+      }
+      return result;
     })(),
     activeSeriesEpisodes: (activeSeriesEpisodes || []).slice(0, 300).map(e => ({ id: e.id, season: e.season, episodeNumber: e.episodeNumber, name: e.name, episodeTitle: e.episodeTitle, duration: e.duration })),
     watchProgress: state.watchProgress || {},
