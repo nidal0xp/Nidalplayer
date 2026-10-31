@@ -1,3 +1,5 @@
+const crypto = require('crypto');
+
 function normalizeRemoteAddress(address = '') {
   const value = String(address || '').trim().toLowerCase();
   return value.startsWith('::ffff:') ? value.slice(7) : value;
@@ -20,9 +22,20 @@ function hasRemoteAccess(request, url, expectedToken) {
       || url?.searchParams?.get('token')
       || ''
   );
-  return Boolean(expectedToken)
-    && suppliedToken.length === expectedToken.length
-    && suppliedToken === expectedToken;
+  if (!expectedToken) return false;
+
+  try {
+    const expectedBuffer = Buffer.from(String(expectedToken), 'utf8');
+    const suppliedBuffer = Buffer.from(suppliedToken, 'utf8');
+
+    if (expectedBuffer.byteLength !== suppliedBuffer.byteLength) {
+      return false;
+    }
+
+    return crypto.timingSafeEqual(expectedBuffer, suppliedBuffer);
+  } catch (e) {
+    return false;
+  }
 }
 
 module.exports = { normalizeRemoteAddress, isPrivateLanAddress, hasRemoteAccess };
