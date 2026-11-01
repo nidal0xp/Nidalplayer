@@ -743,6 +743,27 @@ function createWindow() {
     }
   });
 
+  mainWindow.webContents.on('will-navigate', (event, navigationUrl) => {
+    try {
+      const parsedUrl = new URL(navigationUrl);
+      if (parsedUrl.protocol !== 'file:' && !['localhost', '127.0.0.1'].includes(parsedUrl.hostname)) {
+        event.preventDefault();
+      }
+    } catch {
+      event.preventDefault();
+    }
+  });
+
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    try {
+      const parsedUrl = new URL(url);
+      if (['http:', 'https:'].includes(parsedUrl.protocol)) {
+        shell.openExternal(url);
+      }
+    } catch {}
+    return { action: 'deny' };
+  });
+
   setupNetworkInterceptors();
   const isTvMode = process.argv.includes('--tv') || process.argv.includes('--smart-tv') || process.argv.includes('--tv-mode');
   if (isTvMode) {
@@ -1234,7 +1255,16 @@ ipcMain.handle('relaunch-app', () => {
 ipcMain.handle('exit-app', () => {
   app.quit();
 });
-ipcMain.handle('open-external', async (_e, url) => { await shell.openExternal(url); return true; });
+ipcMain.handle('open-external', async (_e, url) => {
+  try {
+    const parsedUrl = new URL(url);
+    if (['http:', 'https:'].includes(parsedUrl.protocol)) {
+      await shell.openExternal(url);
+      return true;
+    }
+  } catch {}
+  return false;
+});
 
 // Remote control
 ipcMain.on('remote-state-update', (_event, snapshot) => { remoteSnapshot = snapshot || remoteSnapshot; });
