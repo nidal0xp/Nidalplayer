@@ -6,3 +6,6 @@
 **Learning:** Found a specific performance bottleneck in `app.js` during category/search sorting. It called `getWatchProgressForSort` for each item dynamically in the `sort()` function, leading to O(N^2) complexity because `getWatchProgressForSort` loops over the whole dictionary (`Object.values(wp)`) for each item.
 **Action:** When sorting large arrays of objects, specially those that require looking up external data structures with O(N) operations, pre-calculate that data into a `Map` *before* calling `.sort()` to bring the complexity down to O(N).
 
+## 2024-03-01 - O(N) array loops in publishRemoteState
+**Learning:** High-frequency loop `publishRemoteState` running on interval used multiple `.filter()` calls, array spreads, and regular expressions for ID extraction on large lists (100k+ items), causing severe performance and memory allocation issues.
+**Action:** Replaced functional array methods with bounded, single-pass `for` loops and string operations to significantly reduce execution time and avoid object instantiation until after bounding.
