@@ -9,6 +9,7 @@ import { matchCenter, TOP_5_LEAGUES } from './sports/matchCenter.js';
 import lineupService from './sports/lineupService.js';
 import tmdbService from './services/tmdbService.js';
 import favoriteTeamService from './sports/favoriteTeamService.js';
+import { escapeHtml, sanitizeId } from './ui/escapeHtml.js';
 
 // Global API Bridge from Electron Preload
 const bridge = window.streamline || {};
@@ -710,19 +711,21 @@ function renderChannelCard(item, _index) {
   card.className = `channel-card ${isPlaying ? 'playing' : ''}`;
 
   const isFav = state.favorites.has(item.id);
+  const itemName = String(item.name || 'Untitled');
+  const initials = escapeHtml(itemName.slice(0, 2).toUpperCase());
   const logoContent = item.logo
-    ? `<img src="${item.logo}" alt="" class="channel-logo-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"><span class="channel-logo-placeholder" style="display:none;">${item.name.slice(0, 2).toUpperCase()}</span>`
-    : `<span class="channel-logo-placeholder">${item.name.slice(0, 2).toUpperCase()}</span>`;
+    ? `<img src="${escapeHtml(item.logo)}" alt="" class="channel-logo-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"><span class="channel-logo-placeholder" style="display:none;">${initials}</span>`
+    : `<span class="channel-logo-placeholder">${initials}</span>`;
 
-  const cleanStreamId = String(item.metadata?.stream_id || item.id || '').replace(/^(?:live|movie|series)-/, '');
+  const cleanStreamId = sanitizeId(String(item.metadata?.stream_id || item.id || '').replace(/^(?:live|movie|series)-/, ''));
   const cachedEpg = epgCache[cleanStreamId];
   const epgText = cachedEpg ? cachedEpg.title : 'Live Broadcast';
 
   card.innerHTML = `
     <div class="channel-logo-wrap">${logoContent}</div>
     <div class="channel-info">
-      <div class="channel-name" title="${item.name}">${item.name}</div>
-      <div class="channel-group-tag channel-epg-tag" data-stream-id="${cleanStreamId}" title="${cachedEpg?.full || epgText}">${epgText}</div>
+      <div class="channel-name" title="${escapeHtml(itemName)}">${escapeHtml(itemName)}</div>
+      <div class="channel-group-tag channel-epg-tag" data-stream-id="${cleanStreamId}" title="${escapeHtml(cachedEpg?.full || epgText)}">${escapeHtml(epgText)}</div>
     </div>
     <button class="channel-fav-btn ${isFav ? 'active' : ''}" title="Favorite">★</button>
   `;
@@ -756,6 +759,7 @@ function renderChannelCard(item, _index) {
 function renderMovieCard(item, _index) {
   const card = document.createElement('div');
   card.className = 'poster-card';
+  const itemName = String(item.name || 'Untitled');
 
   const isFav = state.favorites.has(item.id);
   const favBtn = `<button class="card-fav-btn ${isFav ? 'active' : ''}" title="Favorite">★</button>`;
@@ -774,9 +778,10 @@ function renderMovieCard(item, _index) {
     statusBadge = `<span class="poster-rating">★ ${parseFloat(item.rating).toFixed(1)}</span>`;
   }
 
+  const initials = escapeHtml(itemName.slice(0, 2).toUpperCase());
   const imgContent = item.logo
-    ? `<img src="${item.logo}" alt="" class="poster-img" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><div class="poster-fallback" style="display:none;">${item.name.slice(0, 2).toUpperCase()}</div>`
-    : `<div class="poster-fallback">${item.name.slice(0, 2).toUpperCase()}</div>`;
+    ? `<img src="${escapeHtml(item.logo)}" alt="" class="poster-img" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><div class="poster-fallback" style="display:none;">${initials}</div>`
+    : `<div class="poster-fallback">${initials}</div>`;
 
   card.innerHTML = `
     <div class="poster-img-wrap">
@@ -786,8 +791,8 @@ function renderMovieCard(item, _index) {
       ${progressFill}
     </div>
     <div class="poster-meta">
-      <div class="poster-title" title="${item.name}">${item.name}</div>
-      <div class="poster-sub">${isWatched ? '👁 Watched' : (progressData?.percentage > 0 ? `▶ ${progressData.percentage}%` : '')}</div>
+      <div class="poster-title" title="${escapeHtml(itemName)}">${escapeHtml(itemName)}</div>
+      <div class="poster-sub">${isWatched ? '👁 Watched' : (progressData?.percentage > 0 ? `▶ ${escapeHtml(progressData.percentage)}%` : '')}</div>
     </div>
   `;
 
@@ -810,6 +815,7 @@ function renderMovieCard(item, _index) {
 function renderSeriesCard(item, _index) {
   const card = document.createElement('div');
   card.className = 'poster-card';
+  const itemName = String(item.name || 'Untitled');
 
   const isFav = state.favorites.has(item.id);
   const favBtn = `<button class="card-fav-btn ${isFav ? 'active' : ''}" title="Favorite">★</button>`;
@@ -837,9 +843,10 @@ function renderSeriesCard(item, _index) {
     statusBadge = `<span class="poster-rating">★ ${parseFloat(item.rating).toFixed(1)}</span>`;
   }
 
+  const initials = escapeHtml(itemName.slice(0, 2).toUpperCase());
   const imgContent = item.logo
-    ? `<img src="${item.logo}" alt="" class="poster-img" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><div class="poster-fallback" style="display:none;">${item.name.slice(0, 2).toUpperCase()}</div>`
-    : `<div class="poster-fallback">${item.name.slice(0, 2).toUpperCase()}</div>`;
+    ? `<img src="${escapeHtml(item.logo)}" alt="" class="poster-img" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><div class="poster-fallback" style="display:none;">${initials}</div>`
+    : `<div class="poster-fallback">${initials}</div>`;
 
   card.innerHTML = `
     <div class="poster-img-wrap">
@@ -849,8 +856,8 @@ function renderSeriesCard(item, _index) {
       ${progressFill}
     </div>
     <div class="poster-meta">
-      <div class="poster-title" title="${item.name}">${item.name}</div>
-      <div class="poster-sub">${seriesProgress?.season ? `▶ S${seriesProgress.season}E${seriesProgress.episodeNumber}` : (isWatched ? '👁 Watched' : '')}</div>
+      <div class="poster-title" title="${escapeHtml(itemName)}">${escapeHtml(itemName)}</div>
+      <div class="poster-sub">${seriesProgress?.season ? `▶ S${escapeHtml(seriesProgress.season)}E${escapeHtml(seriesProgress.episodeNumber)}` : (isWatched ? '👁 Watched' : '')}</div>
     </div>
   `;
 
@@ -1070,7 +1077,7 @@ async function renderHeroFavClub() {
     <div class="fav-club-active-card">
       <div class="sports-loading-placeholder" style="padding:24px 12px; justify-content:center; color:var(--text-secondary);">
         <div class="spinner" style="width:20px; height:20px;"></div>
-        <span style="font-size:11px; font-weight:700;">Loading ${favTeam} radar & next match…</span>
+        <span style="font-size:11px; font-weight:700;">Loading ${escapeHtml(favTeam)} radar & next match…</span>
       </div>
     </div>
   `;
@@ -1082,7 +1089,7 @@ async function renderHeroFavClub() {
         <div class="fav-club-active-card">
           <div class="fav-club-header">
             <div class="fav-club-identity">
-              <h2 class="fav-club-name">⚽ ${favTeam}</h2>
+              <h2 class="fav-club-name">⚽ ${escapeHtml(favTeam)}</h2>
             </div>
             <button id="btnChangeFavTeam" class="fav-club-edit-btn">
               <span>✏️</span> <span>${t('change_team') || 'CHANGE'}</span>
@@ -1098,18 +1105,20 @@ async function renderHeroFavClub() {
     }
 
     const next = data.nextMatch;
-    const formHtml = (data.form || []).map(f => `
-      <div class="form-badge ${f.result.toLowerCase()}" title="${f.result === 'W' ? 'Win' : (f.result === 'L' ? 'Loss' : 'Draw')} (${f.score} vs ${f.opponent})">${f.result}</div>
-    `).join('');
+    const formHtml = (data.form || []).map(f => {
+      const result = String(f.result || '').toUpperCase();
+      const resultClass = ['W', 'D', 'L'].includes(result) ? result.toLowerCase() : 'd';
+      return `<div class="form-badge ${resultClass}" title="${result === 'W' ? 'Win' : (result === 'L' ? 'Loss' : 'Draw')} (${escapeHtml(f.score)} vs ${escapeHtml(f.opponent)})">${result}</div>`;
+    }).join('');
 
     container.innerHTML = `
       <div class="fav-club-active-card">
         <div class="fav-club-header">
           <div class="fav-club-identity">
-            ${data.badge ? `<img src="${data.badge}" alt="${data.name}" class="fav-club-logo" onerror="this.style.display='none';">` : ''}
+            ${data.badge ? `<img src="${escapeHtml(data.badge)}" alt="${escapeHtml(data.name)}" class="fav-club-logo" onerror="this.style.display='none';">` : ''}
             <div>
-              <div class="fav-club-kicker">FAVORITE CLUB // ${data.league || 'EUROPE'}</div>
-              <h2 class="fav-club-name">${data.name}</h2>
+              <div class="fav-club-kicker">FAVORITE CLUB // ${escapeHtml(data.league || 'EUROPE')}</div>
+              <h2 class="fav-club-name">${escapeHtml(data.name)}</h2>
             </div>
           </div>
           <button id="btnChangeFavTeam" class="fav-club-edit-btn">
@@ -1121,21 +1130,21 @@ async function renderHeroFavClub() {
           <div class="fav-club-fixture-box">
             <div class="fav-fixture-top">
               <span class="fav-fixture-label">${t('next_match') || 'NEXT FIXTURE'}</span>
-              <span class="match-time-badge">${next.round || next.league || 'Matchday'}</span>
+              <span class="match-time-badge">${escapeHtml(next.round || next.league || 'Matchday')}</span>
             </div>
             <div class="fav-fixture-matchup">
               <div class="fav-fixture-team">
-                ${next.homeBadge ? `<img src="${next.homeBadge}" class="fav-team-crest" onerror="this.style.display='none';">` : ''}
-                <span>${next.homeTeam}</span>
+                ${next.homeBadge ? `<img src="${escapeHtml(next.homeBadge)}" class="fav-team-crest" onerror="this.style.display='none';">` : ''}
+                <span>${escapeHtml(next.homeTeam)}</span>
               </div>
               <div class="fav-fixture-vs">VS</div>
               <div class="fav-fixture-team away">
-                <span>${next.awayTeam}</span>
-                ${next.awayBadge ? `<img src="${next.awayBadge}" class="fav-team-crest" onerror="this.style.display='none';">` : ''}
+                <span>${escapeHtml(next.awayTeam)}</span>
+                ${next.awayBadge ? `<img src="${escapeHtml(next.awayBadge)}" class="fav-team-crest" onerror="this.style.display='none';">` : ''}
               </div>
             </div>
             <div class="fav-fixture-footer">
-              <span class="fav-fixture-time">📅 ${next.dateStr || ''} • ${next.timeStr || ''}</span>
+              <span class="fav-fixture-time">📅 ${escapeHtml(next.dateStr || '')} • ${escapeHtml(next.timeStr || '')}</span>
               <button class="fav-fixture-watch-btn" id="btnWatchFavMatch">▶ ${t('find_channels') || 'FIND CHANNELS'} →</button>
             </div>
           </div>
@@ -1152,7 +1161,7 @@ async function renderHeroFavClub() {
               ${formHtml || '<span style="color:var(--text-muted); font-size:9px;">N/A</span>'}
             </div>
           </div>
-          ${data.stadium ? `<div class="fav-stadium-text">🏟️ ${data.stadium}</div>` : ''}
+          ${data.stadium ? `<div class="fav-stadium-text">🏟️ ${escapeHtml(data.stadium)}</div>` : ''}
         </div>
       </div>
     `;
@@ -1237,7 +1246,7 @@ async function updateSidebarSportsWidget(forceRefresh = false) {
     els.sidebarSportsContent.innerHTML = `
       <div class="sidebar-sports-loading">
         <div class="spinner" style="width:12px; height:12px; margin:0 auto 4px auto;"></div>
-        LOADING ${favTeam.toUpperCase()} STATS…
+        LOADING ${escapeHtml(favTeam.toUpperCase())} STATS…
       </div>
     `;
   }
@@ -1284,18 +1293,18 @@ function renderSidebarSportsTab(tab, data) {
     const rowsHtml = standings.map(row => {
       const favClass = row.isFavTeam ? 'fav-team' : '';
       const gdStr = row.gd > 0 ? `+${row.gd}` : `${row.gd}`;
-      const logoTag = row.logo ? `<img class="sports-crest-img" src="${row.logo}" alt="" onerror="this.style.display='none'">` : '';
+      const logoTag = row.logo ? `<img class="sports-crest-img" src="${escapeHtml(row.logo)}" alt="" onerror="this.style.display='none'">` : '';
 
       return `
-        <div class="sidebar-sports-row ${favClass}" title="${row.team} - Rank ${row.rank} (${row.pts} pts)">
-          <span class="sports-col-rank">${row.rank}</span>
+        <div class="sidebar-sports-row ${favClass}" title="${escapeHtml(row.team)} - Rank ${escapeHtml(row.rank)} (${escapeHtml(row.pts)} pts)">
+          <span class="sports-col-rank">${escapeHtml(row.rank)}</span>
           <span class="sports-col-club">
             ${logoTag}
-            <span class="sports-name-text">${row.short || row.team}</span>
+            <span class="sports-name-text">${escapeHtml(row.short || row.team)}</span>
           </span>
-          <span class="sports-col-num">${row.played}</span>
-          <span class="sports-col-num">${gdStr}</span>
-          <span class="sports-col-pts">${row.pts}</span>
+          <span class="sports-col-num">${escapeHtml(row.played)}</span>
+          <span class="sports-col-num">${escapeHtml(gdStr)}</span>
+          <span class="sports-col-pts">${escapeHtml(row.pts)}</span>
         </div>
       `;
     }).join('');
@@ -1323,16 +1332,16 @@ function renderSidebarSportsTab(tab, data) {
     `;
 
     const rowsHtml = scorers.map(p => {
-      const logoTag = p.logo ? `<img class="sports-crest-img" src="${p.logo}" alt="" onerror="this.style.display='none'">` : '';
+      const logoTag = p.logo ? `<img class="sports-crest-img" src="${escapeHtml(p.logo)}" alt="" onerror="this.style.display='none'">` : '';
 
       return `
-        <div class="sidebar-sports-row" title="${p.name} (${p.team}) - ${p.value} Goals">
-          <span class="sports-col-rank">${p.rank}</span>
+        <div class="sidebar-sports-row" title="${escapeHtml(p.name)} (${escapeHtml(p.team)}) - ${escapeHtml(p.value)} Goals">
+          <span class="sports-col-rank">${escapeHtml(p.rank)}</span>
           <span class="sports-col-player">
             ${logoTag}
-            <span class="sports-name-text"><strong>${p.name}</strong> <span style="color:var(--text-muted); font-size:8px;">${p.team}</span></span>
+            <span class="sports-name-text"><strong>${escapeHtml(p.name)}</strong> <span style="color:var(--text-muted); font-size:8px;">${escapeHtml(p.team)}</span></span>
           </span>
-          <span class="sports-col-pts"><span class="sports-stat-badge">${p.value}G</span></span>
+          <span class="sports-col-pts"><span class="sports-stat-badge">${escapeHtml(p.value)}G</span></span>
         </div>
       `;
     }).join('');
@@ -1354,16 +1363,16 @@ function renderSidebarSportsTab(tab, data) {
     `;
 
     const rowsHtml = assists.map(p => {
-      const logoTag = p.logo ? `<img class="sports-crest-img" src="${p.logo}" alt="" onerror="this.style.display='none'">` : '';
+      const logoTag = p.logo ? `<img class="sports-crest-img" src="${escapeHtml(p.logo)}" alt="" onerror="this.style.display='none'">` : '';
 
       return `
-        <div class="sidebar-sports-row" title="${p.name} (${p.team}) - ${p.value} Assists">
-          <span class="sports-col-rank">${p.rank}</span>
+        <div class="sidebar-sports-row" title="${escapeHtml(p.name)} (${escapeHtml(p.team)}) - ${escapeHtml(p.value)} Assists">
+          <span class="sports-col-rank">${escapeHtml(p.rank)}</span>
           <span class="sports-col-player">
             ${logoTag}
-            <span class="sports-name-text"><strong>${p.name}</strong> <span style="color:var(--text-muted); font-size:8px;">${p.team}</span></span>
+            <span class="sports-name-text"><strong>${escapeHtml(p.name)}</strong> <span style="color:var(--text-muted); font-size:8px;">${escapeHtml(p.team)}</span></span>
           </span>
-          <span class="sports-col-pts"><span class="sports-stat-badge assist">${p.value}A</span></span>
+          <span class="sports-col-pts"><span class="sports-stat-badge assist">${escapeHtml(p.value)}A</span></span>
         </div>
       `;
     }).join('');
@@ -1414,32 +1423,34 @@ async function renderSportsMatchCenter(forceRefresh = false) {
       ? (match.score ? `🔴 ${t('live_now') || 'LIVE'} • ${match.score}` : `🔴 ${t('live_now') || 'LIVE NOW'}`)
       : (match.isFinished ? (match.score ? `${t('full_time') || 'FT'} • ${match.score}` : (t('full_time') || 'FT')) : (match.round || t('upcoming') || 'UPCOMING'));
 
+    const homeInitials = escapeHtml(String(match.homeTeam || '').slice(0, 2).toUpperCase());
+    const awayInitials = escapeHtml(String(match.awayTeam || '').slice(0, 2).toUpperCase());
     const homeLogoHtml = match.homeBadge
-      ? `<img src="${match.homeBadge}" alt="${match.homeTeam}" class="match-team-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><div class="channel-fallback" style="display:none; width:28px; height:28px; font-size:10px;">${match.homeTeam.slice(0, 2).toUpperCase()}</div>`
-      : `<div class="channel-fallback" style="width:28px; height:28px; font-size:10px;">${match.homeTeam.slice(0, 2).toUpperCase()}</div>`;
+      ? `<img src="${escapeHtml(match.homeBadge)}" alt="${escapeHtml(match.homeTeam)}" class="match-team-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><div class="channel-fallback" style="display:none; width:28px; height:28px; font-size:10px;">${homeInitials}</div>`
+      : `<div class="channel-fallback" style="width:28px; height:28px; font-size:10px;">${homeInitials}</div>`;
 
     const awayLogoHtml = match.awayBadge
-      ? `<img src="${match.awayBadge}" alt="${match.awayTeam}" class="match-team-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><div class="channel-fallback" style="display:none; width:28px; height:28px; font-size:10px;">${match.awayTeam.slice(0, 2).toUpperCase()}</div>`
-      : `<div class="channel-fallback" style="width:28px; height:28px; font-size:10px;">${match.awayTeam.slice(0, 2).toUpperCase()}</div>`;
+      ? `<img src="${escapeHtml(match.awayBadge)}" alt="${escapeHtml(match.awayTeam)}" class="match-team-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><div class="channel-fallback" style="display:none; width:28px; height:28px; font-size:10px;">${awayInitials}</div>`
+      : `<div class="channel-fallback" style="width:28px; height:28px; font-size:10px;">${awayInitials}</div>`;
 
     card.innerHTML = `
       <div class="match-card-top">
-        <span class="match-league-badge">${match.leagueIcon} ${match.leagueName}</span>
-        <span class="${statusBadgeClass}">${statusText}</span>
+        <span class="match-league-badge">${escapeHtml(match.leagueIcon)} ${escapeHtml(match.leagueName)}</span>
+        <span class="${statusBadgeClass}">${escapeHtml(statusText)}</span>
       </div>
       <div class="match-teams-area">
         <div class="match-team-col">
           ${homeLogoHtml}
-          <span class="match-team-name">${match.homeTeam}</span>
+          <span class="match-team-name">${escapeHtml(match.homeTeam)}</span>
         </div>
-        <div class="match-vs-divider">${match.score ? match.score : 'VS'}</div>
+        <div class="match-vs-divider">${escapeHtml(match.score || 'VS')}</div>
         <div class="match-team-col">
           ${awayLogoHtml}
-          <span class="match-team-name">${match.awayTeam}</span>
+          <span class="match-team-name">${escapeHtml(match.awayTeam)}</span>
         </div>
       </div>
       <div class="match-card-bottom">
-        <span class="match-time-text">${timeLabel}</span>
+        <span class="match-time-text">${escapeHtml(timeLabel)}</span>
         <span class="match-action-hint">▶ ${t('find_channels') || 'FIND CHANNELS'} →</span>
       </div>
     `;
@@ -1489,9 +1500,10 @@ function openMatchChannelsModal(match, refreshFromEpg = false) {
       const card = document.createElement('div');
       card.className = `modal-channel-card match-confidence-${confidence || 'candidate'}`;
 
+      const channelInitials = escapeHtml(String(channel.name || '').slice(0, 2).toUpperCase());
       const logoContent = channel.logo
-        ? `<img src="${channel.logo}" alt="" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"><span style="display:none;">${channel.name.slice(0, 2).toUpperCase()}</span>`
-        : `<span>${channel.name.slice(0, 2).toUpperCase()}</span>`;
+        ? `<img src="${escapeHtml(channel.logo)}" alt="" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"><span style="display:none;">${channelInitials}</span>`
+        : `<span>${channelInitials}</span>`;
 
       const epgSubtitle = epg?.full || epg?.title || (channel.group || 'Live Sports');
 
@@ -1499,12 +1511,12 @@ function openMatchChannelsModal(match, refreshFromEpg = false) {
         <div class="modal-channel-left">
           <div class="modal-channel-logo">${logoContent}</div>
           <div class="modal-channel-info">
-            <strong>${channel.name}</strong>
+            <strong>${escapeHtml(channel.name)}</strong>
             <div class="modal-channel-meta">
-              <span class="modal-channel-group">${channel.group || 'SPORTS'}</span>
-              <span class="modal-channel-match-badge">• ${matchReason}</span>
+              <span class="modal-channel-group">${escapeHtml(channel.group || 'SPORTS')}</span>
+              <span class="modal-channel-match-badge">• ${escapeHtml(matchReason)}</span>
             </div>
-            <div class="modal-channel-epg" title="${epgSubtitle}">${epgSubtitle}</div>
+            <div class="modal-channel-epg" title="${escapeHtml(epgSubtitle)}">${escapeHtml(epgSubtitle)}</div>
           </div>
         </div>
         <button class="modal-channel-play-btn" data-i18n="watch_match">▶ WATCH</button>
@@ -1557,7 +1569,7 @@ async function loadMatchLineup(match) {
       container.innerHTML = `
         <div class="modal-channel-empty" style="padding:40px 20px;">
           <div style="font-size:36px; margin-bottom:12px;">📋</div>
-          <p style="font-size:14px; font-weight:700; color:var(--text-pure);">${data?.message || t('lineups_unavailable') || 'Lineups will be announced ~1 hour before kickoff'}</p>
+          <p style="font-size:14px; font-weight:700; color:var(--text-pure);">${escapeHtml(data?.message || t('lineups_unavailable') || 'Lineups will be announced ~1 hour before kickoff')}</p>
           <p style="font-size:12px; color:var(--text-muted); margin-top:6px;">Check back closer to match time for starting XI and tactical formations.</p>
         </div>
       `;
@@ -1578,18 +1590,18 @@ async function loadMatchLineup(match) {
             return `
               <div class="lineup-player-row">
                 <div class="lineup-player-left">
-                  <span class="lineup-jersey-pill">${p.jersey || '•'}</span>
-                  <span class="lineup-player-name">${p.name}</span>
+                  <span class="lineup-jersey-pill">${escapeHtml(p.jersey || '•')}</span>
+                  <span class="lineup-player-name">${escapeHtml(p.name)}</span>
                 </div>
-                <span class="${posClass}">${p.position || 'POS'}</span>
+                <span class="${posClass}">${escapeHtml(p.position || 'POS')}</span>
               </div>
             `;
           }).join('');
 
           const subsHtml = team.subs.map(p => `
             <div class="lineup-sub-chip">
-              <span class="lineup-sub-jersey">#${p.jersey || '•'}</span>
-              <span>${p.name}</span>
+              <span class="lineup-sub-jersey">#${escapeHtml(p.jersey || '•')}</span>
+              <span>${escapeHtml(p.name)}</span>
             </div>
           `).join('');
 
@@ -1597,10 +1609,10 @@ async function loadMatchLineup(match) {
             <div class="lineup-team-card">
               <div class="lineup-team-header">
                 <div class="lineup-team-title-wrap">
-                  ${team.logo ? `<img src="${team.logo}" alt="${team.teamName}" class="lineup-team-logo" onerror="this.style.display='none';">` : ''}
-                  <span class="lineup-team-name">${team.teamName}</span>
+                  ${team.logo ? `<img src="${escapeHtml(team.logo)}" alt="${escapeHtml(team.teamName)}" class="lineup-team-logo" onerror="this.style.display='none';">` : ''}
+                  <span class="lineup-team-name">${escapeHtml(team.teamName)}</span>
                 </div>
-                <span class="lineup-formation-badge">${team.formation ? `${t('formation') || 'Formation'}: ${team.formation}` : 'FORMATION NOT PUBLISHED'}</span>
+                <span class="lineup-formation-badge">${team.formation ? `${t('formation') || 'Formation'}: ${escapeHtml(team.formation)}` : 'FORMATION NOT PUBLISHED'}</span>
               </div>
               <div class="lineup-section-heading">${t('starters') || 'STARTING XI'} (${team.starters.length})</div>
               <div class="lineup-players-list">
@@ -1707,9 +1719,11 @@ function renderContinueWatching() {
     card.style.flexShrink = '0';
 
     const posterSrc = data.logo || item.logo;
+    const itemName = String(item.name || 'Untitled');
+    const initials = escapeHtml(itemName.slice(0, 2).toUpperCase());
     const imgTag = posterSrc
-      ? `<img src="${posterSrc}" alt="" class="poster-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><div class="poster-fallback" style="display:none;">${item.name.slice(0, 2).toUpperCase()}</div>`
-      : `<div class="poster-fallback">${item.name.slice(0, 2).toUpperCase()}</div>`;
+      ? `<img src="${escapeHtml(posterSrc)}" alt="" class="poster-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><div class="poster-fallback" style="display:none;">${initials}</div>`
+      : `<div class="poster-fallback">${initials}</div>`;
 
     const badge = isWatched
       ? `<span class="poster-watched-badge">✓ WATCHED</span>`
@@ -1729,8 +1743,8 @@ function renderContinueWatching() {
         </div>
       </div>
       <div class="poster-meta">
-        <div class="poster-title" title="${item.name}">${item.name}</div>
-        <div class="poster-sub">${subText}</div>
+        <div class="poster-title" title="${escapeHtml(itemName)}">${escapeHtml(itemName)}</div>
+        <div class="poster-sub">${escapeHtml(subText)}</div>
       </div>
     `;
 
@@ -1807,7 +1821,7 @@ function renderCategoryPills(type, listEl, countEl, allCountEl, groupsMap, items
   const allBtn = document.createElement('button');
   allBtn.className = `cat-pill ${state.category === 'all' ? 'active' : ''}`;
   allBtn.setAttribute('data-category', 'all');
-  allBtn.innerHTML = `<span>${allLabel}</span><b>${(itemsList?.length || 0).toLocaleString()}</b>`;
+  allBtn.innerHTML = `<span>${escapeHtml(allLabel)}</span><b>${(itemsList?.length || 0).toLocaleString()}</b>`;
   allBtn.addEventListener('click', () => {
     state.category = 'all';
     listEl.querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active'));
@@ -1860,7 +1874,7 @@ function renderCategoryPills(type, listEl, countEl, allCountEl, groupsMap, items
     const btn = document.createElement('button');
     btn.className = `cat-pill ${state.category === groupName ? 'active' : ''}`;
     btn.setAttribute('data-category', groupName);
-    btn.innerHTML = `<span>${groupName}</span><b>${count.toLocaleString()}</b>`;
+    btn.innerHTML = `<span>${escapeHtml(groupName)}</span><b>${count.toLocaleString()}</b>`;
     btn.addEventListener('click', () => {
       state.category = groupName;
       listEl.querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active'));
@@ -1958,9 +1972,9 @@ function renderCastAvatars(container, cast) {
   if (!container || !cast || cast.length === 0) return;
   container.innerHTML = cast.map(actor => `
     <div class="cast-card">
-      <img src="${actor.profile || 'assets/logo.png'}" class="cast-avatar" alt="${actor.name}" onerror="this.src='assets/logo.png'">
-      <span class="cast-name" title="${actor.name}">${actor.name}</span>
-      <span class="cast-character" title="${actor.character}">${actor.character || ''}</span>
+      <img src="${escapeHtml(actor.profile || 'assets/logo.png')}" class="cast-avatar" alt="${escapeHtml(actor.name)}" onerror="this.src='assets/logo.png'">
+      <span class="cast-name" title="${escapeHtml(actor.name)}">${escapeHtml(actor.name)}</span>
+      <span class="cast-character" title="${escapeHtml(actor.character)}">${escapeHtml(actor.character || '')}</span>
     </div>
   `).join('');
   container.classList.remove('hidden');
@@ -2061,7 +2075,7 @@ async function selectSeriesForPreview(series) {
         }
       } catch (err) {
         console.error('Failed to load series info:', err);
-        els.seriesDockEpisodeList.innerHTML = `<p style="color:#ff3d00; padding:12px; font-size:11px;">Failed to load seasons: ${err.message}</p>`;
+        els.seriesDockEpisodeList.innerHTML = `<p style="color:#ff3d00; padding:12px; font-size:11px;">Failed to load seasons: ${escapeHtml(err.message)}</p>`;
       }
     } else {
       els.seriesDockEpisodeList.innerHTML = '<p style="color:#ffb703; padding:12px; font-size:11px;">Missing login credentials. Please edit playlist in Settings.</p>';
@@ -2133,7 +2147,7 @@ function renderSeriesDockEpisodes(seasonNum) {
   const seasonEps = activeSeriesEpisodes.filter(e => Number(e.season) === Number(seasonNum));
 
   if (seasonEps.length === 0) {
-    els.seriesDockEpisodeList.innerHTML = `<p style="padding:12px; color:#888; font-size:11px;">No episodes in Season ${seasonNum}.</p>`;
+    els.seriesDockEpisodeList.innerHTML = `<p style="padding:12px; color:#888; font-size:11px;">No episodes in Season ${escapeHtml(seasonNum)}.</p>`;
     return;
   }
 
@@ -2147,11 +2161,11 @@ function renderSeriesDockEpisodes(seasonNum) {
     item.innerHTML = `
       <div style="flex:1; min-width:0;">
         <div style="display:flex; align-items:center; gap:6px;">
-          <strong style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">E${ep.episodeNumber}: ${ep.episodeTitle || ep.name}</strong>
+          <strong style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">E${escapeHtml(ep.episodeNumber)}: ${escapeHtml(ep.episodeTitle || ep.name)}</strong>
           ${isWatched ? '<span class="dock-episode-watched-badge">✓ WATCHED</span>' : ''}
         </div>
         <div style="display:flex; align-items:center; gap:8px; margin-top:2px;">
-          <small>${ep.duration ? `${ep.duration}m` : 'HD Stream'}</small>
+          <small>${ep.duration ? `${escapeHtml(ep.duration)}m` : 'HD Stream'}</small>
           ${!isWatched && epProg?.percentage > 0 ? `<small style="color:var(--accent-orange); font-weight:bold;">${epProg.percentage}% watched</small>` : ''}
         </div>
       </div>
@@ -2375,7 +2389,7 @@ async function updateLiveSidebarMatchLineup(item, epgObj) {
     if (!data || !data.available || !data.teams || data.teams.length === 0) {
       content.innerHTML = `
         <div style="font-size:11px; color:var(--text-muted); text-align:center; padding:8px 4px;">
-          ${data?.message || t('lineups_unavailable') || 'Lineups will be announced ~1 hour before kickoff'}
+          ${escapeHtml(data?.message || t('lineups_unavailable') || 'Lineups will be announced ~1 hour before kickoff')}
         </div>
       `;
       return;
@@ -2400,7 +2414,7 @@ function renderSidebarLineupTabs(data, activeTeamIdx = 0) {
     <div class="sidebar-team-tabs">
       ${teams.map((t, idx) => `
         <button class="sidebar-team-tab-btn ${idx === activeTeamIdx ? 'active' : ''}" data-team-idx="${idx}">
-          ${t.teamName} (${t.formation || '4-3-3'})
+          ${escapeHtml(t.teamName)} (${escapeHtml(t.formation || '4-3-3')})
         </button>
       `).join('')}
     </div>
@@ -2417,18 +2431,18 @@ function renderSidebarLineupTabs(data, activeTeamIdx = 0) {
     return `
       <div class="lineup-player-row" style="padding:4px 8px;">
         <div class="lineup-player-left">
-          <span class="lineup-jersey-pill" style="width:18px; height:18px; font-size:9px;">${p.jersey || '•'}</span>
-          <span class="lineup-player-name" style="font-size:11px;">${p.name}</span>
+          <span class="lineup-jersey-pill" style="width:18px; height:18px; font-size:9px;">${escapeHtml(p.jersey || '•')}</span>
+          <span class="lineup-player-name" style="font-size:11px;">${escapeHtml(p.name)}</span>
         </div>
-        <span class="${posClass}" style="font-size:8px; padding:1px 4px;">${p.position || 'POS'}</span>
+        <span class="${posClass}" style="font-size:8px; padding:1px 4px;">${escapeHtml(p.position || 'POS')}</span>
       </div>
     `;
   }).join('');
 
   const subsHtml = currentTeam.subs.map(p => `
     <div class="lineup-sub-chip" style="padding:2px 6px; font-size:10px;">
-      <span class="lineup-sub-jersey" style="font-size:8px;">#${p.jersey || '•'}</span>
-      <span>${p.name}</span>
+      <span class="lineup-sub-jersey" style="font-size:8px;">#${escapeHtml(p.jersey || '•')}</span>
+      <span>${escapeHtml(p.name)}</span>
     </div>
   `).join('');
 
@@ -2711,7 +2725,7 @@ function handlePlayerTelemetry(stats) {
     if (els.hudAudioTrackSelect) {
       els.hudAudioTrackSelect.classList.remove('hidden');
       els.hudAudioTrackSelect.innerHTML = stats.audioTracks.map((t, idx) =>
-        `<option value="${idx}">${t.name || t.lang || ('Track ' + (idx + 1))}</option>`
+        `<option value="${idx}">${escapeHtml(t.name || t.lang || ('Track ' + (idx + 1)))}</option>`
       ).join('');
     }
   } else if (els.hudAudioTrackSelect) {
@@ -3026,10 +3040,6 @@ async function loadCrashLogs() {
   }
 }
 
-function escapeHtml(value) {
-  return String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]);
-}
-
 function renderCrashLogs(logs) {
   if (!els.crashLogsList || !els.crashLogsEmpty) return;
 
@@ -3298,16 +3308,16 @@ function renderSettingsPlaylists() {
       <div class="playlist-card-left">
         <div style="display:flex; align-items:center; gap:8px;">
           <span class="status-indicator ${isActive ? 'active' : ''}"></span>
-          <strong class="playlist-card-title">${pl.name}</strong>
+          <strong class="playlist-card-title">${escapeHtml(pl.name)}</strong>
           ${isActive ? `<span class="active-badge">${t('active')}</span>` : ''}
         </div>
         <div class="playlist-card-meta">
-          <span class="meta-tag type">${pl.type.toUpperCase()}</span>
-          <span class="meta-tag server">${serverDisplay}</span>
+          <span class="meta-tag type">${escapeHtml(String(pl.type || 'playlist').toUpperCase())}</span>
+          <span class="meta-tag server">${escapeHtml(serverDisplay)}</span>
           <span class="meta-tag items">${itemCount.toLocaleString()} items</span>
-          <span class="expiry-pill ${expiry.status}">${expiry.text}</span>
+          <span class="expiry-pill ${escapeHtml(expiry.status)}">${escapeHtml(expiry.text)}</span>
         </div>
-        <div class="playlist-sync-time">Last synced: ${lastSync}</div>
+        <div class="playlist-sync-time">Last synced: ${escapeHtml(lastSync)}</div>
       </div>
       <div class="playlist-card-actions">
         ${!isActive ? `<button class="btn-action btn-set-active" title="Set as primary playlist">⚡ ${t('activate')}</button>` : ''}
@@ -4259,7 +4269,8 @@ function setupEventListeners() {
       if (els.remoteQrImage) els.remoteQrImage.src = info.qrDataUrls?.[0] || '';
       if (els.remoteUrlsContainer) {
         const primaryUrl = info.urls?.[0] || '';
-        const mobileLinks = primaryUrl ? `<div style="margin-bottom:6px;"><span style="color:var(--accent-orange); font-weight:700;">📱 Mobile Remote:</span> <a href="${primaryUrl}" target="_blank" style="color:#fff; text-decoration:none; word-break:break-all;">${primaryUrl}</a></div>` : '';
+        const safePrimaryUrl = escapeHtml(primaryUrl);
+        const mobileLinks = primaryUrl ? `<div style="margin-bottom:6px;"><span style="color:var(--accent-orange); font-weight:700;">📱 Mobile Remote:</span> <a href="${safePrimaryUrl}" target="_blank" style="color:#fff; text-decoration:none; word-break:break-all;">${safePrimaryUrl}</a></div>` : '';
         els.remoteUrlsContainer.innerHTML = mobileLinks;
       }
       els.remoteModal?.classList.remove('hidden');
@@ -4566,7 +4577,7 @@ function setupUpdaterUI() {
     if (sidebarTag) sidebarTag.textContent = `V${major}`;
     // Settings header line
     const settingsLine = document.getElementById('settingsVersionLine');
-    if (settingsLine) settingsLine.textContent = `Version ${version} \u2022 Swiss Industrial Edition \u2022 Obsidian & International Signal Orange`;
+    if (settingsLine) settingsLine.textContent = `Version ${version} \u2022 Glass Edition \u2022 Obsidian & International Signal Orange`;
     // Settings update title
     if (els.settingsUpdateTitle) els.settingsUpdateTitle.textContent = `Version Status: v${version}`;
   });
@@ -4781,9 +4792,9 @@ function setupUpdaterUI() {
 
     if (els.settingsUpdateSubtitle) {
       if (msg.includes('404')) {
-        els.settingsUpdateSubtitle.innerHTML = `<span style="color:#ff9f1c;">\u26a0 Release binary not yet attached to this GitHub release.</span> <a href="#" id="settingsManualReleaseLink" style="color:var(--accent-cyan); text-decoration:underline; font-weight:600; margin-left:6px; cursor:pointer;">Download ${targetVer} from GitHub manually</a>`;
+        els.settingsUpdateSubtitle.innerHTML = `<span style="color:#ff9f1c;">\u26a0 Release binary not yet attached to this GitHub release.</span> <a href="#" id="settingsManualReleaseLink" style="color:var(--accent-cyan); text-decoration:underline; font-weight:600; margin-left:6px; cursor:pointer;">Download ${escapeHtml(targetVer)} from GitHub manually</a>`;
       } else {
-        els.settingsUpdateSubtitle.innerHTML = `<span>Update error: ${msg.slice(0, 80)}</span> <a href="#" id="settingsManualReleaseLink" style="color:var(--accent-cyan); text-decoration:underline; font-weight:600; margin-left:6px; cursor:pointer;">Open GitHub Releases</a>`;
+        els.settingsUpdateSubtitle.innerHTML = `<span>Update error: ${escapeHtml(msg.slice(0, 80))}</span> <a href="#" id="settingsManualReleaseLink" style="color:var(--accent-cyan); text-decoration:underline; font-weight:600; margin-left:6px; cursor:pointer;">Open GitHub Releases</a>`;
       }
       document.getElementById('settingsManualReleaseLink')?.addEventListener('click', e => {
         e.preventDefault();

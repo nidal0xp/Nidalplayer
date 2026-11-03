@@ -6,7 +6,7 @@ const http = require('http');
 const crypto = require('crypto');
 const os = require('os');
 const QRCode = require('qrcode');
-const { hasRemoteAccess } = require('./src/desktop/remoteSecurity');
+const { hasRemoteAccess } = require('./src/desktop/remoteSecurity.cjs');
 
 const remoteHtml = path.join(__dirname, 'remote', 'index.html');
 const tvHtml = path.join(__dirname, 'tv', 'index.html');
@@ -164,6 +164,15 @@ try {
   });
 } catch (error) {
   console.warn('[CrashReporter] Could not start local crash collection:', error?.message || error);
+}
+
+function isHttpUrl(value) {
+  try {
+    const parsed = new URL(String(value));
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
 }
 
 function readJson(file, fallback) {
@@ -341,20 +350,6 @@ function markRemoteActive() {
   }, 15000);
 }
 
-function getActiveDevices() {
-  return [
-    {
-      id: 'desktop',
-      name: 'Desktop PC (Windows)',
-      type: 'desktop',
-      icon: '💻',
-      online: Boolean(mainWindow && !mainWindow.isDestroyed()),
-      active: true,
-      lastSeen: Date.now()
-    }
-  ];
-}
-
 function startRemoteServer() {
   if (remoteServer) return;
   remoteServer = http.createServer((request, response) => {
@@ -399,38 +394,6 @@ function startRemoteServer() {
         response.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
         response.end(html);
       });
-    }
-
-    // Android TV Downloader Direct APK Route
-    if (url.pathname === '/apk' || url.pathname === '/nidalplayer.apk' || url.pathname === '/apk-tv') {
-      const apkPath = path.join(__dirname, 'dist', 'Nidalplayer-AndroidTV.apk');
-      if (!fs.existsSync(apkPath)) {
-        return json(response, 404, { error: 'Android TV APK not found.' });
-      }
-      const stat = fs.statSync(apkPath);
-      response.writeHead(200, {
-        'Content-Type': 'application/vnd.android.package-archive',
-        'Content-Length': stat.size,
-        'Content-Disposition': 'attachment; filename="Nidalplayer-AndroidTV.apk"',
-        'Cache-Control': 'no-store'
-      });
-      return fs.createReadStream(apkPath).pipe(response);
-    }
-
-    // Android Mobile & Tablet Direct APK Route
-    if (url.pathname === '/apk-mobile' || url.pathname === '/nidalplayer-mobile.apk') {
-      const apkPath = path.join(__dirname, 'dist', 'Nidalplayer-AndroidMobile.apk');
-      if (!fs.existsSync(apkPath)) {
-        return json(response, 404, { error: 'Android Mobile APK not found.' });
-      }
-      const stat = fs.statSync(apkPath);
-      response.writeHead(200, {
-        'Content-Type': 'application/vnd.android.package-archive',
-        'Content-Length': stat.size,
-        'Content-Disposition': 'attachment; filename="Nidalplayer-AndroidMobile.apk"',
-        'Cache-Control': 'no-store'
-      });
-      return fs.createReadStream(apkPath).pipe(response);
     }
 
     markRemoteActive();
@@ -629,10 +592,6 @@ function setupNetworkInterceptors() {
 
 app.commandLine.appendSwitch('disable-http-cache');
 app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
-app.commandLine.appendSwitch('ignore-certificate-errors');
-app.commandLine.appendSwitch('allow-running-insecure-content');
-app.commandLine.appendSwitch('disable-web-security');
-app.commandLine.appendSwitch('allow-insecure-localhost');
 
 // Hardware acceleration is enabled by Chromium only when the installed graphics
 // driver supports it. Do not force a decoder/backend or disable the GPU watchdog:
@@ -644,7 +603,21 @@ console.log(`[GPU] Hardware acceleration ${gpuAccelerationEnabled ? 'enabled wit
 app.commandLine.appendSwitch('dns-over-https-mode', 'automatic');
 app.commandLine.appendSwitch('dns-over-https-templates', 'https://cloudflare-dns.com/dns-query https://dns.google/dns-query');
 
-app.setAppUserModelId('com.streamline.iptvplayer');
+// IPTV providers commonly use self-signed certificates. Accept those for the
+// app window, but keep certificates verified for public metadata/release services.
+const VERIFIED_SERVICE_HOSTS = /(^|\.)(themoviedb\.org|tmdb\.org|thesportsdb\.com|github\.com|githubusercontent\.com|githubassets\.com)$/;
+app.on('certificate-error', (event, webContents, url, error, certificate, callback) => {
+  let host = '';
+  try { host = new URL(url).hostname.toLowerCase(); } catch {}
+  const isAppWindow = Boolean(mainWindow && !mainWindow.isDestroyed() && webContents?.id === mainWindow.webContents?.id);
+  if (isAppWindow && host && !VERIFIED_SERVICE_HOSTS.test(host)) {
+    event.preventDefault();
+    return callback(true);
+  }
+  callback(false);
+});
+
+app.setAppUserModelId('com.nidalplayer.app');
 
 function createWindow() {
   const iconPath = process.platform === 'win32'
@@ -672,10 +645,9 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: false,
+      sandbox: true,
       backgroundThrottling: false,
-      webSecurity: false,
-      allowRunningInsecureContent: true
+      webSecurity: true
     }
   });
 
@@ -800,7 +772,7 @@ process.on('unhandledRejection', (reason) => {
 });
 
 app.whenReady().then(() => {
-  app.setAppUserModelId('com.streamline.iptvplayer');
+  app.setAppUserModelId('com.nidalplayer.app');
   remoteToken = getPersistentRemoteToken();
   createWindow();
   setTimeout(captureGpuRuntimeDiagnostics, 2500);
@@ -901,10 +873,10 @@ ipcMain.handle('save-credentials', async (_e, { playlistId, credentials, remembe
       return { ok: true, remembered: false };
     }
     if (!safeStorage.isEncryptionAvailable()) {
-      store[playlistId] = `b64:${Buffer.from(JSON.stringify(credentials)).toString('base64')}`;
+      delete store[playlistId];
       writeJson(credentialsFile(), store);
-      console.log('[save-credentials fallback b64]', playlistId);
-      return { ok: true, remembered: true, fallback: true };
+      console.warn('[save-credentials] Secure storage unavailable; credentials were not persisted.', playlistId);
+      return { ok: true, remembered: false, reason: 'secure-storage-unavailable' };
     }
     const encryptedBuf = safeStorage.encryptString(JSON.stringify(credentials));
     store[playlistId] = `enc:${encryptedBuf.toString('base64')}`;
@@ -973,6 +945,7 @@ ipcMain.handle('load-watch-progress', async () => readJson(watchProgressFile(), 
 
 ipcMain.handle('test-connection', async (_e, url) => {
   const start = Date.now();
+  if (!isHttpUrl(url)) return { ok: false, status: 0, error: 'Only HTTP(S) URLs are supported.', latency: 0 };
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 12000);
@@ -990,6 +963,7 @@ ipcMain.handle('test-connection', async (_e, url) => {
 });
 
 ipcMain.handle('validate-xtream', async (_e, { base, username, password }) => {
+  if (!isHttpUrl(base)) return { ok: false, error: 'Only HTTP(S) server URLs are supported.' };
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 15000);
@@ -1013,6 +987,9 @@ ipcMain.handle('validate-xtream', async (_e, { base, username, password }) => {
 });
 
 ipcMain.handle('fetch-playlist', async (_e, url) => {
+  if (!isHttpUrl(url)) {
+    return { ok: false, status: 0, error: 'Only HTTP(S) playlist URLs are supported.', text: '', contentType: '', preview: '' };
+  }
   try {
     const controller = new AbortController();
     // Large Xtream responses (especially get_series) can legitimately take
@@ -1052,6 +1029,7 @@ ipcMain.handle('fetch-playlist', async (_e, url) => {
 });
 
 ipcMain.handle('fetch-series-discovery', async (_e, { base, username, password, maxId = 250000, batchSize = 100 }) => {
+  if (!isHttpUrl(base)) return { ok: false, series: [], categories: {} };
   return new Promise(async (resolve) => {
     const client = String(base).startsWith('https') ? https : http;
     const allShows = [];
@@ -1234,7 +1212,11 @@ ipcMain.handle('relaunch-app', () => {
 ipcMain.handle('exit-app', () => {
   app.quit();
 });
-ipcMain.handle('open-external', async (_e, url) => { await shell.openExternal(url); return true; });
+ipcMain.handle('open-external', async (_e, url) => {
+  if (!isHttpUrl(url)) return false;
+  await shell.openExternal(url);
+  return true;
+});
 
 // Remote control
 ipcMain.on('remote-state-update', (_event, snapshot) => { remoteSnapshot = snapshot || remoteSnapshot; });

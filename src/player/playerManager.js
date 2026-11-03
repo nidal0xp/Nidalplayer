@@ -178,6 +178,13 @@ export class PlayerManager {
     }
   }
 
+  clearLiveStartWatchdog() {
+    if (this.liveStartTimer) {
+      clearTimeout(this.liveStartTimer);
+      this.liveStartTimer = null;
+    }
+  }
+
   startFpsTracker(media) {
     this.stopFpsTracker();
     if (!media) return;
@@ -247,6 +254,7 @@ export class PlayerManager {
     clearTimeout(this.retryTimer);
     this.retryTimer = null;
     this.clearLiveStallWatchdog();
+    this.clearLiveStartWatchdog();
     this.stopFpsTracker();
     this.retrying = false;
 
@@ -394,7 +402,16 @@ export class PlayerManager {
 
     media.addEventListener('play', () => {
       if (current()) {
-        this.onState({ status: 'playing', paused: false, engine: this.engine, itemId: this.current?.id || '' });
+        // 'play' only means playback was requested; for live streams stay in buffering until
+        // the 'playing' event proves frames are actually flowing.
+        const isLive = this.current?.type === 'live';
+        this.onState({
+          status: isLive ? 'buffering' : 'playing',
+          paused: false,
+          buffering: isLive,
+          engine: this.engine,
+          itemId: this.current?.id || ''
+        });
       }
     });
 
@@ -466,8 +483,48 @@ export class PlayerManager {
       levelLoadingMaxRetry: 4
     });
 
+    let offlineReported = false;
+    let liveStarted = false;
+    const playbackGeneration = this.generation;
+    const playbackItemId = item?.id;
+
+    const markLiveStarted = () => {
+      if (liveStarted) return;
+      if (this.generation !== playbackGeneration || this.current?.id !== playbackItemId) return;
+      liveStarted = true;
+      this.retryCount = 0;
+      this.clearLiveStartWatchdog();
+    };
+
+    const reportNonLivePlaylist = () => {
+      if (offlineReported || !isLive) return false;
+      offlineReported = true;
+      this.clearLiveStartWatchdog();
+      try { this.hls?.destroy(); } catch {}
+      this.hls = null;
+      this.onState({
+        status: 'offline',
+        buffering: false,
+        engine: this.engine,
+        itemId: this.current?.id || '',
+        message: 'This channel is offline — your provider is serving a static placeholder instead of a live broadcast.',
+        details: { reason: 'non-live-playlist' }
+      });
+      return true;
+    };
+
+    if (isLive) {
+      media.addEventListener('playing', markLiveStarted, { once: true });
+    }
+
+    this.hls.on(this.Hls.Events.LEVEL_LOADED, (_event, data) => {
+      if (data?.details && data.details.live === false) reportNonLivePlaylist();
+    });
+
     this.hls.on(this.Hls.Events.MANIFEST_PARSED, (_event, data) => {
+      if (offlineReported) return;
       const level = this.hls.levels[this.hls.currentLevel >= 0 ? this.hls.currentLevel : 0];
+      if (level?.details && level.details.live === false && reportNonLivePlaylist()) return;
       if (level) {
         this.onTelemetry({
           width: level.width,
@@ -480,7 +537,18 @@ export class PlayerManager {
       const subtitleTracks = this.hls.subtitleTracks || [];
       this.onTelemetry({ audioTracks, subtitleTracks });
 
-      ready();
+      ready(media, isLive);
+
+      if (isLive) {
+        this.clearLiveStartWatchdog();
+        this.liveStartTimer = setTimeout(() => {
+          this.liveStartTimer = null;
+          if (offlineReported || liveStarted) return;
+          if (this.generation !== playbackGeneration || this.current?.id !== playbackItemId) return;
+          if (media.currentTime > 0.25 || media.readyState >= 3) return;
+          this.retry('Live stream did not start within 15 seconds', { startupTimeout: true });
+        }, 15000);
+      }
     });
 
     this.hls.on(this.Hls.Events.FRAG_LOADED, (_event, data) => {
@@ -801,14 +869,17 @@ export class PlayerManager {
     }
   }
 
-  ready(media) {
-    this.retryCount = 0;
+  ready(media, isLive = false) {
+    if (!isLive) this.retryCount = 0;
     this.resetAudio(media);
     if (media.videoWidth && media.videoHeight) {
       this.onTelemetry({ width: media.videoWidth, height: media.videoHeight });
     }
     this.startFpsTracker(media);
-    this.onState({ status: 'connected', buffering: false, engine: this.engine, itemId: this.current?.id || '' });
+    // Live status must reflect real playback; a parsed manifest alone is not proof of a working stream.
+    if (!isLive) {
+      this.onState({ status: 'connected', buffering: false, engine: this.engine, itemId: this.current?.id || '' });
+    }
 
     if (this.resumeTime > 0) {
       try { media.currentTime = this.resumeTime; } catch {}
@@ -965,6 +1036,14 @@ export class PlayerManager {
     const isLive = this.current?.type === 'live';
 
     if (isLive && this.retryCount >= 4) {
+      this.clearLiveStallWatchdog();
+      this.clearLiveStartWatchdog();
+      try { this.hls?.stopLoad(); } catch {}
+      try { this.hls?.detachMedia(); } catch {}
+      try { this.hls?.destroy(); } catch {}
+      this.hls = null;
+      try { this.video?.pause(); } catch {}
+      try { this.art?.video?.pause(); } catch {}
       this.onState({
         status: 'offline',
         buffering: false,

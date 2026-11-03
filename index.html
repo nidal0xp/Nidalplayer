@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src * http: https: ws: wss: data: blob: file:; media-src * http: https: data: blob: file:; worker-src * 'unsafe-inline' blob:; child-src * blob:; img-src * http: https: data: blob: file:; style-src * 'unsafe-inline'; font-src * data: https:; script-src * 'unsafe-inline' 'unsafe-eval'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' file:; connect-src * http: https: ws: wss: data: blob: file:; media-src * http: https: data: blob: file:; worker-src 'self' blob:; child-src 'self' blob:; img-src * http: https: data: blob: file:; style-src * 'unsafe-inline'; font-src * data: https:; script-src 'self' 'unsafe-inline' file:">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Nidalplayer — M3U Media Player</title>
   <style>
@@ -15,8 +15,17 @@
     }
   </style>
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="glass-theme.css">
 </head>
 <body class="app-root">
+
+  <!-- Ambient glass backdrop -->
+  <div class="ambient-backdrop" aria-hidden="true">
+    <span class="ambient-orb ambient-orb--ember"></span>
+    <span class="ambient-orb ambient-orb--violet"></span>
+    <span class="ambient-orb ambient-orb--teal"></span>
+    <span class="ambient-grain"></span>
+  </div>
 
   <!-- Cinematic Boot Splash Screen -->
   <div id="boot" class="screen boot-screen">
@@ -50,7 +59,7 @@
         </div>
         <div class="boot-status-row">
           <span id="bootStatus" class="boot-status-text">INITIALIZING HARDWARE ACCELERATION & CACHE…</span>
-          <span id="bootVersionBadge" class="boot-version-badge">V4.3 PRO</span>
+          <span id="bootVersionBadge" class="boot-version-badge">V4.5 PRO</span>
         </div>
       </div>
 
@@ -72,7 +81,7 @@
         <img src="assets/logo.png" alt="NP" style="width:38px; height:38px; border-radius:8px; object-fit:cover; border:1px solid rgba(255,255,255,0.12); flex-shrink:0;">
         <div style="min-width:0;">
           <div class="brand-badge" style="letter-spacing:1px; line-height:1.2; font-size:14px;">NIDALPLAYER</div>
-          <div class="brand-meta" style="font-size:10px; color:var(--text-muted); margin-top:2px;">M3U MEDIA PLAYER <span id="sidebarVersionTag" class="version-tag">V4.2</span></div>
+          <div class="brand-meta" style="font-size:10px; color:var(--text-muted); margin-top:2px;">M3U MEDIA PLAYER <span id="sidebarVersionTag" class="version-tag">V4.5</span></div>
         </div>
       </div>
 
@@ -620,7 +629,7 @@
               <img src="assets/logo.png" alt="NP" style="width:56px; height:56px; border-radius:12px; object-fit:cover; border:1px solid rgba(255,69,26,0.35); box-shadow:0 6px 20px rgba(255,69,26,0.2); flex-shrink:0;">
               <div>
                 <div style="font-family:var(--font-mono); font-size:16px; font-weight:700; color:var(--text-primary); letter-spacing:0.5px;">NIDALPLAYER MEDIA CENTER</div>
-                <p id="settingsVersionLine" style="font-size:11px; color:var(--text-muted); margin-top:4px;">Version 4.4.2 ⬤ Swiss Industrial Edition ⬤ Obsidian &amp; International Signal Orange</p>
+                <p id="settingsVersionLine" style="font-size:11px; color:var(--text-muted); margin-top:4px;">Version 4.5.0 ⬤ Glass Edition ⬤ Obsidian &amp; International Signal Orange</p>
               </div>
             </div>
 
@@ -738,7 +747,7 @@
               <div class="settings-title">APPLICATION UPDATES —</div>
               <div class="setting-row" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
                 <div>
-                  <strong id="settingsUpdateTitle">Version Status: v4.4.2</strong>
+                  <strong id="settingsUpdateTitle">Version Status: v4.5.0</strong>
                   <p class="settings-desc" id="settingsUpdateSubtitle" style="margin:0; font-size:11px;">Nidalplayer checks for updates automatically via GitHub Releases.</p>
                 </div>
                 <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">

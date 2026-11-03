@@ -3,20 +3,32 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src http: https:; img-src http: https: data: blob:; media-src http: https: data: blob:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; font-src data:;">
   <title>Nidalplayer — Mobile Remote Control</title>
   <style>
     :root {
-      --bg: #0b0d11;
-      --surface: #13171f;
-      --surface-raised: #1c222d;
-      --orange: #ff451a;
-      --orange-light: #ff6b47;
-      --text: #f4f1ea;
-      --text-muted: #8b929e;
-      --border: #232a36;
-      --border-strong: #323b4b;
-      --font-display: Impact, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      --font-mono: "SF Mono", Monaco, Consolas, "Courier New", monospace;
+      --bg: #05070d;
+      --surface: rgba(255, 255, 255, 0.05);
+      --surface-raised: rgba(255, 255, 255, 0.085);
+      --orange: #ff5a2c;
+      --orange-light: #ff7a52;
+      --text: #f2f4f8;
+      --text-muted: #a3abbe;
+      --border: rgba(255, 255, 255, 0.09);
+      --border-strong: rgba(255, 255, 255, 0.16);
+      --glass-bg: rgba(255, 255, 255, 0.045);
+      --glass-bg-strong: rgba(255, 255, 255, 0.075);
+      --glass-border: rgba(255, 255, 255, 0.09);
+      --glass-border-strong: rgba(255, 255, 255, 0.16);
+      --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.09);
+      --glass-shadow: 0 18px 48px rgba(0, 0, 0, 0.42);
+      --glass-blur: blur(22px) saturate(155%);
+      --radius-sm: 9px;
+      --radius-md: 13px;
+      --radius-lg: 18px;
+      --radius-xl: 24px;
+      --font-display: "Segoe UI Variable Display", "Segoe UI", -apple-system, BlinkMacSystemFont, "Inter", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --font-mono: "Cascadia Code", "SF Mono", "Segoe UI Mono", Consolas, monospace;
     }
 
     * {
@@ -28,13 +40,20 @@
     }
 
     body {
-      background: var(--bg);
+      background-color: var(--bg);
+      background-image:
+        radial-gradient(760px 520px at 8% -4%, rgba(255, 90, 44, 0.16), transparent 62%),
+        radial-gradient(720px 560px at 102% 2%, rgba(122, 116, 255, 0.16), transparent 62%),
+        radial-gradient(820px 640px at 50% 108%, rgba(0, 188, 208, 0.10), transparent 66%),
+        linear-gradient(180deg, #080a12 0%, #05070d 60%, #070910 100%);
+      background-attachment: fixed;
+      background-repeat: no-repeat;
       color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      padding-bottom: 24px;
+      padding-bottom: calc(24px + env(safe-area-inset-bottom));
     }
 
     /* Top App Bar */
@@ -731,6 +750,415 @@
       animation: remote-spin .8s linear infinite;
     }
     @keyframes remote-spin { to { transform: rotate(360deg); } }
+
+    /* ============================================================
+       GLASS THEME — mobile remote, matches the desktop glass shell
+       ============================================================ */
+    .hidden { display: none !important; }
+
+    .top-bar {
+      padding: calc(12px + env(safe-area-inset-top)) 16px 12px;
+      background: rgba(8, 10, 17, 0.72);
+      border-bottom: 1px solid var(--glass-border);
+      -webkit-backdrop-filter: var(--glass-blur);
+      backdrop-filter: var(--glass-blur);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    }
+
+    .brand-tag {
+      background: linear-gradient(135deg, var(--orange) 0%, #ff7d3f 100%);
+      color: #fff;
+      font-weight: 800;
+      border-radius: 999px;
+      padding: 4px 10px;
+      box-shadow: 0 6px 16px rgba(255, 90, 44, 0.35);
+    }
+
+    .brand-title {
+      color: #a9b1c2;
+      letter-spacing: 0.16em;
+    }
+
+    .state-pill {
+      border-radius: 999px;
+      padding: 4px 9px;
+      background: rgba(0, 230, 118, 0.12);
+      border: 1px solid rgba(0, 230, 118, 0.45);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+
+    #remoteDeviceSelect,
+    #remoteLangSelect {
+      border-radius: 999px !important;
+      background: rgba(255, 255, 255, 0.06) !important;
+      border: 1px solid var(--glass-border-strong) !important;
+      padding: 4px 8px !important;
+    }
+    #remoteDeviceSelect {
+      color: #7dd3fc !important;
+      border-color: rgba(56, 189, 248, 0.45) !important;
+    }
+    #remoteLangSelect { color: var(--text) !important; }
+
+    #remotePlaylistBar {
+      background: rgba(255, 255, 255, 0.03) !important;
+      border-bottom: 1px solid var(--glass-border) !important;
+      padding: 9px 16px !important;
+      -webkit-backdrop-filter: blur(16px) saturate(150%);
+      backdrop-filter: blur(16px) saturate(150%);
+    }
+    #remotePlaylistSelect,
+    #remoteSyncPlBtn,
+    #remoteOpenAddPlBtn {
+      border-radius: 999px !important;
+      padding: 6px 12px !important;
+    }
+    #remotePlaylistSelect {
+      background: rgba(255, 255, 255, 0.06) !important;
+      border: 1px solid var(--glass-border-strong) !important;
+      color: var(--text) !important;
+    }
+    #remoteSyncPlBtn {
+      background: rgba(255, 255, 255, 0.07) !important;
+      border: 1px solid var(--glass-border-strong) !important;
+      color: var(--text) !important;
+    }
+    #remoteOpenAddPlBtn {
+      background: linear-gradient(135deg, var(--orange) 0%, #ff7d3f 100%) !important;
+      border: 1px solid rgba(255, 138, 96, 0.55) !important;
+      color: #fff !important;
+      box-shadow: 0 6px 18px rgba(255, 90, 44, 0.35) !important;
+    }
+
+    .now-playing-card {
+      margin: 14px;
+      background: linear-gradient(165deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.028));
+      border: 1px solid var(--glass-border-strong);
+      border-radius: var(--radius-xl);
+      padding: 16px;
+      box-shadow: var(--glass-highlight), var(--glass-shadow);
+      -webkit-backdrop-filter: var(--glass-blur);
+      backdrop-filter: var(--glass-blur);
+    }
+
+    .now-title {
+      font-size: 19px;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+    }
+
+    .badge-ep {
+      border-radius: 999px;
+      padding: 2px 8px;
+      background: linear-gradient(135deg, var(--orange) 0%, #ff7d3f 100%);
+      color: #fff;
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 0.05em;
+    }
+
+    .btn-now-fav { border-radius: 999px; }
+    .btn-now-fav.active { color: #ffb703; text-shadow: 0 0 12px rgba(255, 183, 3, 0.45); }
+
+    .now-series-toolbar {
+      background: rgba(0, 0, 0, 0.22);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-md);
+      padding: 6px;
+    }
+    .btn-ep-quick {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--glass-border);
+      border-radius: 999px;
+      padding: 8px 10px;
+    }
+    .btn-ep-quick:active {
+      background: var(--orange);
+      border-color: var(--orange);
+      color: #fff;
+    }
+
+    .scrub-slider::-webkit-slider-runnable-track {
+      height: 6px;
+      background: rgba(255, 255, 255, 0.12);
+      border: none;
+      border-radius: 999px;
+    }
+    .scrub-slider::-webkit-slider-thumb {
+      width: 22px;
+      height: 22px;
+      margin-top: -8px;
+      background: linear-gradient(135deg, #ff8a5c, var(--orange));
+      border: 2px solid rgba(255, 255, 255, 0.92);
+      box-shadow: 0 0 14px rgba(255, 90, 44, 0.55);
+    }
+    .scrub-slider::-moz-range-track {
+      height: 6px;
+      background: rgba(255, 255, 255, 0.12);
+      border: none;
+      border-radius: 999px;
+    }
+    .scrub-slider::-moz-range-thumb {
+      width: 22px;
+      height: 22px;
+      background: linear-gradient(135deg, #ff8a5c, var(--orange));
+      border: 2px solid rgba(255, 255, 255, 0.92);
+      box-shadow: 0 0 14px rgba(255, 90, 44, 0.55);
+    }
+
+    .btn-seek {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--glass-border);
+      border-radius: 999px;
+      padding: 11px 8px;
+    }
+    .btn-seek:active {
+      background: linear-gradient(135deg, var(--orange), #ff7d3f);
+      border-color: rgba(255, 138, 96, 0.6);
+      color: #fff;
+    }
+
+    .control-buttons-grid { gap: 10px; }
+    .btn-ctrl {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
+      padding: 13px 8px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+    .btn-ctrl.active {
+      background: rgba(255, 90, 44, 0.16);
+      border-color: rgba(255, 90, 44, 0.6);
+      color: var(--orange-light);
+    }
+    .btn-ctrl.primary {
+      background: linear-gradient(135deg, var(--orange) 0%, #ff7d3f 100%);
+      border-color: rgba(255, 138, 96, 0.5);
+      color: #fff;
+      box-shadow: 0 10px 26px rgba(255, 90, 44, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    }
+    .btn-ctrl:active,
+    .btn-ctrl.primary:active {
+      background: linear-gradient(135deg, #ff7d3f, var(--orange));
+      border-color: rgba(255, 138, 96, 0.6);
+      color: #fff;
+    }
+
+    .volume-row {
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--glass-border);
+      border-radius: 999px;
+      padding: 9px 14px;
+    }
+
+    .mode-tabs-bar { gap: 8px; padding: 4px 16px 12px; }
+    .mode-tab-btn {
+      background: rgba(255, 255, 255, 0.045);
+      border: 1px solid var(--glass-border);
+      border-radius: 999px;
+      padding: 11px 4px;
+      -webkit-backdrop-filter: blur(14px) saturate(140%);
+      backdrop-filter: blur(14px) saturate(140%);
+    }
+    .mode-tab-btn.active {
+      background: linear-gradient(135deg, var(--orange) 0%, #ff7d3f 100%);
+      border-color: rgba(255, 138, 96, 0.55);
+      color: #fff;
+      box-shadow: 0 8px 22px rgba(255, 90, 44, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+    }
+
+    .chips-scroller { gap: 8px; }
+    .chip-btn {
+      background: rgba(255, 255, 255, 0.045);
+      border: 1px solid var(--glass-border);
+      border-radius: 999px;
+      padding: 7px 14px;
+      color: var(--text-muted);
+    }
+    .chip-btn.active {
+      background: rgba(255, 90, 44, 0.14);
+      border-color: rgba(255, 90, 44, 0.6);
+      color: var(--orange-light);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+    }
+    .chip-btn.chip-watched {
+      border-color: rgba(0, 230, 118, 0.4);
+      color: #00e676;
+    }
+    .chip-btn.chip-watched.active {
+      background: rgba(0, 230, 118, 0.14);
+      border-color: rgba(0, 230, 118, 0.65);
+      color: #00e676;
+    }
+
+    .search-input {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--glass-border-strong);
+      border-radius: 999px;
+      padding: 11px 16px;
+      color: var(--text);
+      -webkit-backdrop-filter: blur(14px) saturate(140%);
+      backdrop-filter: blur(14px) saturate(140%);
+    }
+    .search-input:focus {
+      border-color: rgba(255, 90, 44, 0.65);
+      box-shadow: 0 0 0 3px rgba(255, 90, 44, 0.16);
+    }
+
+    .list-section-header {
+      padding: 8px 18px;
+      letter-spacing: 0.14em;
+      color: var(--text-muted);
+    }
+    .content-items-list { gap: 8px; padding: 0 14px; }
+    .content-card-row {
+      position: relative;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.045);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      padding: 10px 12px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      -webkit-backdrop-filter: blur(14px) saturate(140%);
+      backdrop-filter: blur(14px) saturate(140%);
+    }
+    .content-card-row:active {
+      background: rgba(255, 255, 255, 0.09);
+      border-color: rgba(255, 90, 44, 0.55);
+      transform: scale(0.99);
+    }
+    .content-card-row.playing {
+      background: linear-gradient(120deg, rgba(255, 90, 44, 0.16), rgba(255, 255, 255, 0.045));
+      border-color: rgba(255, 90, 44, 0.55);
+      box-shadow: 0 10px 26px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    }
+    .content-card-row.playing::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 10px;
+      bottom: 10px;
+      width: 3px;
+      border-radius: 0 999px 999px 0;
+      background: var(--orange);
+      box-shadow: 0 0 10px rgba(255, 90, 44, 0.7);
+    }
+    [dir="rtl"] .content-card-row.playing::before {
+      left: auto;
+      right: 0;
+      border-radius: 999px 0 0 999px;
+    }
+    .card-thumb {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+    }
+    .card-watched-tag,
+    .card-prog-tag {
+      border-radius: 999px;
+      padding: 1px 7px;
+    }
+    .card-progress-bar-fill { border-radius: 999px; }
+
+    .series-drawer {
+      background: rgba(3, 5, 10, 0.72);
+      -webkit-backdrop-filter: blur(12px) saturate(140%);
+      backdrop-filter: blur(12px) saturate(140%);
+    }
+    .drawer-card {
+      background: linear-gradient(180deg, rgba(24, 28, 38, 0.96), rgba(10, 12, 19, 0.98));
+      border-top: 1px solid var(--glass-border-strong);
+      border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+      padding: 18px 16px calc(18px + env(safe-area-inset-bottom));
+      box-shadow: 0 -22px 60px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    }
+    .drawer-card::before {
+      content: "";
+      display: block;
+      width: 44px;
+      height: 4px;
+      margin: -4px auto 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.22);
+    }
+    .btn-close-drawer {
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid var(--glass-border-strong);
+      border-radius: 999px;
+      padding: 5px 12px;
+      color: var(--text);
+    }
+    .drawer-episodes-list { gap: 8px; }
+    .drawer-episode-item {
+      background: rgba(255, 255, 255, 0.045);
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
+      padding: 11px 14px;
+    }
+    .drawer-episode-item:active {
+      background: rgba(255, 90, 44, 0.14);
+      border-color: rgba(255, 90, 44, 0.55);
+    }
+    #drawerEpisodesList .btn-ctrl {
+      border-radius: 999px !important;
+      padding: 7px 14px !important;
+      font-size: 10px !important;
+      box-shadow: 0 6px 16px rgba(255, 90, 44, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+    }
+
+    #addPlaylistModal { background: rgba(3, 5, 10, 0.8) !important; }
+    #addPlaylistModal .drawer-card { max-height: 88vh !important; }
+    #addPlaylistModal .search-input { border-radius: 14px; }
+
+    .expired-overlay {
+      background: rgba(4, 6, 11, 0.82);
+      -webkit-backdrop-filter: blur(16px) saturate(140%);
+      backdrop-filter: blur(16px) saturate(140%);
+    }
+    .expired-card,
+    .remote-loading-card {
+      background: linear-gradient(165deg, rgba(255, 255, 255, 0.085), rgba(255, 255, 255, 0.03));
+      border: 1px solid var(--glass-border-strong);
+      border-radius: var(--radius-xl);
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      -webkit-backdrop-filter: blur(26px) saturate(160%);
+      backdrop-filter: blur(26px) saturate(160%);
+    }
+    .remote-loading-overlay {
+      background: rgba(4, 6, 11, 0.72);
+      -webkit-backdrop-filter: blur(14px) saturate(140%);
+      backdrop-filter: blur(14px) saturate(140%);
+    }
+    .remote-loading-spinner { border-color: rgba(255, 255, 255, 0.14); border-top-color: var(--orange); }
+
+    @media (max-width: 430px) {
+      .brand-title { white-space: nowrap; }
+      .top-bar { flex-wrap: wrap; row-gap: 6px; padding-bottom: 10px; }
+      .top-bar > div { min-width: 0; }
+      .top-bar > div:last-child { margin-inline-start: auto; }
+      #remotePlaylistBar { flex-wrap: wrap !important; row-gap: 8px !important; }
+      #remotePlaylistBar > span:first-child { margin-inline-end: auto; }
+      #remotePlaylistSelect {
+        flex: 1 1 100% !important;
+        order: 5;
+        min-width: 0 !important;
+        width: 100%;
+      }
+    }
+
+    @media (prefers-reduced-transparency: reduce) {
+      .top-bar, .now-playing-card, .mode-tab-btn, .content-card-row,
+      .expired-card, .remote-loading-card {
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+        background: rgba(14, 17, 24, 0.96);
+      }
+      body { background-image: none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .pulse-dot { animation: none; }
+      .content-card-row:active { transform: none; }
+    }
   </style>
 </head>
 <body>
@@ -908,6 +1336,9 @@
 
   <script>
     const $ = s => document.querySelector(s);
+    const htmlEscapes = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+    const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, character => htmlEscapes[character]);
+    const sanitizeId = value => String(value ?? '').replace(/[^a-zA-Z0-9_-]/g, '');
     let targetDevice = new URLSearchParams(location.search).get('target') || 
                        new URLSearchParams(location.search).get('device') || 
                        window.SERVER_INJECTED_TARGET || 
@@ -1479,7 +1910,7 @@
         plSelect.innerHTML = snapshot.playlists.map(p => {
           const count = p.itemCount ? ` (${p.itemCount})` : '';
           const isSel = p.id === activeId ? 'selected' : '';
-          return `<option value="${p.id}" ${isSel}>${p.name || 'Playlist'}${count}</option>`;
+          return `<option value="${escapeHtml(p.id)}" ${isSel}>${escapeHtml(p.name || 'Playlist')}${count}</option>`;
         }).join('');
       }
 
@@ -1631,7 +2062,7 @@
           `<button class="chip-btn ${selectedCat === 'all' ? 'active' : ''}" data-cat="all">${t('all_prefix')} ${modeLabel}</button>`,
           watchedChip,
           favChip,
-          ...activeCats.map(name => `<button class="chip-btn ${selectedCat === name ? 'active' : ''}" data-cat="${name}">${name}</button>`)
+          ...activeCats.map(name => `<button class="chip-btn ${selectedCat === name ? 'active' : ''}" data-cat="${escapeHtml(name)}">${escapeHtml(name)}</button>`)
         ].filter(Boolean).join('');
       }
 
@@ -1725,9 +2156,11 @@
           const prog = getWatchProgress(item);
           const isWatched = prog && (prog.isWatched || prog.percentage >= 85);
           const inProgress = prog && prog.percentage > 0 && !isWatched;
+          const itemName = String(item.name || 'Untitled');
+          const initials = escapeHtml(itemName.slice(0, 2).toUpperCase());
           const thumb = item.logo
-            ? `<img src="${item.logo}" alt="" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"><span style="display:none;">${item.name.slice(0, 2).toUpperCase()}</span>`
-            : `<span>${item.name.slice(0, 2).toUpperCase()}</span>`;
+            ? `<img src="${escapeHtml(item.logo)}" alt="" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"><span style="display:none;">${initials}</span>`
+            : `<span>${initials}</span>`;
 
           const watchedTag = isWatched
             ? `<span class="card-watched-tag">✓ ${t('watched') || 'WATCHED'}</span>`
@@ -1745,7 +2178,7 @@
             : (item.type || activeMode);
           const isSeries = itemType === 'series';
 
-          const cleanStreamId = String(item.id || '').replace(/^(?:live|movie|series)-/, '');
+          const cleanStreamId = sanitizeId(String(item.id || '').replace(/^(?:live|movie|series)-/, ''));
           let subText = item.group || '';
           if (itemType === 'live') {
             const cachedEpg = (snapshot && snapshot.epgCache && snapshot.epgCache[cleanStreamId]) || remoteEpgCache[cleanStreamId];
@@ -1753,16 +2186,16 @@
           }
 
           return `
-            <div class="content-card-row ${isPlaying ? 'playing' : ''}" data-id="${item.id}" data-type="${itemType}" data-seriesid="${item.seriesId || item.id}">
+            <div class="content-card-row ${isPlaying ? 'playing' : ''}" data-id="${escapeHtml(item.id)}" data-type="${itemType}" data-seriesid="${escapeHtml(item.seriesId || item.id)}">
               <div class="card-left">
                 <div class="card-thumb">${thumb}</div>
                 <div class="card-meta">
-                  <strong>${item.name}</strong>
-                  <small class="${itemType === 'live' ? 'card-epg-subtitle' : ''}" data-stream-id="${cleanStreamId}">${watchedTag}${subText}</small>
+                  <strong>${escapeHtml(itemName)}</strong>
+                  <small class="${itemType === 'live' ? 'card-epg-subtitle' : ''}" data-stream-id="${cleanStreamId}">${watchedTag}${escapeHtml(subText)}</small>
                 </div>
               </div>
               <div class="card-actions">
-                <button class="btn-fav ${itemIsFav ? 'active' : ''}" data-favid="${item.id}">★</button>
+                <button class="btn-fav ${itemIsFav ? 'active' : ''}" data-favid="${escapeHtml(item.id)}">★</button>
                 <span class="btn-play-arrow">${isSeries ? '☰' : '▶'}</span>
               </div>
               ${progressBar}
@@ -1774,7 +2207,7 @@
           filtered.slice(0, 60).forEach(item => {
             const itemType = activeMode === 'live' ? 'live' : (item.type || activeMode);
             if (itemType !== 'live') return;
-            const cleanStreamId = String(item.id || '').replace(/^(?:live|movie|series)-/, '');
+            const cleanStreamId = sanitizeId(String(item.id || '').replace(/^(?:live|movie|series)-/, ''));
             const cachedEpg = (snapshot && snapshot.epgCache && snapshot.epgCache[cleanStreamId]) || remoteEpgCache[cleanStreamId];
             if (!cachedEpg && cleanStreamId) {
               requestRemoteEpg(cleanStreamId, (epg) => {
@@ -1788,7 +2221,7 @@
                     : inProgress
                     ? `<span class="card-prog-tag">▶ ${prog.season ? `S${prog.season}E${prog.episodeNumber || 1} • ` : ''}${prog.percentage}%</span>`
                     : '';
-                  el.innerHTML = `${watchedTag}${epg.full || epg.title}`;
+                  el.innerHTML = `${watchedTag}${escapeHtml(epg.full || epg.title)}`;
                   el.title = epg.full || epg.title;
                 }
               });
@@ -1974,7 +2407,7 @@
         const finalSeasons = seasons.length > 0 ? seasons : [{ season: 1 }];
         if ($('#drawerSeasonTabs')) {
           $('#drawerSeasonTabs').innerHTML = finalSeasons.map((s, idx) => `
-            <button class="chip-btn ${idx === 0 ? 'active' : ''}" data-season="${s.season}">S${s.season}</button>
+            <button class="chip-btn ${idx === 0 ? 'active' : ''}" data-season="${escapeHtml(s.season)}">S${escapeHtml(s.season)}</button>
           `).join('');
         }
 
@@ -1988,7 +2421,7 @@
     function renderDrawerEpisodes(seasonNum) {
       const eps = currentSeriesEpisodes.filter(e => Number(e.season) === Number(seasonNum));
       if (!eps.length) {
-        if ($('#drawerEpisodesList')) $('#drawerEpisodesList').innerHTML = `<p style="padding:16px; color:#888; font-size:12px;">No episodes in Season ${seasonNum}</p>`;
+        if ($('#drawerEpisodesList')) $('#drawerEpisodesList').innerHTML = `<p style="padding:16px; color:#888; font-size:12px;">No episodes in Season ${escapeHtml(seasonNum)}</p>`;
         return;
       }
       if ($('#drawerEpisodesList')) {
@@ -2004,11 +2437,11 @@
             : '';
 
           return `
-            <div class="drawer-episode-item" data-epid="${ep.id}">
+            <div class="drawer-episode-item" data-epid="${escapeHtml(ep.id)}">
               <div style="flex:1; min-width:0;">
-                <div style="font-weight:600; font-size:12px;">${t('ep_prefix') || 'EP '}${ep.episodeNumber}: ${ep.episodeTitle || ep.name}</div>
+                <div style="font-weight:600; font-size:12px;">${t('ep_prefix') || 'EP '}${escapeHtml(ep.episodeNumber)}: ${escapeHtml(ep.episodeTitle || ep.name)}</div>
                 <div style="font-size:10px; color:var(--text-muted); margin-top:2px;">
-                  ${ep.duration ? `${ep.duration}m • ` : ''}HD ${epWatchedBadge ? `• ${epWatchedBadge}` : ''}
+                  ${ep.duration ? `${escapeHtml(ep.duration)}m • ` : ''}HD ${epWatchedBadge ? `• ${epWatchedBadge}` : ''}
                 </div>
               </div>
               <button class="btn-ctrl primary" style="font-size:11px; padding:6px 12px; border-radius:4px; flex-shrink:0;">▶ ${t('play_ep') || 'PLAY'}</button>

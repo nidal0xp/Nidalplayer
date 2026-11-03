@@ -9,7 +9,8 @@ import { cleanTitle, extractYear, fetchTMDBDetails, testTMDBApiKey } from '../sr
 import { matchCenter, TOP_5_LEAGUES } from '../src/sports/matchCenter.js';
 import { favoriteTeamService } from '../src/sports/favoriteTeamService.js';
 import { VirtualScroller } from '../src/ui/virtualScroller.js';
-import remoteSecurity from '../src/desktop/remoteSecurity.js';
+import remoteSecurity from '../src/desktop/remoteSecurity.cjs';
+import { escapeHtml, sanitizeId } from '../src/ui/escapeHtml.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -58,6 +59,19 @@ async function main() {
     assert.strictEqual(remoteSecurity.hasRemoteAccess(request, new URL('http://desktop.local/api/action'), expectedToken), true);
     assert.strictEqual(remoteSecurity.hasRemoteAccess({ ...request, headers: {} }, new URL('http://desktop.local/api/action?token=wrong'), expectedToken), false);
     assert.strictEqual(remoteSecurity.hasRemoteAccess({ ...request, socket: { remoteAddress: '8.8.8.8' } }, new URL('http://desktop.local/api/action?token=' + expectedToken), expectedToken), false);
+  });
+
+  runTest('Renderer escaping: playlist metadata cannot break out of markup', () => {
+    assert.strictEqual(escapeHtml('<img src=x onerror="alert(1)">'), '&lt;img src=x onerror=&quot;alert(1)&quot;&gt;');
+    assert.strictEqual(escapeHtml("' onmouseover='alert(1)"), '&#39; onmouseover=&#39;alert(1)');
+    assert.strictEqual(escapeHtml('A & B'), 'A &amp; B');
+    assert.strictEqual(sanitizeId('12" onmouseover="alert(1)'), '12onmouseoveralert1');
+  });
+
+  runTest('Desktop remote: token comparison rejects wrong and partial tokens', () => {
+    assert.strictEqual(remoteSecurity.tokensMatch('abcdef', 'abcdef'), true);
+    assert.strictEqual(remoteSecurity.tokensMatch('abcdef', 'abcdeg'), false);
+    assert.strictEqual(remoteSecurity.tokensMatch('abc', 'abcdef'), false);
   });
 
   runTest('Match center: ranks confirmed EPG matches above league-channel candidates', () => {
@@ -249,7 +263,11 @@ http://stream.example.com/series/user/pass/789.mp4`;
       assetNames.includes(setupExeName),
       `${setupExeName} must be present in release assets (found: ${assetNames.join(', ')})`
     );
-    assert.ok(assetNames.includes('Nidalplayer-Portable.exe'), 'Nidalplayer-Portable.exe must be present in release assets');
+    const portableExeName = `Nidalplayer-Portable-${tagVersion}.exe`;
+    assert.ok(
+      assetNames.includes(portableExeName),
+      `${portableExeName} must be present in release assets (found: ${assetNames.join(', ')})`
+    );
     assert.ok(assetNames.includes('latest.yml'), 'latest.yml must be present in release assets');
 
     // Verify the setup binary metadata
