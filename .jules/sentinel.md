@@ -1,0 +1,4 @@
+## 2024-11-03 - Timing Attack Vulnerability in Remote Token Validation
+**Vulnerability:** The application was using simple string equality (`===`) to compare the remote access token, which is vulnerable to timing attacks. An attacker could measure the time taken to reject a token and guess the token character by character.
+**Learning:** String comparisons in Node.js short-circuit as soon as a mismatch is found. When comparing security-sensitive tokens, a constant-time comparison must be used to prevent timing leaks.
+**Prevention:** Always use `crypto.timingSafeEqual()` for security token or hash comparisons. Ensure both inputs are converted to Buffers, and explicitly verify they have the exact same `byteLength` before calling the function, as different length buffers will throw an error and could lead to DoS.
