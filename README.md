@@ -2,30 +2,48 @@
 
 [![License: CC BY-NC-SA 4.0](https://img.shields.io/badge/License-CC_BY--NC--SA_4.0-orange.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows_x64-blue.svg)](https://github.com/nidal0xp/Nidalplayer/releases)
-[![Version](https://img.shields.io/badge/Version-4.5.0-success.svg)](https://github.com/nidal0xp/Nidalplayer/releases)
+[![Version](https://img.shields.io/badge/Version-4.5.0_Glass_Edition-success.svg)](https://github.com/nidal0xp/Nidalplayer/releases/tag/v4.5.0)
 [![Auto-Updates](https://img.shields.io/badge/Updates-Automatic_GitHub_Releases-brightgreen.svg)](https://github.com/nidal0xp/Nidalplayer/releases)
 
-**Nidalplayer** is a high-performance, modernist streaming media center engineered specifically for Windows. Designed with a refined glassmorphism aesthetic, it combines lightning-fast stream startup, real-time sports intelligence, 4K metadata discovery, live preview playback, and zero-configuration mobile companion remote control.
+**Nidalplayer** is a high-performance streaming media center engineered for Windows. Version **4.5.0 "Glass Edition"** rebuilds the desktop client, the phone remote and the Windows installer on a single dark glass design system, and fixes the live-stream pipeline so buffering, failures and retries are reported truthfully.
+
+![Nidalplayer 4.5.0 — Glass Edition home screen](screenshots/01-glass-home.png)
 
 ---
 
-## 📸 Presentation Showcase
+## ✨ What's New in 4.5.0
 
-![Nidalplayer Presentation](assets/presentation.png)
+* **Glass design system** — frosted panels, soft depth and consistent spacing across Home, Live, Movies, Series and Settings.
+* **New boot experience** — animated glass splash instead of the old white flash.
+* **Redesigned mobile remote** — status header, volume, transport controls, D-pad and channel shortcuts, matching the desktop.
+* **Dark installer** — custom NSIS artwork and wizard theme instead of the stock white setup screens.
+* **Live playback fixes** — live items stay `buffering` until the decoder is ready, with a 15 s startup watchdog and an offline placeholder when a stream is unreachable.
+* **Security hardening** — sandboxed renderer, no Chromium security bypass switches, scoped certificate exceptions, escaped playlist metadata.
+
+See the full [release notes](https://github.com/nidal0xp/Nidalplayer/releases/tag/v4.5.0) for details.
+
+---
+
+## 📸 Showcase
+
+| Live Television | Movies & Cinema |
+| :---: | :---: |
+| <img src="screenshots/02-live-television.png" width="640" alt="Live television grid" /> | <img src="screenshots/03-movies-cinema.png" width="640" alt="Movies grid with posters" /> |
+
+| TV Series | Mobile Companion Remote |
+| :---: | :---: |
+| <img src="screenshots/04-tv-series.png" width="640" alt="TV series grid" /> | <img src="screenshots/05-mobile-remote.png" width="220" alt="Nidalplayer mobile remote" /> |
 
 <p align="center">
-  <em>Windows Desktop Media Center (left) & Smartphone Companion Web Remote (right)</em>
+  <img src="screenshots/00-boot-splash.png" width="640" alt="Boot splash" /><br/>
+  <em>Boot splash · Windows desktop media center · smartphone web remote</em>
 </p>
 
 ---
 
 ## 📱 Mobile Companion Web Remote
 
-Scan the in-app QR code with any smartphone on your local Wi-Fi to launch the instant touch remote control — no phone app download required:
-
-<p align="center">
-  <img src="assets/mobile-remote.png" width="340" alt="Nidalplayer Mobile Remote" />
-</p>
+Scan the in-app QR code with any smartphone on your local Wi-Fi to launch the instant touch remote control — no phone app download required.
 
 ---
 
@@ -64,9 +82,11 @@ Scan the in-app QR code with any smartphone on your local Wi-Fi to launch the in
 
 | Release Package | File | Size | Description |
 | :--- | :--- | :--- | :--- |
-| **Windows Installer** | [`Nidalplayer-Setup-4.5.0.exe`](https://github.com/nidal0xp/Nidalplayer/releases/download/v4.5.0/Nidalplayer-Setup-4.5.0.exe) | ~89 MB | Standard Windows Setup with desktop & start menu shortcuts |
-| **Portable Edition** | [`Nidalplayer-Portable-4.5.0.exe`](https://github.com/nidal0xp/Nidalplayer/releases/download/v4.5.0/Nidalplayer-Portable-4.5.0.exe) | ~89 MB | Standalone portable executable (no installation required) |
-| **Update Manifest** | [`latest.yml`](https://github.com/nidal0xp/Nidalplayer/releases/download/v4.5.0/latest.yml) | generated at release | SHA-512 update verification manifest |
+| **Windows Installer** | [`Nidalplayer-Setup-4.5.0.exe`](https://github.com/nidal0xp/Nidalplayer/releases/download/v4.5.0/Nidalplayer-Setup-4.5.0.exe) | ~90 MB | Standard Windows setup with desktop and Start Menu shortcuts |
+| **Portable Edition** | [`Nidalplayer-Portable-4.5.0.exe`](https://github.com/nidal0xp/Nidalplayer/releases/download/v4.5.0/Nidalplayer-Portable-4.5.0.exe) | ~89 MB | Standalone portable executable, no installation |
+| **Update Manifest** | [`latest.yml`](https://github.com/nidal0xp/Nidalplayer/releases/download/v4.5.0/latest.yml) | 350 B | SHA-512 update verification manifest |
+
+Requires Windows 10/11 x64.
 
 ---
 
