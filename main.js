@@ -655,6 +655,22 @@ function createWindow() {
     mainWindow.show();
   });
 
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    if (isHttpUrl(url)) shell.openExternal(url).catch(() => {});
+    return { action: 'deny' };
+  });
+
+  mainWindow.webContents.on('will-navigate', (event, url) => {
+    try {
+      const parsed = new URL(url);
+      if (parsed.protocol !== 'file:' && parsed.hostname !== 'localhost' && parsed.hostname !== '127.0.0.1') {
+        event.preventDefault();
+      }
+    } catch {
+      event.preventDefault();
+    }
+  });
+
   // Fallback to guarantee window visibility
   setTimeout(() => {
     if (mainWindow && !mainWindow.isVisible()) {
