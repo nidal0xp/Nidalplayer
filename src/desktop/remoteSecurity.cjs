@@ -12,13 +12,17 @@ function isPrivateLanAddress(address) {
     || /^172\.(1[6-9]|2\d|3[0-1])\./.test(ip);
 }
 
+const crypto = require('crypto');
+
 function tokensMatch(supplied, expected) {
-  if (typeof supplied !== 'string' || typeof expected !== 'string' || supplied.length !== expected.length) return false;
-  let diff = 0;
-  for (let i = 0; i < supplied.length; i++) {
-    diff |= supplied.charCodeAt(i) ^ expected.charCodeAt(i);
-  }
-  return diff === 0;
+  if (typeof supplied !== 'string' || typeof expected !== 'string') return false;
+
+  const a = Buffer.from(supplied);
+  const b = Buffer.from(expected);
+
+  if (a.byteLength !== b.byteLength) return false;
+
+  return crypto.timingSafeEqual(a, b);
 }
 
 function hasRemoteAccess(request, url, expectedToken) {
