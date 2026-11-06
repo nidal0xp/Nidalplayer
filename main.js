@@ -651,6 +651,31 @@ function createWindow() {
     }
   });
 
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    try {
+      const parsed = new URL(url);
+      if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+        shell.openExternal(url);
+      }
+    } catch (e) {
+      console.error('Invalid URL in window open handler:', e);
+    }
+    return { action: 'deny' };
+  });
+
+  mainWindow.webContents.on('will-navigate', (event, navigationUrl) => {
+    try {
+      const parsedUrl = new URL(navigationUrl);
+      if (parsedUrl.protocol !== 'file:' && parsedUrl.hostname !== 'localhost' && parsedUrl.hostname !== '127.0.0.1') {
+        event.preventDefault();
+        console.warn(`Blocked navigation to untrusted URL: ${navigationUrl}`);
+      }
+    } catch (e) {
+      event.preventDefault();
+      console.error('Invalid URL in will-navigate handler:', e);
+    }
+  });
+
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
   });
