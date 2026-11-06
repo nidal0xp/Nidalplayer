@@ -6,3 +6,6 @@
 **Learning:** Found that multiple icon-only buttons (like 'X' close buttons on modals and clear search inputs) and search input were completely unlabelled for screen readers, meaning users would only hear 'button' or confusing generic text. Decorative symbols (like the '⌕' reticle) could also confuse screen readers.
 **Action:** Always add descriptive `aria-label` attributes to icon-only buttons and inputs, and add `aria-hidden="true"` to decorative symbols to ensure clear navigation for users relying on assistive technology.
 
+## 2026-11-06 - Settings View Form Control Labels
+**Learning:** In Nidalplayer's settings view, standard layout constructs often used generic `<label>` elements that lacked the `for` attribute necessary to map them to adjacent `<select>` and `<input>` elements, causing screen readers to miss field contexts.
+**Action:** Always ensure that custom form layouts, regardless of visual structure or grouping wrappers, include an explicit `for` attribute referencing the associated control's ID.
