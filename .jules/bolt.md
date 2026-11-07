@@ -6,3 +6,6 @@
 **Learning:** Found a specific performance bottleneck in `app.js` during category/search sorting. It called `getWatchProgressForSort` for each item dynamically in the `sort()` function, leading to O(N^2) complexity because `getWatchProgressForSort` loops over the whole dictionary (`Object.values(wp)`) for each item.
 **Action:** When sorting large arrays of objects, specially those that require looking up external data structures with O(N) operations, pre-calculate that data into a `Map` *before* calling `.sort()` to bring the complexity down to O(N).
 
+## 2026-11-07 - [Optimize array filtering and spreading in high-frequency loops]
+**Learning:** In high-frequency functions like `publishRemoteState` (called every 2s), doing multiple `.filter()` passes and then spreading the results into a new array (e.g., `[...arr.filter(cond), ...arr.filter(!cond)]`) causes massive memory allocation and CPU overhead, especially with arrays having tens of thousands of items.
+**Action:** Replaced the double `.filter()` + spread operations with single-pass loops that eagerly populate the output arrays until the maximum length (2000) is reached. Deferred the `.map()` object transformation until after the array is bounded, further preventing O(N) memory allocations.
