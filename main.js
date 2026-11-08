@@ -353,7 +353,12 @@ function markRemoteActive() {
 function startRemoteServer() {
   if (remoteServer) return;
   remoteServer = http.createServer((request, response) => {
-    const url = new URL(request.url, `http://127.0.0.1:${remotePort}`);
+    let url;
+    try {
+      url = new URL(request.url, `http://127.0.0.1:${remotePort}`);
+    } catch (err) {
+      return json(response, 400, { error: 'Invalid URL' });
+    }
     
     const pathname = (url.pathname || '').replace(/\/+$/, '') || '/';
 

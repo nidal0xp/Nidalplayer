@@ -1,0 +1,4 @@
+## 2024-05-18 - Node.js new URL Unhandled Exception DoS Risk
+**Vulnerability:** The HTTP server in Nidalplayer's desktop remote feature would crash completely when it received requests with malformed URLs (e.g., `http://[::1`).
+**Learning:** `new URL()` in Node.js throws an unhandled exception `ERR_INVALID_URL` rather than returning null when parsing fundamentally broken input strings. When this happens directly in an HTTP server connection handler without error handling, the unhandled exception crashes the entire application process, leading to a simple remote Denial of Service (DoS) vulnerability.
+**Prevention:** Always wrap URL validation and parsing (such as `new URL()`) in a `try...catch` block when processing external input or HTTP request URLs in Electron IPC handlers or Node.js web servers.
