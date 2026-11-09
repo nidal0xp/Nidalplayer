@@ -1,0 +1,5 @@
+
+## 2024-05-24 - Unhandled URL parsing in main process leads to LAN DoS
+**Vulnerability:** A Denial of Service (DoS) vulnerability existed in the LAN remote control web server where malformed request URLs (e.g., `////`) sent directly to the local HTTP server caused the `new URL()` constructor to throw an `ERR_INVALID_URL` exception. Because this exception was unhandled, it crashed the entire Electron main process.
+**Learning:** In Node.js, `new URL()` throws a synchronous `TypeError` if the provided URL string is malformed. If this happens inside an HTTP request handler without a `try...catch` block, the exception bubbles up and terminates the process, allowing any device on the local network to remotely crash the application.
+**Prevention:** Always wrap `new URL()` constructions that process untrusted or incoming request data in a `try...catch` block. When an error is caught, gracefully handle it by returning an HTTP 400 Bad Request response rather than allowing the exception to propagate.
