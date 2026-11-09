@@ -61,9 +61,13 @@
 | :---: | :---: |
 | <img src="screenshots/02-live-television.png" width="640" alt="Live television guide and preview dock" /> | <img src="screenshots/03-cinema-player.png" width="640" alt="Fullscreen cinema player" /> |
 
-| Home Hub & Match Center | Mobile Remote Pairing (Scan to Control) |
+| Home Hub & Match Center | Mobile Remote Pairing (Desktop QR) |
 | :---: | :---: |
 | <img src="screenshots/01-glass-home.png" width="640" alt="Home dashboard and match center" /> | <img src="screenshots/04-mobile-qr.png" width="640" alt="Mobile remote QR pairing" /> |
+
+| Mobile Companion Remote (Smartphone) | Add Playlist to TV (Mobile Control) |
+| :---: | :---: |
+| <img src="screenshots/05-mobile-remote.png" width="280" alt="Night HUD Mobile Remote Control" /> | <img src="screenshots/06-mobile-add-playlist.png" width="280" alt="Add Playlist to TV via Mobile" /> |
 
 ---
 
