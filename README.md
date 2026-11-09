@@ -2,94 +2,68 @@
 
 [![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows_x64-blue.svg)](https://github.com/nidal0xp/Nidalplayer/releases)
-[![Version](https://img.shields.io/badge/Version-4.6.0_Night_HUD-success.svg)](https://github.com/nidal0xp/Nidalplayer/releases/tag/v4.6.0)
+[![Latest Release](https://img.shields.io/badge/Release-v4.6.0-success.svg)](https://github.com/nidal0xp/Nidalplayer/releases/latest)
 [![Auto-Updates](https://img.shields.io/badge/Updates-Automatic_GitHub_Releases-brightgreen.svg)](https://github.com/nidal0xp/Nidalplayer/releases)
 
-**Nidalplayer** is a high-performance streaming media center engineered for Windows. Version **4.6.0 "Night HUD Edition"** delivers a decoupled dual-fullscreen architecture, newest-first movies grid curation with a category-aware display heading, deterministic stature-curated football marquee matchups, and a battery-efficient flat Night HUD mobile remote.
+**Nidalplayer** is an advanced, high-performance streaming media center engineered specifically for Windows. Built with an ultra-responsive dark Liquid Glass design system, Nidalplayer provides a cinema-grade desktop experience for streaming IPTV live television, on-demand movies, and TV series with zero-latency channel zapping, instant seeking, and seamless smartphone companion remote control.
 
-![Nidalplayer 4.6.0 — Night HUD home screen](screenshots/01-glass-home.png)
+![Nidalplayer Cinema Interface](screenshots/01-glass-home.png)
 
 > [!IMPORTANT]
 > ### ⚠️ NO PLAYLISTS OR CONTENT INCLUDED
-> **Nidalplayer is strictly a media player client software.** It **does NOT contain, host, provide, or bundle any playlists, TV channels, movies, series, or video streams of any kind**.
+> **Nidalplayer is strictly a media player software client.** It **does NOT contain, host, provide, broadcast, or bundle any playlists, TV channels, movies, series, or video streams of any kind**.
 >
-> **Users must supply and enter their own valid, legally acquired playlist (M3U URL or Xtream Codes credentials) to stream content.**
+> **You must provide and enter your own legally acquired playlist (M3U playlist URL or Xtream Codes login credentials) to stream content.**
 >
-> *All demonstration channels and movies shown in screenshots are strictly public domain, Creative Commons (Blender Open Projects), or free-to-air public broadcasters used exclusively for UI demonstration.*
+> *All demonstration channels and movies shown in promotional screenshots utilize strictly Creative Commons open-source media (Blender Open Projects) and public domain / free-to-air feeds for illustrative purposes only.*
 
 ---
 
-## ✨ What's New in 4.6.0
-
-* **🎬 Dual Fullscreen Architecture (Toggle Borderless vs. Monitor Fullscreen)**:
-  * **App-Only Toggle (`F` / Dock Toggle)**: Fills the entire application window borderless without taking over the monitor.
-  * **Monitor Fullscreen (`F11` / Dock Fullscreen)**: Takes the stream into whole-monitor OS cinema fullscreen.
-  * **In-HUD Fullscreen Control**: Switch directly between App Borderless and Whole Monitor view from inside the player controls without exiting.
-  * **Symmetric Exit Lifecycle**: Exiting playback cleanly restores native window dimensions without leaving the desktop trapped in monitor fullscreen.
-  * **Natural Double-Click**: Double-click any dock preview to enter whole-monitor cinema; double-click the expanded video viewport to restore back to dock.
-
-* **🍿 Movies Grid Newest-Added-First**:
-  * Movies automatically sort newest-added first via Xtream timestamps (`added` DESC), with honest `providerOrder` fallback for playlist formats without timestamps.
-  * **Category-Aware Display Heading**: Prominent display heading dynamically displays **LATEST MOVIES** for default view, switching to the active category or status (Watched / Favorites) with automatic ellipsis truncation.
-
-* **⚽ Top 5 Football Match Center: Stature-Based Curation**:
-  * Curated big-club global stature across Premier League, La Liga, Serie A, Bundesliga, Ligue 1, and UEFA Champions League.
-  * Instant, deterministic, zero-network curation eliminates empty standings fallbacks or API rate-limits.
-  * Canonical alias normalization for club naming variants across live scoreboards.
-
-* **📱 Flat Night HUD Mobile Companion Remote**:
-  * Redesigned mobile companion on obsidian/slate flat design tokens (`--bg-obsidian`, `--bg-surface`, `--border-subtle`, `--accent-orange`), matching desktop design.
-  * Removed heavy CSS glassmorphism blur and gradient glows for maximum mobile rendering performance and battery efficiency.
-  * Full catalog parity with desktop newest-added-first sorting.
-
-* **⚡ Windows 11 Polish & Performance**:
-  * Reserved in-HUD top padding in borderless mode to prevent native Windows caption buttons (`— ▢ ✕`) from overlapping telemetry badges.
-  * Fluid 60 FPS VirtualScroller DOM rendering and GPU compositor transition safety.
-
----
-
-## 📸 Showcase
-
-| Live Television | Movies & Cinema |
-| :---: | :---: |
-| <img src="screenshots/02-live-television.png" width="640" alt="Live television grid" /> | <img src="screenshots/03-movies-cinema.png" width="640" alt="Movies grid with posters" /> |
-
-| TV Series | Mobile Companion Remote |
-| :---: | :---: |
-| <img src="screenshots/04-tv-series.png" width="640" alt="TV series grid" /> | <img src="screenshots/05-mobile-remote.png" width="220" alt="Nidalplayer mobile remote" /> |
-
----
-
-## 📱 Mobile Companion Web Remote
-
-Scan the in-app QR code with any smartphone on your local Wi-Fi to launch the instant touch remote control — no phone app download required.
-
----
-
-## 🚀 Key Features
+## 🚀 What Nidalplayer Includes
 
 * **⚡ Ultra-Low Latency Streaming Engine**:
-  * Zero-delay stream initiation (<150ms startup).
-  * High-compatibility synthetic byte-range M3U8 chunking for instant seeking (+10s / -10s) across all movies, episodes, and VOD streams.
-  * Multi-track audio and subtitle selection with universal codec support (AAC, MP3, AC3, EAC3).
-  * Driver-managed GPU acceleration with automatic software-rendering fallback on driver crash.
+  * High-compatibility synthetic chunked HLS byte-range streaming engine with instant (<150ms) playback startup.
+  * Rapid seeking (+10s / -10s) across movies, episodes, and VOD streams without buffer stalls.
+  * Multi-track audio and subtitle selection supporting all standard audio formats (AAC, MP3, AC3, EAC3).
+  * Driver-managed GPU hardware acceleration with automatic software-rendering fallback on driver crash.
 
-* **🎬 Integrated Cinema Preview & VOD Grid**:
-  * Side-by-side instant playback preview panel with audio controls, synopsis display, and one-click cinema fullscreen mode.
-  * High-density virtualized grid supporting hundreds of thousands of entries with 60 FPS fluid scrolling.
-  * Real-time search reticle across live feeds, movies, and TV series.
+* **📺 Dual Fullscreen & Cinema Docking**:
+  * **In-Window Borderless Player (`F` / In-HUD Toggle)**: Expands playback to fill the entire application window without taking over your desktop or multi-monitor setup.
+  * **Whole-Monitor Cinema Fullscreen (`F11` / In-HUD Expander)**: Takes the stream into dedicated OS display fullscreen for immersive home theater viewing.
+  * **Side-by-Side Preview Panel**: Stream channels and VODs in an active live preview pane while continuing to browse categories, playlists, and guides.
 
-* **⚽ Top 5 Football Leagues Match Center & Live Sidebar Widget**:
-  * Real-time match fixtures, live scores, and schedules for Premier League, La Liga, Serie A, Bundesliga, Ligue 1, and UEFA Champions League.
-  * Sidebar Favorite Team Sports Center with live standings, top scorers, and top assists.
-  * Starting XI lineups and formations displayed when published.
+* **🎬 Smart VOD & TV Series Cinema Hub**:
+  * High-density virtualized scroller running at fluid 60 FPS across libraries containing hundreds of thousands of items.
+  * **4K TMDB Metadata Enrichment**: Cleans stream titles and automatically fetches official posters, backdrops, ratings, plot synopses, and cast details.
+  * **Season & Episode Inspector**: Full TV series browser with watched progress indicators, resume timestamps, and episode summaries.
+  * **Flexible Sorting & Category Curation**: Newest-added-first sorting with category-aware display headers.
 
-* **🌟 4K TMDB Metadata Enrichment**:
-  * Clean title sanitization strips codec and release tags to fetch original 4K backdrops, posters, ratings, plot synopses, and cast headshots.
-  * User-configurable API key in Settings.
+* **⚽ Top 5 Football Leagues Match Center**:
+  * Integrated real-time match fixtures, live scores, and schedules for Premier League, La Liga, Serie A, Bundesliga, Ligue 1, and UEFA Champions League.
+  * **Sidebar Favorite Team Sports Center**: Live league standings, top scorers, and top assists for your selected favorite club.
+  * Starting XI lineups and tactical formations displayed when published by live sports feeds.
 
-* **🔄 Silent Background Auto-Updates**:
-  * Built-in background auto-updater checks for new releases on GitHub, downloads patches in the background, and prompts with a 1-click restart notification.
+* **📱 Flat Night HUD Mobile Companion Remote**:
+  * Scan the in-app QR code with any smartphone on your local Wi-Fi to launch an instant touch remote control — no app store download required.
+  * Battery-efficient flat Night HUD theme optimized for high-contrast OLED mobile screens.
+  * Full playback controls, D-Pad navigation, volume slider, and live channel switching from your couch.
+
+* **🌍 Multi-Language & Windows 11 Integration**:
+  * Native localized interface in **English**, **Arabic (العربية)**, **French (Français)**, **Spanish (Español)**, and **German (Deutsch)**.
+  * Tailored for Windows 10 & 11 with keyboard shortcuts cheatsheet (`F1` / `?`).
+  * Built-in silent background auto-updater with 1-click restart patching via GitHub Releases.
+
+---
+
+## 📸 Interface Showcase
+
+| Live Television & EPG Guide | Movies Cinema Grid |
+| :---: | :---: |
+| <img src="screenshots/02-live-television.png" width="640" alt="Live television guide" /> | <img src="screenshots/03-movies-cinema.png" width="640" alt="Movies cinema grid" /> |
+
+| TV Series & Seasons | Mobile Companion Remote |
+| :---: | :---: |
+| <img src="screenshots/04-tv-series.png" width="640" alt="TV series browser" /> | <img src="screenshots/05-mobile-remote.png" width="220" alt="Mobile remote control" /> |
 
 ---
 
@@ -97,17 +71,23 @@ Scan the in-app QR code with any smartphone on your local Wi-Fi to launch the in
 
 | Release Package | File | Size | Description |
 | :--- | :--- | :--- | :--- |
-| **Windows Installer** | [`Nidalplayer-Setup-4.6.0.exe`](https://github.com/nidal0xp/Nidalplayer/releases/download/v4.6.0/Nidalplayer-Setup-4.6.0.exe) | ~117.7 MB | Standard Windows setup with desktop and Start Menu shortcuts |
-| **Portable Edition** | [`Nidalplayer-Portable-4.6.0.exe`](https://github.com/nidal0xp/Nidalplayer/releases/download/v4.6.0/Nidalplayer-Portable-4.6.0.exe) | ~104.8 MB | Standalone portable executable, no installation |
+| **Windows Installer** | [`Nidalplayer-Setup-4.6.0.exe`](https://github.com/nidal0xp/Nidalplayer/releases/download/v4.6.0/Nidalplayer-Setup-4.6.0.exe) | ~112.3 MB | Standard Windows setup with desktop and Start Menu shortcuts |
+| **Portable Edition** | [`Nidalplayer-Portable-4.6.0.exe`](https://github.com/nidal0xp/Nidalplayer/releases/download/v4.6.0/Nidalplayer-Portable-4.6.0.exe) | ~99.9 MB | Standalone portable executable, no installation required |
 | **Update Manifest** | [`latest.yml`](https://github.com/nidal0xp/Nidalplayer/releases/download/v4.6.0/latest.yml) | ~350 B | SHA-512 update verification manifest |
 
-*Requires Windows 10/11 x64.*
+*Compatible with Windows 10 and Windows 11 (64-bit).*
+
+---
+
+## 🔄 Version Updates & Changelog
+
+For the complete history of updates, new features, and technical improvements for each release, please visit the official [GitHub Releases](https://github.com/nidal0xp/Nidalplayer/releases) page.
 
 ---
 
 ## ⚖️ Legal & Disclaimer
 
-Nidalplayer is strictly a standalone software media player and client aggregator. **It does not host, provide, broadcast, or distribute any media content or playlists.** Users are exclusively responsible for supplying their own legitimate streams. For full details, please review our [DISCLAIMER](DISCLAIMER.md).
+Nidalplayer is strictly a standalone software media player client and aggregator. **It does not host, provide, broadcast, or distribute any media content or playlists.** Users are exclusively responsible for supplying their own legitimate streams. For full details, please review our [DISCLAIMER](DISCLAIMER.md).
 
 ---
 
