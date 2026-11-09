@@ -57,13 +57,13 @@
 
 ## 📸 Interface Showcase
 
-| Live Television & EPG Guide | Movies Cinema Grid |
+| Live Television & EPG Guide | Fullscreen Cinema Mode |
 | :---: | :---: |
-| <img src="screenshots/02-live-television.png" width="640" alt="Live television guide" /> | <img src="screenshots/03-movies-cinema.png" width="640" alt="Movies cinema grid" /> |
+| <img src="screenshots/02-live-television.png" width="640" alt="Live television guide and preview dock" /> | <img src="screenshots/03-cinema-player.png" width="640" alt="Fullscreen cinema player" /> |
 
-| TV Series & Seasons | Mobile Companion Remote |
+| Home Hub & Match Center | Mobile Remote Pairing (Scan to Control) |
 | :---: | :---: |
-| <img src="screenshots/04-tv-series.png" width="640" alt="TV series browser" /> | <img src="screenshots/05-mobile-remote.png" width="220" alt="Mobile remote control" /> |
+| <img src="screenshots/01-glass-home.png" width="640" alt="Home dashboard and match center" /> | <img src="screenshots/04-mobile-qr.png" width="640" alt="Mobile remote QR pairing" /> |
 
 ---
 
