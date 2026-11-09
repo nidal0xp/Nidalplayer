@@ -1,0 +1,99 @@
+# Dependencies
+node_modules/
+package-lock.json.bak
+vibe_images/
+
+# Production & Build outputs
+dist/
+dist-beta-*/
+scratch-*/
+build/*.exe
+build/*.msi
+*.exe
+*.msi
+
+# Explicitly allow root Windows release executables & update manifests
+!Nidalplayer-Portable.exe
+!Nidalplayer-Setup-*.exe
+!*.blockmap
+!latest.yml
+
+# TV & Mobile platforms (reserved for future release)
+android-tv/
+apk/
+tizen/
+tizen-app/
+tv/
+Nidalplayer-SamsungTV.wgt
+*.wgt
+*.apk
+build-tools/
+scripts/build-android-tv.js
+scripts/build-tizen-wgt.ps1
+scripts/check-es5.js
+scripts/check-tv-ports.js
+scripts/debug_emulator_preview.py
+scripts/download-android-tools.js
+scripts/get-tv-apps.js
+scripts/get-tv-info.js
+scripts/init-android-www.js
+scripts/install-tv-direct.ps1
+scripts/launch-tv-app.js
+scripts/pack_apk.py
+scripts/pack_tizen.py
+scripts/prepare-android-drawables.js
+scripts/setup-android-sdk.ps1
+scripts/test-runner.js
+scripts/test-tv-endpoint.js
+scripts/test_batch_streams.py
+scripts/test_batch_streams_runner.js
+scripts/test_emulator_suite.py
+
+# Internal reports & agent instructions
+*REPORT*.md
+PROJECT_INSTRUCTIONS.md
+Run-Nidalplayer.cmd
+AGENTS.md
+GEMINI.md
+
+# User data, logs, and caches
+*.log
+diagnostics.log
+.cache/
+.temp/
+*.tmp
+*.tmp.*
+
+# OS generated files
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# IDE & Editor configs
+.vscode/
+.idea/
+.claude/
+.gemini/
+*.sublime-project
+*.sublime-workspace
+*.code-workspace
+
+# Environment variables & local secrets
+.env
+.env.local
+.env.*.local
+credentials.json
+remote_token.json
+
+# Keystores & signing certificates
+*.jks
+*.keystore
+*.p12
+*.cer
+*.crt
+*.pem
+
+# Local playlists and user data backups
+*.m3u
+*.m3u8
+library_backup.json
