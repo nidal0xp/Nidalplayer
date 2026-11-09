@@ -9,6 +9,14 @@
 
 ![Nidalplayer 4.6.0 — Night HUD home screen](screenshots/01-glass-home.png)
 
+> [!IMPORTANT]
+> ### ⚠️ NO PLAYLISTS OR CONTENT INCLUDED
+> **Nidalplayer is strictly a media player client software.** It **does NOT contain, host, provide, or bundle any playlists, TV channels, movies, series, or video streams of any kind**.
+>
+> **Users must supply and enter their own valid, legally acquired playlist (M3U URL or Xtream Codes credentials) to stream content.**
+>
+> *All demonstration channels and movies shown in screenshots are strictly public domain, Creative Commons (Blender Open Projects), or free-to-air public broadcasters used exclusively for UI demonstration.*
+
 ---
 
 ## ✨ What's New in 4.6.0
@@ -49,11 +57,6 @@
 | TV Series | Mobile Companion Remote |
 | :---: | :---: |
 | <img src="screenshots/04-tv-series.png" width="640" alt="TV series grid" /> | <img src="screenshots/05-mobile-remote.png" width="220" alt="Nidalplayer mobile remote" /> |
-
-<p align="center">
-  <img src="screenshots/00-boot-splash.png" width="640" alt="Boot splash" /><br/>
-  <em>Boot splash · Windows desktop media center · smartphone web remote</em>
-</p>
 
 ---
 
