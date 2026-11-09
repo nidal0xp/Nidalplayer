@@ -44,9 +44,10 @@
   * Starting XI lineups and tactical formations displayed when published by live sports feeds.
 
 * **📱 Flat Night HUD Mobile Companion Remote**:
-  * Scan the in-app QR code with any smartphone on your local Wi-Fi to launch an instant touch remote control — no app store download required.
+  * Scan the in-app QR code with any smartphone to launch an instant touch remote control — no app store download required.
+  * **📶 Same Wi-Fi Network Required**: Your smartphone and Windows PC must be connected to the **same local Wi-Fi / LAN network** for the companion remote to communicate securely with the player.
   * Battery-efficient flat Night HUD theme optimized for high-contrast OLED mobile screens.
-  * Full playback controls, D-Pad navigation, volume slider, and live channel switching from your couch.
+  * Full playback controls, D-Pad navigation, volume slider, live channel switching, and mobile playlist configuration ("Add Playlist to TV") directly from your couch.
 
 * **🌍 Multi-Language & Windows 11 Integration**:
   * Native localized interface in **English**, **Arabic (العربية)**, **French (Français)**, **Spanish (Español)**, and **German (Deutsch)**.
@@ -68,6 +69,9 @@
 | Mobile Companion Remote (Smartphone) | Add Playlist to TV (Mobile Control) |
 | :---: | :---: |
 | <img src="screenshots/05-mobile-remote.png" width="280" alt="Night HUD Mobile Remote Control" /> | <img src="screenshots/06-mobile-add-playlist.png" width="280" alt="Add Playlist to TV via Mobile" /> |
+
+> [!NOTE]
+> **Mobile Remote Connection**: The smartphone web remote operates securely over your local network and requires both your phone and PC to be connected to the **same local Wi-Fi / LAN network**.
 
 ---
 
