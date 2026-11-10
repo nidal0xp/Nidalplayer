@@ -1,0 +1,3 @@
+## 2024-05-24 - Static Documentation Optimization
+**Learning:** In the closed-source public release repository (where `src` or `package.json` are absent), performance optimization is limited to static files like `privacy.html`. The main CLS and FCP bottleneck is the delayed loading and layout computation of the primary logo image, which lacked preloading and explicit HTML dimensions.
+**Action:** Always use `<link rel="preload">` for critical above-the-fold assets and provide explicit `width` and `height` HTML attributes to prevent Cumulative Layout Shift (CLS) and prioritize fetching, even in minimal static files.
