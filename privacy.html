@@ -3,6 +3,8 @@
 <head>
   <meta charset=UTF-8>
   <meta name=viewport content=width=device-width, initial-scale=1.0>
+  <!-- Security Enhancement: Defense-in-depth CSP to prevent XSS / unauthorized resources -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src 'self';">
   <title>Privacy Policy — Nidalplayer</title>
   <style>
     :root {
@@ -110,7 +112,7 @@
 <body>
   <div class=container>
     <div class=header>
-      <img src=assets/logo.png alt=Nidalplayer Logo onerror=this.style.display='none'>
+      <img src=assets/logo.png alt="Nidalplayer Logo">
       <div>
         <h1>Nidalplayer <span class=badge>v4.0</span></h1>
         <div class=last-updated>Privacy Policy • Last updated: August 2026</div>
