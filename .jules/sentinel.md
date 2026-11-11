@@ -1,0 +1,4 @@
+## 2024-05-24 - [Strict Content Security Policy on Static Pages]
+**Vulnerability:** Missing Content Security Policy (CSP) in static HTML page (`privacy.html`), allowing potential XSS if the file were ever dynamically served or modified.
+**Learning:** Even static, informational HTML pages (like privacy policies or terms of service) shipped with Electron or desktop apps should have a strict CSP to follow defense-in-depth principles. Furthermore, inline scripts (like `onerror`) must be removed to enforce `script-src 'none'` or `default-src 'none'`.
+**Prevention:** Always add a `<meta http-equiv="Content-Security-Policy">` header to all HTML entry points, even static ones, restricting resources to the absolute minimum necessary (e.g., `default-src 'none'; style-src 'unsafe-inline'; img-src 'self'`).
